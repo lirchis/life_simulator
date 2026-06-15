@@ -455,7 +455,7 @@ export const historyPre1949Events = [
     ]
   },
   {
-    "id": "era_may_fourth_leaflet",
+    "id": "era_may_fourth_city_leaflet_memory",
     "title": "传单从手里发热",
     "category": "school",
     "yearRange": [
@@ -1576,6 +1576,309 @@ export const historyPre1949Events = [
       },
       {
         "addTag": "nanyang_letter_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_1911_queue_cut_city",
+    "title": "剪掉辫子的街头",
+    "category": "random",
+    "yearRange": [
+      1911,
+      1913
+    ],
+    "ageRange": [
+      6,
+      80
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 20,
+    "text": "街上有人剪掉辫子，也有人把帽子压得很低。王朝的结束先落在头发、招牌和人们试探的眼神里。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": 3
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "queue_cut_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_may_fourth_leaflet",
+    "title": "传单从手里递过",
+    "category": "school",
+    "yearRange": [
+      1919,
+      1921
+    ],
+    "ageRange": [
+      14,
+      28
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "city",
+        "tier2",
+        "tier1"
+      ],
+      "provinces": [
+        "beijing",
+        "tianjin",
+        "shanghai",
+        "jiangsu",
+        "zhejiang",
+        "hubei",
+        "hunan",
+        "guangdong"
+      ]
+    },
+    "weightModifiers": [
+      {
+        "hasTrait": "modern_schooling",
+        "multiply": 1.8
+      },
+      {
+        "path": "education.score",
+        "gte": 40,
+        "multiply": 1.5
+      }
+    ],
+    "maxOccurrences": 1,
+    "baseWeight": 12,
+    "text": "传单从学生手里递过来，纸很薄，字却很烫。你不一定完全懂那些大词，但知道街上的年轻人不想再低声说话。",
+    "effects": [
+      {
+        "path": "education.score",
+        "add": 4
+      },
+      {
+        "path": "resources.freedom",
+        "add": 3
+      },
+      {
+        "addTag": "may_fourth_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_northeast_occupation_silence",
+    "title": "东北的沉默",
+    "category": "war",
+    "tags": [
+      "war"
+    ],
+    "yearRange": [
+      1931,
+      1945
+    ],
+    "ageRange": [
+      6,
+      80
+    ],
+    "currentRegions": {
+      "provinces": [
+        "liaoning",
+        "jilin",
+        "heilongjiang"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 30,
+    "text": "街上的旗帜和口音变了，许多话只能咽回去。你学会在熟悉的地方过陌生的日子。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": -10
+      },
+      {
+        "path": "resources.happiness",
+        "add": -7
+      },
+      {
+        "addTag": "northeast_occupation_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_wartime_chongqing_cave_light",
+    "title": "山城防空灯",
+    "category": "war",
+    "tags": [
+      "war"
+    ],
+    "yearRange": [
+      1938,
+      1943
+    ],
+    "ageRange": [
+      3,
+      75
+    ],
+    "currentRegions": {
+      "provinces": [
+        "chongqing",
+        "sichuan"
+      ],
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 20,
+    "text": "山城夜里熄了灯，人群往防空洞里走。潮湿的石壁贴着背，远处的爆响把每个人都变得很小。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -8
+      },
+      {
+        "path": "resources.health",
+        "add": -3
+      },
+      {
+        "addTag": "chongqing_air_raid_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_henan_famine_1942",
+    "title": "中原荒年",
+    "category": "health",
+    "yearRange": [
+      1942,
+      1943
+    ],
+    "ageRange": [
+      2,
+      80
+    ],
+    "currentRegions": {
+      "provinces": [
+        "henan"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 30,
+    "weightModifiers": [
+      {
+        "path": "birth.hukou",
+        "eq": "rural",
+        "multiply": 1.5
+      },
+      {
+        "path": "resources.wealth",
+        "lte": 30,
+        "multiply": 1.5
+      }
+    ],
+    "text": "荒年压到中原，粮食、树皮和亲人的脚步都变得稀薄。你记住了饥饿不是空，是身体里一点点被掏走。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": -14
+      },
+      {
+        "path": "resources.happiness",
+        "add": -10
+      },
+      {
+        "addTag": "henan_famine_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_victory_news_1945",
+    "title": "胜利的消息",
+    "category": "war",
+    "tags": [
+      "war"
+    ],
+    "yearRange": [
+      1945,
+      1945
+    ],
+    "ageRange": [
+      0,
+      90
+    ],
+    "maxOccurrences": 1,
+    "priority": 45,
+    "baseWeight": 80,
+    "text": "胜利的消息传来，有人哭，有人笑，也有人先问失散的人还能不能回来。八年像一条长河，终于听见了回声。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": 6
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "war_victory_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_1948_student_prices",
+    "title": "学生看见物价",
+    "category": "school",
+    "yearRange": [
+      1947,
+      1949
+    ],
+    "ageRange": [
+      13,
+      25
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "student"
+        },
+        {
+          "path": "education.score",
+          "gte": 30
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "学校门口的小吃又涨价了，纸币像越印越轻。你开始明白，课本外面的世界也会出题，而且没有标准答案。",
+    "effects": [
+      {
+        "path": "education.score",
+        "add": 2
+      },
+      {
+        "path": "resources.wealth",
+        "add": -4
+      },
+      {
+        "addTag": "student_inflation_memory"
       }
     ]
   }

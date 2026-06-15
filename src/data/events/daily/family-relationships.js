@@ -907,5 +907,236 @@ export const dailyFamilyRelationshipsEvents = [
         "addTag": "neighbor_farewell_memory"
       }
     ]
+  },
+  {
+    "id": "daily_matchmaker_visit",
+    "title": "媒人上门",
+    "category": "family",
+    "yearRange": [
+      1950,
+      2015
+    ],
+    "ageRange": [
+      18,
+      35
+    ],
+    "conditions": {
+      "none": [
+        {
+          "hasTag": "married"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "birth.gender",
+              "eq": "female"
+            }
+          ]
+        },
+        "text": "媒人或亲戚上门说亲，话里绕着年龄、工作、家境和脾气。你坐在旁边，像被放进一张看不见的秤。"
+      },
+      {
+        "text": "媒人或亲戚上门说亲，茶杯一放，话题就绕到年龄、工作和家境。婚姻第一次像一件要被估价的事。"
+      }
+    ],
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": -1
+      },
+      {
+        "path": "resources.happiness",
+        "add": -2
+      },
+      {
+        "addTag": "matchmaker_visit_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_wedding_banquet_table",
+    "title": "婚宴桌边",
+    "category": "family",
+    "ageRange": [
+      18,
+      50
+    ],
+    "baseWeight": 20,
+    "text": "你参加了一场婚宴。敬酒、红包、玩笑和比较挤在一张桌上，喜庆里也藏着许多现实的账。",
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": 3
+      },
+      {
+        "path": "resources.wealth",
+        "add": -2
+      },
+      {
+        "path": "resources.happiness",
+        "add": 2
+      },
+      {
+        "addTag": "wedding_banquet_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_couple_money_argument",
+    "title": "为钱拌嘴",
+    "category": "family",
+    "ageRange": [
+      22,
+      65
+    ],
+    "conditions": {
+      "all": [
+        {
+          "hasTag": "married"
+        }
+      ]
+    },
+    "baseWeight": 24,
+    "weightModifiers": [
+      {
+        "path": "resources.wealth",
+        "lte": 35,
+        "multiply": 1.5
+      }
+    ],
+    "text": "你们为了钱拌了几句嘴。账单不大，却能把很多没说出口的不安一并翻出来。",
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": -4
+      },
+      {
+        "path": "resources.happiness",
+        "add": -3
+      },
+      {
+        "addTag": "money_argument_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_friend_moves_away",
+    "title": "朋友搬走了",
+    "category": "relationship",
+    "ageRange": [
+      8,
+      55
+    ],
+    "baseWeight": 22,
+    "text": "一个熟悉的朋友搬走了。路口还是那个路口，只是少了一个会喊你名字的人。",
+    "effects": [
+      {
+        "path": "relationships.friendship",
+        "add": -4
+      },
+      {
+        "path": "resources.happiness",
+        "add": -3
+      },
+      {
+        "addTag": "friend_moved_away"
+      }
+    ]
+  },
+  {
+    "id": "daily_inlaw_visit",
+    "title": "姻亲来访",
+    "category": "family",
+    "ageRange": [
+      22,
+      70
+    ],
+    "conditions": {
+      "all": [
+        {
+          "hasTag": "married"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "姻亲来家里坐了一阵，客气话和真心话隔着茶水来回试探。婚姻不只是两个人，也是一串人情往来。",
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": 2
+      },
+      {
+        "path": "resources.happiness",
+        "add": -1
+      },
+      {
+        "addTag": "inlaw_visit_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_child_fever_night",
+    "title": "孩子半夜发烧",
+    "category": "health",
+    "ageRange": [
+      24,
+      55
+    ],
+    "conditions": {
+      "all": [
+        {
+          "path": "relationships.children",
+          "gte": 1
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "孩子半夜发烧，你摸着额头、找药、等体温降下来。那一夜很长，长到足够让人重新理解牵挂。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -5
+      },
+      {
+        "path": "relationships.family",
+        "add": 4
+      },
+      {
+        "addTag": "child_fever_night_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_old_classmate_reunion",
+    "title": "老同学聚会",
+    "category": "relationship",
+    "yearRange": [
+      1980,
+      2035
+    ],
+    "ageRange": [
+      25,
+      70
+    ],
+    "baseWeight": 18,
+    "text": "你见到多年不见的老同学。大家说起从前，又悄悄比较现在；笑声里有亲近，也有一点无法回头的距离。",
+    "effects": [
+      {
+        "path": "relationships.friendship",
+        "add": 4
+      },
+      {
+        "path": "resources.happiness",
+        "add": 2
+      },
+      {
+        "addTag": "classmate_reunion_memory"
+      }
+    ]
   }
 ];

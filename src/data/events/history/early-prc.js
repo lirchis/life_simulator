@@ -1359,5 +1359,255 @@ export const historyEarlyPrcEvents = [
         "addTag": "model_worker_aspiration"
       }
     ]
+  },
+  {
+    "id": "era_ration_ticket_city_queue",
+    "title": "粮票队伍",
+    "category": "wealth",
+    "yearRange": [
+      1955,
+      1985
+    ],
+    "ageRange": [
+      6,
+      80
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "maxOccurrences": 2,
+    "baseWeight": 22,
+    "text": "你拿着粮票排队，前面的人一边等一边算。那时生活常常不是看想要什么，而是看票上还剩什么。",
+    "effects": [
+      {
+        "path": "resources.wealth",
+        "add": -1
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "ration_queue_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_cooperative_meeting_rural",
+    "title": "合作社会议",
+    "category": "family",
+    "yearRange": [
+      1953,
+      1956
+    ],
+    "ageRange": [
+      12,
+      70
+    ],
+    "birthRegions": {
+      "hukou": [
+        "rural"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 26,
+    "text": "村里开会说互助组、合作社，锄头、牲口和土地都被放进新的账里。你听见日子正被重新安排。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": -3
+      },
+      {
+        "path": "relationships.family",
+        "add": 2
+      },
+      {
+        "addTag": "cooperative_meeting_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_private_plot_recovery",
+    "title": "自留地又绿了",
+    "category": "family",
+    "yearRange": [
+      1962,
+      1965
+    ],
+    "ageRange": [
+      8,
+      75
+    ],
+    "birthRegions": {
+      "hukou": [
+        "rural"
+      ]
+    },
+    "baseWeight": 22,
+    "text": "家里那点自留地又慢慢绿起来。菜苗很小，却让人相信饭桌还能一点点缓过来。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": 4
+      },
+      {
+        "path": "resources.happiness",
+        "add": 3
+      },
+      {
+        "addTag": "private_plot_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_militia_night_training",
+    "title": "夜里民兵训练",
+    "category": "career",
+    "yearRange": [
+      1964,
+      1976
+    ],
+    "ageRange": [
+      16,
+      35
+    ],
+    "birthRegions": {
+      "hukou": [
+        "rural"
+      ]
+    },
+    "baseWeight": 16,
+    "text": "夜里集合训练，木枪、口令和脚步声把村口变得严肃。你不一定上战场，却也被时代练出一副绷紧的身体。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": 2
+      },
+      {
+        "path": "resources.freedom",
+        "add": -2
+      },
+      {
+        "addTrait": "militia_exposure"
+      },
+      {
+        "addTag": "militia_training_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_worker_peasant_soldier_college_recommendation",
+    "title": "推荐上大学",
+    "category": "school",
+    "yearRange": [
+      1970,
+      1976
+    ],
+    "ageRange": [
+      18,
+      30
+    ],
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "factory_worker"
+        },
+        {
+          "hasTag": "collective_laborer"
+        },
+        {
+          "hasTag": "sent_down_youth"
+        }
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 12,
+    "text": "有人提到推荐你去上工农兵大学。机会很亮，也很复杂，档案、表现和人缘都在背后悄悄说话。",
+    "effects": [
+      {
+        "path": "education.level",
+        "set": "college"
+      },
+      {
+        "path": "resources.achievement",
+        "add": 10
+      },
+      {
+        "addTag": "worker_peasant_soldier_college"
+      }
+    ]
+  },
+  {
+    "id": "era_tangshan_quake_news",
+    "title": "唐山地震的消息",
+    "category": "health",
+    "yearRange": [
+      1976,
+      1976
+    ],
+    "ageRange": [
+      0,
+      90
+    ],
+    "currentRegions": {
+      "provinces": [
+        "hebei",
+        "beijing",
+        "tianjin",
+        "liaoning"
+      ]
+    },
+    "maxOccurrences": 1,
+    "priority": 45,
+    "baseWeight": 45,
+    "text": "唐山地震的消息传来，夜像裂开过一样。你听着伤亡和救援，忽然觉得脚下的土地也并非永远可靠。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -8
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "tangshan_quake_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_1976_memorial_silence",
+    "title": "一九七六年的沉默",
+    "category": "random",
+    "yearRange": [
+      1976,
+      1976
+    ],
+    "ageRange": [
+      6,
+      90
+    ],
+    "maxOccurrences": 1,
+    "priority": 42,
+    "baseWeight": 70,
+    "text": "那一年，广播、讣告和人群的沉默一阵阵传来。很多人说不清未来，只觉得一个旧章节正在合上。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -3
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "year_1976_memory"
+      }
+    ]
   }
 ];
