@@ -5,6 +5,7 @@ import {
   familyClassEras,
   familyClassMeta,
   getFamilyClassOptionsForContext,
+  getFamilyAttrRange,
   getCityTierOptionsForYear,
   getEffectiveHukou,
   getFamilyClassOptionsForYear,
@@ -17,7 +18,7 @@ import {
   hukouEras,
   resolveHistoricalProvince,
 } from "./history.js";
-import { familyClasses, cityTiers, hukouTypes, provinces } from "./regions.js";
+import { familyClasses, cityTiers, genderTypes, hukouTypes, provinces } from "./regions.js";
 import { tagLabels } from "./tagLabels.js";
 import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js";
 
@@ -28,6 +29,7 @@ export const data = {
   familyClassEras,
   familyClassMeta,
   getFamilyClassOptionsForContext,
+  getFamilyAttrRange,
   getCityTierOptionsForYear,
   getEffectiveHukou,
   getFamilyClassOptionsForYear,
@@ -40,6 +42,7 @@ export const data = {
   hukouEras,
   cityTiers,
   hukouTypes,
+  genderTypes,
   provinces,
   cityTierEras,
   resolveHistoricalProvince,

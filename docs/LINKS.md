@@ -10,6 +10,15 @@
 - 当前 Figma MCP Starter 计划达到工具调用上限，设计节点暂未成功写入。
 - 后续额度恢复或切换可用 plan 后，继续在该文件中绘制 Web 首版 UI。
 
+## 飞书云文档
+
+- [人生模拟器：架构与系统设计总览](https://my.feishu.cn/docx/SqKPdsYVVoaqPUx6WcKcM7cNnCd)
+
+状态：
+
+- 已根据当前 PRD、技术方案和代码结构整理。
+- 包含总体架构、核心实体、年度推进、事件筛选、特质系统、历史口径和下一步建议。
+
 ## 历史口径参考
 
 - [西康省](https://zh.wikipedia.org/wiki/%E8%A5%BF%E5%BA%B7%E7%9C%81)

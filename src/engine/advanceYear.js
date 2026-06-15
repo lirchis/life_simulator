@@ -15,7 +15,9 @@ export function advanceYear(state, data, context) {
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   tickCooldowns(state);
   removeExpiredTimedModifiers(state);
+  const beforeNatural = clone(state);
   applyNaturalChanges(state);
+  recordYearlyChange(beforeNatural, state);
 
   const candidates = uniqueEvents([...baseCandidates(state, data.events, context), ...scheduledCandidates(state, data.events, context)]);
   const selected = selectEvents(candidates, state, context);
@@ -29,6 +31,17 @@ export function advanceYear(state, data, context) {
 
   writeSnapshot(state);
   return { logs, choiceEvent: null, ended: !state.meta.isAlive };
+}
+
+function recordYearlyChange(before, state) {
+  const effectsSummary = makeEffectSummary(before, state);
+  if (!effectsSummary.length) return;
+  state.yearlyChanges ??= [];
+  state.yearlyChanges.push({
+    age: state.meta.age,
+    year: state.meta.currentYear,
+    effectsSummary,
+  });
 }
 
 export function resolveChoice(event, choiceId, state, context) {
@@ -87,6 +100,7 @@ function selectEvents(candidates, state, context) {
 function baseCandidates(state, events, context) {
   return events
     .filter((event) => matchTime(event, state))
+    .filter((event) => matchGenderFilters(event, state))
     .filter((event) => matchFamilyFilters(event, state))
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
@@ -100,6 +114,7 @@ function scheduledCandidates(state, events, context) {
   return events
     .filter((event) => ids.has(event.id))
     .filter((event) => matchTime(event, state))
+    .filter((event) => matchGenderFilters(event, state))
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
@@ -152,12 +167,19 @@ function matchFamilyFilters(event, state) {
   return true;
 }
 
+function matchGenderFilters(event, state) {
+  if (event.genders && !event.genders.includes(state.birth.gender)) return false;
+  return true;
+}
+
 function matchRegionFilters(event, state, context) {
   return matchRegionFilter(event.birthRegions, {
+    gender: state.birth.gender,
     province: state.birth.province,
     cityTier: state.birth.cityTier,
     hukou: state.birth.hukou,
   }, context) && matchRegionFilter(event.currentRegions, {
+    gender: state.birth.gender,
     province: state.location.currentProvince,
     cityTier: state.location.currentCityTier,
     hukou: state.birth.hukou,
@@ -172,6 +194,7 @@ function matchRegionFilter(filter, source, context) {
   if (filter.cityTiers && !filter.cityTiers.includes(source.cityTier)) return false;
   if (filter.cityTierGroups && !filter.cityTierGroups.some((id) => context.aggregateRegistry.includes(id, source.cityTier))) return false;
   if (filter.hukou && !filter.hukou.includes(source.hukou)) return false;
+  if (filter.genders && !filter.genders.includes(source.gender)) return false;
   return true;
 }
 

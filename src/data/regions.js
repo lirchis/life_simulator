@@ -29,3 +29,8 @@ export const hukouTypes = [
   ["rural", "农村"],
   ["urban", "城镇"],
 ];
+
+export const genderTypes = [
+  ["female", "女"],
+  ["male", "男"],
+];
