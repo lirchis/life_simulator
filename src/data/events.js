@@ -7,7 +7,17 @@ const coreEvents = [
     priority: 90,
     maxOccurrences: 1,
     baseWeight: 100,
-    text: "你出生了。窗外的时代照常奔涌，屋里的人先数你的手指，再给你取一个要用很多年的名字。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "birth.hukou", eq: "rural" }, { path: "birth.year", lte: 1990 }] },
+        text: "你出生了。屋里先安静了一下，又很快忙起来；有人说女孩也好，声音轻得像怕被旧规矩听见。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "meta.currentYear", lte: 1979 }, { path: "birth.hukou", eq: "rural" }] },
+        text: "你出生了。家里人把香火、姓氏和以后的力气都悄悄放到你身上，而你只是攥着小拳头睡着。",
+      },
+      { text: "你出生了。窗外的时代照常奔涌，屋里的人先数你的手指，再给你取一个要用很多年的名字。" },
+    ],
     effects: [
       { path: "relationships.family", add: 6 },
       { path: "resources.happiness", add: 2 },
@@ -27,7 +37,13 @@ const coreEvents = [
       { path: "resources.health", lte: 40, multiply: 2 },
       { path: "environment.healthcareAccess", lte: 3, multiply: 1.8 },
     ],
-    text: "你来得并不轻松。大人们围在昏暗的灯下，连松一口气都像怕惊动命运。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 1979 }, { path: "environment.healthcareAccess", lte: 3 }] },
+        text: "你来得并不轻松。大人们围在昏暗的灯下，先盼你活下来，再把没说出口的失望咽回去。",
+      },
+      { text: "你来得并不轻松。大人们围在昏暗的灯下，连松一口气都像怕惊动命运。" },
+    ],
     effects: [
       { path: "resources.health", add: -10 },
       { path: "relationships.family", add: 4 },
@@ -170,7 +186,13 @@ const coreEvents = [
     priority: 78,
     maxOccurrences: 1,
     baseWeight: 100,
-    text: "村里丈量田地，你家第一次把几亩地说成“自己的”。大人没有大声笑，只是在夜里反复算明年的口粮。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.age", gte: 14 }] },
+        text: "村里丈量田地，你也跟着家里去听分配。地契和名字多半不写你，但你知道明年的口粮也有你弯腰的一份。",
+      },
+      { text: "村里丈量田地，你家第一次把几亩地说成“自己的”。大人没有大声笑，只是在夜里反复算明年的口粮。" },
+    ],
     effects: [
       { path: "resources.wealth", add: 10 },
       { path: "relationships.family", add: 6 },
@@ -219,7 +241,17 @@ const coreEvents = [
     priority: 85,
     maxOccurrences: 1,
     baseWeight: 100,
-    text: "高考到了。校门口挤满家长、汗水和沉默的期待，你站在人生第一个巨大岔路口前。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "birth.hukou", eq: "rural" }, { path: "meta.currentYear", lte: 1995 }] },
+        text: "高考到了。家里支持你，也有人说女孩子读太远以后难回头；你站在校门口，知道这不只是一场考试。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "birth.hukou", eq: "rural" }, { path: "meta.currentYear", lte: 1995 }] },
+        text: "高考到了。家里把翻身、门楣和远方都塞进你的书包，你站在校门口，觉得肩上比准考证重得多。",
+      },
+      { text: "高考到了。校门口挤满家长、汗水和沉默的期待，你站在人生第一个巨大岔路口前。" },
+    ],
     choices: [
       {
         id: "steady",
@@ -292,7 +324,17 @@ const coreEvents = [
       { hasTag: "college", multiply: 1.5 },
       { hasTrait: "migration_ready", multiply: 1.5 },
     ],
-    text: "你离开熟悉的地方，去了更大的城市。房租很贵，机会也是真的多，夜里连路灯都像没空休息。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 2005 }] },
+        text: "你离开熟悉的地方，去了更大的城市。家里人反复叮嘱安全和名声，你把担心塞进行李，也把自由塞进去。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "birth.hukou", eq: "rural" }] },
+        text: "你离开熟悉的地方，去了更大的城市。亲戚说男孩子总要出去闯，你听着像鼓励，也像命令。",
+      },
+      { text: "你离开熟悉的地方，去了更大的城市。房租很贵，机会也是真的多，夜里连路灯都像没空休息。" },
+    ],
     effects: [
       { path: "location.currentProvince", set: "shanghai" },
       { path: "location.currentCityTier", set: "tier1" },
@@ -336,7 +378,17 @@ const coreEvents = [
     priority: 70,
     maxOccurrences: 1,
     baseWeight: 100,
-    text: "你拿到了几份方向不同的工作机会。成年人世界的第一张门票，背面写着价格。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 2005 }] },
+        text: "你拿到了几份方向不同的工作机会。有人问你稳不稳定，也有人拐弯问你什么时候结婚；门票递到手里，背面还有小字。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "meta.currentYear", lte: 2005 }] },
+        text: "你拿到了几份方向不同的工作机会。别人默认你该扛起收入、房子和以后的一家人，成年人世界的第一张门票很快变重。",
+      },
+      { text: "你拿到了几份方向不同的工作机会。成年人世界的第一张门票，背面写着价格。" },
+    ],
     choices: [
       {
         id: "stable_company",
@@ -416,7 +468,17 @@ const coreEvents = [
       { path: "relationships.romance", gte: 25, multiply: 1.8 },
       { path: "resources.wealth", gte: 40, multiply: 1.2 },
     ],
-    text: "你和一个人决定把两条人生线绑在一起。婚礼很吵，未来很长，誓词说出口时像轻轻签下一份巨大的合同。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 2015 }] },
+        text: "你和一个人决定结婚。亲戚们讨论彩礼、房子和你以后怎么顾家，婚礼很吵，未来也被许多人提前安排了一遍。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "meta.currentYear", lte: 2015 }] },
+        text: "你和一个人决定结婚。房子、收入和责任被一项项摆上桌，婚礼很吵，未来很长，誓词像轻轻签下一份巨大的合同。",
+      },
+      { text: "你和一个人决定把两条人生线绑在一起。婚礼很吵，未来很长，誓词说出口时像轻轻签下一份巨大的合同。" },
+    ],
     effects: [
       { path: "relationships.partnerStatus", set: "married" },
       { path: "relationships.partnerQuality", add: 15 },
@@ -430,7 +492,17 @@ const coreEvents = [
     category: "wealth",
     ageRange: [35, 56],
     baseWeight: 42,
-    text: "钱、健康、家庭和工作一起挤过来。你开始学会在深夜叹气，也学会第二天照常起床。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "relationships.children", gte: 1 }] },
+        text: "工作、孩子、父母和家务一起挤过来。你像同时开着几个窗口的人，深夜才想起自己也需要喘口气。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }, { path: "relationships.children", gte: 1 }] },
+        text: "钱、房子、孩子和父母一起挤过来。你开始学会在深夜叹气，也学会第二天把责任重新扛回肩上。",
+      },
+      { text: "钱、健康、家庭和工作一起挤过来。你开始学会在深夜叹气，也学会第二天照常起床。" },
+    ],
     effects: [
       { path: "resources.health", add: -5 },
       { path: "resources.happiness", add: -5 },
@@ -487,7 +559,17 @@ const richEvents = [
     birthFamilyClasses: ["scholar_gentry", "landlord", "merchant", "comprador_merchant", "smallholder"],
     maxOccurrences: 1,
     baseWeight: 34,
-    text: "天还没亮，你已经坐在长凳上背书。先生的戒尺落在桌面，像旧时代还不肯退场的回声。",
+    weightModifiers: [
+      { path: "birth.gender", eq: "male", multiply: 1.6 },
+      { path: "birth.gender", eq: "female", multiply: 0.45 },
+    ],
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "天还没亮，你在家中跟着识字的大人读书。能摸到书页已经不易，先生的戒尺和正式的学堂仍离你很远。",
+      },
+      { text: "天还没亮，你已经坐在长凳上背书。先生的戒尺落在桌面，像旧时代还不肯退场的回声。" },
+    ],
     effects: [
       { path: "education.score", add: 7 },
       { path: "attrs.mental", add: -1 },
@@ -505,7 +587,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 45,
     baseWeight: 70,
-    text: "家里人忽然说，旧路断了。你看见长辈把书页抚平，又像在给一条看不见的路送行。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "家里人说科举废了，旧路断了。你原本就很难走上那条路，却仍感觉屋里的书声忽然换了方向。",
+      },
+      { text: "家里人忽然说，旧路断了。你看见长辈把书页抚平，又像在给一条看不见的路送行。" },
+    ],
     effects: [
       { path: "resources.happiness", add: -3 },
       { path: "education.score", add: 4 },
@@ -581,7 +669,13 @@ const richEvents = [
         { hasTrait: "market_sense" },
       ],
     },
-    text: "你把家乡装进一个小包袱，跟船往南走。海面一黑，谁也不知道明天是活路还是更远的苦。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你跟着亲眷或同乡往南洋去，船舱里挤满方言、晕船和不敢说出口的担心。海面一黑，明天像被折进小包袱里。",
+      },
+      { text: "你把家乡装进一个小包袱，跟船往南走。海面一黑，谁也不知道明天是活路还是更远的苦。" },
+    ],
     effects: [
       { path: "resources.wealth", add: 8 },
       { path: "relationships.family", add: -8 },
@@ -621,8 +715,16 @@ const richEvents = [
       { path: "resources.wealth", lte: 25, multiply: 1.8 },
       { hasTag: "poor_peasant_family", multiply: 1.6 },
       { hasTrait: "survival_instinct", multiply: 1.4 },
+      { path: "birth.gender", eq: "male", multiply: 1.4 },
+      { path: "birth.gender", eq: "female", multiply: 0.55 },
     ],
-    text: "你跟着队伍离开家。草鞋磨穿，山路没有尽头，少年人的名字被风吹得越来越轻。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你跟着队伍离开家，做宣传、护理、送信，也在山路上学会把害怕压低。草鞋磨穿，名字被风吹得越来越轻。",
+      },
+      { text: "你跟着队伍离开家。草鞋磨穿，山路没有尽头，少年人的名字被风吹得越来越轻。" },
+    ],
     effects: [
       { path: "resources.health", add: -10 },
       { path: "resources.reputation", add: 8 },
@@ -648,7 +750,13 @@ const richEvents = [
         { hasTag: "soviet_area_memory" },
       ],
     },
-    text: "跟随苏区红军开拔往西，战死湘江。风萧萧兮易水寒，年轻的骨头没有等到春天。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "跟随苏区队伍开拔往西，你倒在湘江边。风萧萧兮易水寒，年轻的名字没有等到春天。",
+      },
+      { text: "跟随苏区红军开拔往西，战死湘江。风萧萧兮易水寒，年轻的骨头没有等到春天。" },
+    ],
     effects: [
       { die: "湘江战役" },
       { triggerEnding: "xiangjiang_fallen" },
@@ -669,7 +777,13 @@ const richEvents = [
         { path: "resources.health", gte: 25 },
       ],
     },
-    text: "你从雪山草地里活着走出来。后来你很少讲那段路，只在吃饭时把碗底刮得格外干净。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你从雪山草地里活着走出来。后来别人总惊讶你也走过那段路，你只是把碗底刮得格外干净。",
+      },
+      { text: "你从雪山草地里活着走出来。后来你很少讲那段路，只在吃饭时把碗底刮得格外干净。" },
+    ],
     effects: [
       { path: "resources.health", add: -8 },
       { path: "attrs.mental", add: 2 },
@@ -688,7 +802,13 @@ const richEvents = [
     currentRegions: { provinces: ["beijing", "tianjin", "hebei", "shandong", "jiangsu", "shanghai", "zhejiang", "guangdong", "hubei", "hunan"] },
     maxOccurrences: 1,
     baseWeight: 40,
-    text: "车站挤满了人，行李和哭声堆在一起。你不知道自己是在离开家，还是在离开一个旧世界。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.age", gte: 12 }] },
+        text: "车站挤满了人，行李和哭声堆在一起。你把自己裹得严实些，乱世里女孩的路总要多绕几道暗处。",
+      },
+      { text: "车站挤满了人，行李和哭声堆在一起。你不知道自己是在离开家，还是在离开一个旧世界。" },
+    ],
     effects: [
       { path: "resources.wealth", add: -12 },
       { path: "resources.health", add: -7 },
@@ -775,6 +895,7 @@ const richEvents = [
     title: "被拉壮丁",
     category: "war",
     tags: ["war"],
+    genders: ["male"],
     yearRange: [1946, 1949],
     ageRange: [16, 35],
     birthRegions: { hukou: ["rural"] },
@@ -784,7 +905,7 @@ const richEvents = [
       { path: "attrs.luck", lte: 3, multiply: 1.8 },
       { path: "resources.wealth", lte: 25, multiply: 1.5 },
     ],
-    text: "夜里有人敲门，你被推到队伍里。月光照着土路，家门在身后越来越小。",
+    text: "夜里有人敲门，你被推到队伍里。月光照着土路，家门在身后越来越小；所谓男丁，在乱世里先是一项可以被带走的资源。",
     effects: [
       { path: "resources.health", add: -12 },
       { path: "relationships.family", add: -10 },
@@ -801,7 +922,13 @@ const richEvents = [
     priority: 50,
     maxOccurrences: 1,
     baseWeight: 90,
-    text: "喇叭里传来新的国名，街上有人鼓掌，有人沉默。你站在人群里，觉得日历忽然翻得很响。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "喇叭里传来新的国名，街上有人鼓掌，有人沉默。你听见“妇女能顶半边天”的新话，也知道旧日子不会一夜松手。",
+      },
+      { text: "喇叭里传来新的国名，街上有人鼓掌，有人沉默。你站在人群里，觉得日历忽然翻得很响。" },
+    ],
     effects: [
       { path: "resources.happiness", add: 4 },
       { path: "attrs.mental", add: 1 },
@@ -817,7 +944,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 60,
     baseWeight: 70,
-    text: "家里的旧账被重新翻开，一个词盖在门楣上。你第一次知道，出身也会像影子一样被登记。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "家里的旧账被重新翻开，一个词盖在门楣上。后来谈婚论嫁、读书就业都有人问起它，出身像影子一样跟着你。",
+      },
+      { text: "家里的旧账被重新翻开，一个词盖在门楣上。你第一次知道，出身也会像影子一样被登记。" },
+    ],
     effects: [
       { path: "resources.wealth", add: -18 },
       { path: "resources.reputation", add: -12 },
@@ -855,7 +988,13 @@ const richEvents = [
         { path: "career.status", eq: "employed" },
       ],
     },
-    text: "你进了厂，领到工牌。机器声很响，但每月发工资的日子，家里人听得最清楚。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你进了厂，领到工牌。女工的手也能拧紧机器上的螺丝，每月发工资的日子，家里人听得最清楚。",
+      },
+      { text: "你进了厂，领到工牌。机器声很响，但每月发工资的日子，家里人听得最清楚。" },
+    ],
     effects: [
       { path: "career.status", set: "employed" },
       { path: "career.field", set: "factory" },
@@ -880,7 +1019,13 @@ const richEvents = [
         { hasTag: "state_worker_family" },
       ],
     },
-    text: "工地和厂房一起长高，汽笛把清晨切开。你觉得自己只是拧紧一颗螺丝，却也参与了一个巨大的句子。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "工地和厂房一起长高，汽笛把清晨切开。你和男工一样上工、流汗、评先进，半边天也要按时打卡。",
+      },
+      { text: "工地和厂房一起长高，汽笛把清晨切开。你觉得自己只是拧紧一颗螺丝，却也参与了一个巨大的句子。" },
+    ],
     effects: [
       { path: "career.level", add: 7 },
       { path: "resources.achievement", add: 8 },
@@ -935,7 +1080,13 @@ const richEvents = [
       { path: "attrs.physique", lte: 3, multiply: 1.4 },
       { hasTag: "low_resource_family", multiply: 1.4 },
     ],
-    text: "春天来了，锅里却没有春天。你记住了野菜的苦，也记住了大人把最后一口让出去的样子。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.age", gte: 10 }] },
+        text: "春天来了，锅里却没有春天。你跟着大人找野菜、照看更小的孩子，也把自己的饿藏得很安静。",
+      },
+      { text: "春天来了，锅里却没有春天。你记住了野菜的苦，也记住了大人把最后一口让出去的样子。" },
+    ],
     effects: [
       { path: "resources.health", add: -16 },
       { path: "resources.happiness", add: -14 },
@@ -973,7 +1124,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 58,
     baseWeight: 65,
-    text: "你坐上绿皮车，胸前别着红花。站台越来越远，青春被一张调令寄往陌生的田野。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你坐上绿皮车，胸前别着红花。站台越来越远，青春被一张调令寄往陌生的田野，也寄进更紧的目光里。",
+      },
+      { text: "你坐上绿皮车，胸前别着红花。站台越来越远，青春被一张调令寄往陌生的田野。" },
+    ],
     effects: [
       { path: "location.migratedTimes", add: 1 },
       { path: "resources.health", add: -5 },
@@ -992,7 +1149,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 52,
     baseWeight: 70,
-    text: "课本被合上，操场变成口号的海。你还没学会很多字，却先学会了看大人的脸色。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "birth.hukou", eq: "rural" }] },
+        text: "课本被合上，操场变成口号的海。你回家分担更多活计，教育断档没有声音，却实实在在从手指缝里漏掉。",
+      },
+      { text: "课本被合上，操场变成口号的海。你还没学会很多字，却先学会了看大人的脸色。" },
+    ],
     effects: [
       { path: "education.score", add: -12 },
       { path: "resources.happiness", add: -4 },
@@ -1050,7 +1213,13 @@ const richEvents = [
         { hasTag: "gaokao_done" },
       ],
     },
-    text: "消息传来，高考恢复。有人翻出旧课本，有人夜里点灯，你忽然看见命运开了一条细缝。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "消息传来，高考恢复。有人说女孩子年纪不小了，别再折腾；你翻出旧课本，看见命运开了一条细缝。",
+      },
+      { text: "消息传来，高考恢复。有人翻出旧课本，有人夜里点灯，你忽然看见命运开了一条细缝。" },
+    ],
     choices: [
       {
         id: "study_again",
@@ -1085,7 +1254,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 45,
     baseWeight: 58,
-    text: "集市上又有人吆喝，布、糖、零件和消息一起流动。你发现生活不只会被安排，也会自己找路。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "集市上又有人吆喝，布、糖、零件和消息一起流动。你看见女人也能摆摊、算账、谈价钱，生活不只会被安排。",
+      },
+      { text: "集市上又有人吆喝，布、糖、零件和消息一起流动。你发现生活不只会被安排，也会自己找路。" },
+    ],
     effects: [
       { path: "resources.wealth", add: 6 },
       { path: "resources.freedom", add: 8 },
@@ -1103,7 +1278,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 50,
     baseWeight: 65,
-    text: "地又分到各家手里。父亲蹲在田埂上算账，像重新把一家人的明天攥回掌心。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.age", gte: 12 }] },
+        text: "地又分到各家手里。账多半由父亲去算，活却要全家一起干；你在田埂上明白，明天也会压到自己肩上。",
+      },
+      { text: "地又分到各家手里。父亲蹲在田埂上算账，像重新把一家人的明天攥回掌心。" },
+    ],
     effects: [
       { path: "resources.wealth", add: 10 },
       { path: "resources.happiness", add: 8 },
@@ -1161,7 +1342,13 @@ const richEvents = [
       { hasTrait: "market_sense", multiply: 1.8 },
       { path: "attrs.luck", gte: 6, multiply: 1.3 },
     ],
-    text: "你领到一张个体户执照。薄薄一张纸，压在柜台玻璃下，像给胆子盖了个章。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你领到一张个体户执照。薄薄一张纸压在柜台玻璃下，别人叫你会过日子，你知道那也是胆子。",
+      },
+      { text: "你领到一张个体户执照。薄薄一张纸，压在柜台玻璃下，像给胆子盖了个章。" },
+    ],
     effects: [
       { path: "career.status", set: "self_employed" },
       { path: "career.field", set: "small_business" },
@@ -1187,7 +1374,13 @@ const richEvents = [
         { path: "resources.wealth", gte: 35 },
       ],
     },
-    text: "有人劝你下海。岸上稳，海里乱，但浪头上也许真有金光。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "有人劝你下海。岸上稳，海里乱，亲戚说女人别太冒险；可浪头上的金光不只照男人。",
+      },
+      { text: "有人劝你下海。岸上稳，海里乱，但浪头上也许真有金光。" },
+    ],
     choices: [
       {
         id: "jump_into_market",
@@ -1228,7 +1421,13 @@ const richEvents = [
       { path: "resources.wealth", lte: 25, multiply: 2 },
       { path: "attrs.luck", lte: 3, multiply: 1.5 },
     ],
-    text: "有人低声谈起边境那边的灯。你知道这不是旅行，是把一条命压进黑水和草丛。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "有人低声谈起边境那边的灯。对你来说，这不是旅行，是把名声、身体和一条命都压进黑水和草丛。",
+      },
+      { text: "有人低声谈起边境那边的灯。你知道这不是旅行，是把一条命压进黑水和草丛。" },
+    ],
     choices: [
       {
         id: "attempt_crossing",
@@ -1287,7 +1486,13 @@ const richEvents = [
         { hasTag: "worker_family" },
       ],
     },
-    text: "通知贴出来，名字排成一列。曾经像铁一样的饭碗，原来摔在地上也会响。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "通知贴出来，名字排成一列。女工被劝回家、照顾老人孩子，曾经像铁一样的饭碗，摔在地上也会响。",
+      },
+      { text: "通知贴出来，名字排成一列。曾经像铁一样的饭碗，原来摔在地上也会响。" },
+    ],
     effects: [
       { path: "career.status", set: "laid_off" },
       { path: "career.income", add: -18 },
@@ -1308,7 +1513,13 @@ const richEvents = [
     maxOccurrences: 1,
     baseWeight: 36,
     currentRegions: { provinceGroups: ["province.region.west"] },
-    text: "你买了去沿海的硬座票。车厢里全是蛇皮袋和年轻人的沉默，窗外的山一座座往后退。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你买了去沿海的硬座票。车厢里全是蛇皮袋和年轻人的沉默，家里人反复叮嘱你别信陌生人。",
+      },
+      { text: "你买了去沿海的硬座票。车厢里全是蛇皮袋和年轻人的沉默，窗外的山一座座往后退。" },
+    ],
     effects: [
       { path: "location.currentProvince", set: "guangdong" },
       { path: "location.currentCityTier", set: "city" },
@@ -1351,7 +1562,13 @@ const richEvents = [
     maxOccurrences: 1,
     priority: 42,
     baseWeight: 45,
-    text: "加入 WTO 后，厂里的订单像潮水一样涌来。你在流水线旁站到腿麻，也在工资条上看见世界的影子。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "加入 WTO 后，厂里的订单像潮水一样涌来。女工宿舍的灯很晚才灭，你在工资条上看见世界，也看见自己的青春被计件。",
+      },
+      { text: "加入 WTO 后，厂里的订单像潮水一样涌来。你在流水线旁站到腿麻，也在工资条上看见世界的影子。" },
+    ],
     effects: [
       { path: "career.income", add: 10 },
       { path: "resources.wealth", add: 12 },
@@ -1489,7 +1706,13 @@ const richEvents = [
       { path: "environment.educationPressure", gte: 7, multiply: 1.4 },
       { hasTrait: "exam_aptitude", multiply: 1.6 },
     ],
-    text: "你把很多黄昏都交给试卷。窗外的县城很小，题目却像一节节通往远方的铁轨。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你把很多黄昏都交给试卷。窗外的县城很小，题目像铁轨，也像一张能替你推开偏见的证明。",
+      },
+      { text: "你把很多黄昏都交给试卷。窗外的县城很小，题目却像一节节通往远方的铁轨。" },
+    ],
     effects: [
       { path: "education.score", add: 10 },
       { path: "resources.happiness", add: -5 },
@@ -1575,7 +1798,13 @@ const richEvents = [
         { hasTag: "migrant_worker" },
       ],
     },
-    text: "你把手机绑在车把上，城市被拆成一个个倒计时。风从脸上刮过去，算法在耳机里催促。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你把手机绑在车把上，城市被拆成一个个倒计时。夜路和差评都要小心，算法在耳机里催促。",
+      },
+      { text: "你把手机绑在车把上，城市被拆成一个个倒计时。风从脸上刮过去，算法在耳机里催促。" },
+    ],
     effects: [
       { path: "career.status", set: "gig_worker" },
       { path: "career.field", set: "delivery" },
@@ -1799,7 +2028,13 @@ const richEvents = [
       { path: "attrs.charm", gte: 6, multiply: 1.5 },
       { path: "relationships.friendship", gte: 40, multiply: 1.3 },
     ],
-    text: "你坐过某个人的自行车后座。风把校服吹得鼓起来，很多年后你还记得那段路的坡度。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 2005 }] },
+        text: "你坐过某个人的自行车后座。风把校服吹得鼓起来，你一边心动，一边怕被熟人看见。",
+      },
+      { text: "你坐过某个人的自行车后座。风把校服吹得鼓起来，很多年后你还记得那段路的坡度。" },
+    ],
     effects: [
       { path: "relationships.romance", add: 18 },
       { path: "resources.happiness", add: 8 },
@@ -1884,7 +2119,17 @@ const richEvents = [
     ageRange: [28, 60],
     maxOccurrences: 1,
     baseWeight: 24,
-    text: "父母开始频繁去医院。你突然意识到，他们不是一直站在你身后的山，山也会慢慢变矮。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "父母开始频繁去医院。很多照料默认落到你身上，你突然意识到，山也会慢慢变矮，还会需要人扶。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }] },
+        text: "父母开始频繁去医院。你突然意识到，他们不是一直站在你身后的山，而你也被默认该撑起下一段路。",
+      },
+      { text: "父母开始频繁去医院。你突然意识到，他们不是一直站在你身后的山，山也会慢慢变矮。" },
+    ],
     effects: [
       { path: "resources.wealth", add: -10 },
       { path: "relationships.family", add: 5 },
@@ -1893,9 +2138,10 @@ const richEvents = [
     ],
   },
   {
-    id: "daily_child_born",
+    id: "daily_child_born_mother",
     title: "孩子出生",
     category: "family",
+    genders: ["female"],
     ageRange: [24, 42],
     maxOccurrences: 3,
     baseWeight: 20,
@@ -1904,12 +2150,36 @@ const richEvents = [
         { hasTag: "married" },
       ],
     },
-    text: "孩子出生了。小小一团哭声，把你的人生往前推了一大步。",
+    text: "孩子出生了。小小一团哭声把你的人生往前推了一大步，也把疼痛、虚弱和新的身份一起留在你身上。",
     effects: [
       { path: "relationships.children", add: 1 },
       { path: "relationships.family", add: 8 },
       { path: "resources.happiness", add: 7 },
+      { path: "resources.health", add: -6 },
       { path: "resources.wealth", add: -8 },
+      { addTag: "has_child" },
+    ],
+  },
+  {
+    id: "daily_child_born_father",
+    title: "孩子出生",
+    category: "family",
+    genders: ["male"],
+    ageRange: [24, 45],
+    maxOccurrences: 3,
+    baseWeight: 20,
+    conditions: {
+      all: [
+        { hasTag: "married" },
+      ],
+    },
+    text: "孩子出生了。你抱着那团小小的哭声，突然明白“当父亲”不是一个称呼，而是一张从今天开始长期扣款的账单。",
+    effects: [
+      { path: "relationships.children", add: 1 },
+      { path: "relationships.family", add: 7 },
+      { path: "resources.happiness", add: 6 },
+      { path: "resources.wealth", add: -10 },
+      { path: "attrs.mental", add: -1 },
       { addTag: "has_child" },
     ],
   },
@@ -1927,7 +2197,17 @@ const richEvents = [
     weightModifiers: [
       { path: "environment.educationPressure", gte: 8, multiply: 1.5 },
     ],
-    text: "你给孩子报了补习班。小时候你做过的题，换了一种字体又回到家里。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }] },
+        text: "你给孩子报了补习班。沟通老师、接送、作业和情绪多半绕回你这里，题目换了一种字体又回到家里。",
+      },
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "male" }] },
+        text: "你给孩子报了补习班。账单来得很准时，你开始理解教育焦虑也可以按月扣款。",
+      },
+      { text: "你给孩子报了补习班。小时候你做过的题，换了一种字体又回到家里。" },
+    ],
     effects: [
       { path: "resources.wealth", add: -8 },
       { path: "resources.happiness", add: -4 },
