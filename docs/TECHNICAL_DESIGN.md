@@ -5,7 +5,7 @@
 本项目采用“壳子”和“数据”分离的架构：
 
 - 壳子：稳定的模拟引擎，负责状态推进、事件筛选、概率计算、效果应用、历史记录和结局判断。
-- 数据：可持续扩展的内容包，包含天赋、事件、结局、地区配置、时代配置等。
+- 数据：可持续扩展的内容包，包含开局特质、事件、结局、地区配置、时代配置等。
 
 核心目标是让大量人生事件可以用声明式数据编写，而不是在事件里写业务代码。后续补内容、调概率、加结局时，应尽量不改引擎。
 
@@ -14,15 +14,16 @@
 ```text
 玩家手选或随机生成初始状态
   -> 选择出生年份 / 省份 / 城市层级 / 户口 / 家庭阶层
-  -> 选择天赋 / 分配属性
+  -> 选择开局特质 / 分配属性
   -> 每次点击“下一年”
   -> 年龄和当前年份推进
+  -> 计算环境和年度自然变化
   -> 筛选候选事件
   -> 计算事件权重
   -> 加权随机抽取事件
   -> 展示事件文本或选择
   -> 应用事件效果
-  -> 更新标签、计数器、历史和后续事件
+  -> 更新特质、标签、计数器、历史和后续事件
   -> 判断死亡或结局
 ```
 
@@ -43,7 +44,8 @@ type PlayerState = {
   relationships: RelationshipState;
   education: EducationState;
   career: CareerState;
-  talents: string[];
+  talents: string[]; // 开局选择记录
+  traits: string[];
   tags: string[];
   counters: Record<string, number>;
   flags: Record<string, boolean | string | number>;
@@ -181,7 +183,7 @@ type LocationState = {
 
 首版省份支持：全量支持中国省级行政区，省份 code 采用拼音，并保留 `other` 作为兜底值。文档中的 `ProvinceCode` 示例不是最终全集，落地实现时应在 `data/regions/` 中维护完整 code 表和展示名。
 
-初始状态允许玩家手选，包括出生年份、出生省份、城市层级、户口、家庭阶层、基础属性和天赋。引擎也应提供一键随机生成能力，用同一套状态 schema 输出。
+初始状态允许玩家手选，包括出生年份、出生省份、城市层级、户口、家庭阶层、基础属性和开局特质。引擎也应提供一键随机生成能力，用同一套状态 schema 输出。
 
 ### 3.4 环境画像
 
@@ -299,6 +301,7 @@ type LifeSnapshot = {
   relationships: RelationshipState;
   education: EducationState;
   career: CareerState;
+  traits: string[];
   tags: string[];
 };
 
@@ -316,7 +319,8 @@ type LifeLogEntry = {
 
 用途：
 
-- `tags`：描述人生状态和经历，如 `college`、`married`、`in_debt`。
+- `traits`：描述主角相对稳定的个人特质，如 `frail_body`、`chronic_weakness`。特质可以由事件获得，也可以由年度自然变化推导获得。
+- `tags`：描述人生状态、经历和社会身份，如 `college`、`married`、`land_reform_beneficiary`。
 - `counters`：记录次数，如 `startup_attempts`、`failed_exam_count`。
 - `flags`：少量特殊状态，避免过早建字段。
 - `cooldowns`：防止同类事件连续刷屏。
@@ -324,6 +328,8 @@ type LifeLogEntry = {
 - `scheduledEvents`：支持后续事件和剧情链。
 - `timedModifiers`：支持跨时间概率影响，例如未来 5 年内创业事件概率提升。
 - `snapshots`：记录每年结束后的关键状态，用于判断“过去某个年龄段 / 年份段是否满足过某条件”。
+
+年度推进中允许存在自然变化层。自然变化不需要表现为单独事件，例如生病导致健康大幅下降后，后续年份可以根据体质、年龄、医疗资源自动恢复一部分；年龄增长后健康也可能自然下滑。自然变化发生在当年事件抽取前，因此会影响当年的事件概率。
 
 前端展示层应基于 `history` 渲染同一个连续时间轴。年度推进时追加新的 `LifeLogEntry`，不要替换整页内容或只保留当前年份事件。玩家可以一直向上回看过往年份，底部继续推进新年份。
 
@@ -424,9 +430,9 @@ type LifeEvent = {
 
 这里 `birthFamilyClasses` 判断开局选择的历史阶层 code，`familyTags` 判断初始状态写入的阶层标签。两者可以一起用，也可以只用其中一个。
 
-## 5. 天赋字段定义
+## 5. 开局特质字段定义
 
-天赋同样是纯数据。首版采用预算机制平衡开局选择，避免玩家只选择强正面天赋。
+开局特质同样是纯数据。UI 可以继续称为“天赋”，但进入人生状态后统一写入 `traits`。首版采用预算机制平衡开局选择，避免玩家只选择强正面特质。
 
 ```ts
 type Talent = {
@@ -442,21 +448,24 @@ type Talent = {
   };
   description: string;
   effects?: Effect[];
-  tags?: string[];
+  traits?: string[];
 };
 ```
 
-- `cost > 0`：消耗天赋点，越强越贵。
+- `cost > 0`：消耗特质点，越强越贵。
 - `cost = 0`：免费，通常是弱正面或轻微双刃剑。
-- `cost < 0`：返还天赋点，通常带有明确负面影响。
-- 天赋预算由出生年份决定。首版为：1900-1948 预算 2、1949-1977 预算 2、1978-1999 预算 3、2000-2020 预算 4。
-- `availableYearRange` 控制天赋出现年代，例如“考试机器”只在高考恢复后出现，“卷王”只在改革开放后出现。
-- 所有带明显时代媒介、制度或技术语境的天赋都必须配置 `availableYearRange`。例如“游戏高手”只能在电子游戏普及后的年代出现，不能出现在 1900 年开局；“旧学根底”只出现在传统教育语境仍强的早期年代。
-- `eraCosts` 控制同一天赋在不同时代的成本。例如强运、家境类天赋在乱世或集体年代成本更高。
-- `requirements.attrs` 控制天赋和初始加点的联动。例如“考试机器”要求智力达到一定值，“敏感艺术家”要求魅力达到一定值。UI 可以展示但禁用不满足条件的天赋，随机开局只从满足条件的天赋组合中选择。
-- 跨时代天赋要拆成“时代外显名”和“底层能力标签”。例如 1900 年的“科举苗子”、民国/旧式教育语境下的“旧学根底”、1977 年后的“考试机器”都可以写入 `exam_aptitude`，后续升学、考试、选拔类事件优先读取 `exam_aptitude`，而不是只绑定某个时代词。
-- 必须选满 3 个天赋且总成本不超过当年预算才能开始。
-- `tags` 使用稳定内部 id，UI 层通过 `tagLabels` 映射成中文展示；玩家界面不直接展示英文 tag。
+- `cost < 0`：返还特质点，通常带有明确负面影响。
+- 特质预算由出生年份决定。首版为：1900-1948 预算 2、1949-1977 预算 2、1978-1999 预算 3、2000-2020 预算 4。
+- `availableYearRange` 控制特质出现年代，例如“考试机器”只在高考恢复后出现，“卷王”只在改革开放后出现。
+- 所有带明显时代媒介、制度或技术语境的特质都必须配置 `availableYearRange`。例如“游戏高手”只能在电子游戏普及后的年代出现，不能出现在 1900 年开局；“旧学根底”只出现在传统教育语境仍强的早期年代。
+- `eraCosts` 控制同一特质在不同时代的成本。例如强运、家境类特质在乱世或集体年代成本更高。
+- `requirements.attrs` 控制特质和初始加点的联动。例如“考试机器”要求智力达到一定值，“敏感艺术家”要求魅力达到一定值。UI 可以展示但禁用不满足条件的特质，随机开局只从满足条件的特质组合中选择。
+- `talents` 只记录开局选过哪些特质，真正进入事件系统后统一写入 `traits`。
+- 跨时代特质要拆成“时代外显名”和“底层特质”。例如 1900 年的“科举苗子”、民国/旧式教育语境下的“旧学根底”、1977 年后的“考试机器”都会让主角拥有 `exam_aptitude`，后续升学、考试、选拔类事件优先读取 `hasTrait: "exam_aptitude"`，而不是只绑定某个时代词。
+- 特质库按时代维护：1900-1948 偏传统社会、乱世、学徒、商埠和宗族经验；1949-1977 偏集体年代、成分、单位/工厂、公社和教育断档；1978-1999 偏市场化、下海、流动人口、下岗、电视和电脑房；2000-2020 偏互联网、补习、平台劳动、房价压力、留守和小镇教育路径。
+- 每个开局特质可以同时写入多个底层特质。例如“电脑房孩子”写入 `digital_native`，“敢下海”写入 `market_sense` 和 `risk_taker`。事件优先判断底层特质，避免把内容绑定到某个年代的具体措辞。
+- 必须选满 3 个特质且总成本不超过当年预算才能开始。
+- `traits` 和 `tags` 都使用稳定内部 id，UI 层通过 `tagLabels` 映射成中文展示；玩家界面不直接展示英文 id。
 
 ### 4.1 时间字段
 
@@ -576,6 +585,12 @@ type TagCondition =
   | { missingTag: string }
   | { tagIn: string[] }
   | { tagNotIn: string[] };
+
+type TraitCondition =
+  | { hasTrait: string }
+  | { missingTrait: string }
+  | { traitIn: string[] }
+  | { traitNotIn: string[] };
 
 type EventCondition =
   | { eventOccurred: string }
@@ -741,6 +756,7 @@ finalWeight = baseWeight
 type WeightModifier =
   | PathWeightModifier
   | TagWeightModifier
+  | TraitWeightModifier
   | EventWeightModifier
   | CounterWeightModifier;
 
@@ -759,6 +775,10 @@ type PathWeightModifier = {
 type TagWeightModifier =
   | { hasTag: string; add?: number; multiply?: number }
   | { missingTag: string; add?: number; multiply?: number };
+
+type TraitWeightModifier =
+  | { hasTrait: string; add?: number; multiply?: number }
+  | { missingTrait: string; add?: number; multiply?: number };
 
 type EventWeightModifier =
   | { eventOccurred: string; add?: number; multiply?: number }
@@ -815,6 +835,8 @@ type Effect =
   | { path: string; multiply: number }
   | { addTag: string }
   | { removeTag: string }
+  | { addTrait: string }
+  | { removeTrait: string }
   | { counter: string; add: number }
   | { setFlag: string; value: boolean | string | number }
   | { cooldown: string; years: number }
@@ -1133,10 +1155,11 @@ data/
 
 模块职责：
 
-- `createInitialState`：根据 seed、出生年份、省份、天赋和属性生成初始状态。
+- `createInitialState`：根据 seed、出生年份、省份、开局特质和属性生成初始状态。
 - `advanceYear`：年度推进入口。
 - `stage`：年龄和人生阶段的互相映射。
 - `environment`：根据出生地、当前位置、年份计算外部环境。
+- `naturalChanges`：处理年度自然变化，例如病后恢复、随年龄健康下滑、长期低健康获得体弱特质。
 - `aggregateRegistry`：加载和解析聚合定义，支持 `inGroup`、地区 group、标签 group 等引用。
 - `conditions`：条件判断。
 - `weights`：事件权重计算。
@@ -1156,6 +1179,7 @@ function advanceYear(state: PlayerState, eventPool: LifeEvent[]): YearResult {
   state.environment = calculateEnvironment(state);
   tickCooldowns(state);
   removeExpiredTimedModifiers(state);
+  applyNaturalChanges(state);
 
   const candidates = eventPool
     .filter(event => matchTime(event, state))

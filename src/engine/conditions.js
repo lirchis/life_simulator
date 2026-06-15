@@ -13,6 +13,10 @@ export function matchCondition(condition, state, context) {
   if (condition.missingTag) return !state.tags.includes(condition.missingTag);
   if (condition.tagIn) return condition.tagIn.some((tag) => state.tags.includes(tag));
   if (condition.tagNotIn) return condition.tagNotIn.every((tag) => !state.tags.includes(tag));
+  if (condition.hasTrait) return state.traits.includes(condition.hasTrait);
+  if (condition.missingTrait) return !state.traits.includes(condition.missingTrait);
+  if (condition.traitIn) return condition.traitIn.some((trait) => state.traits.includes(trait));
+  if (condition.traitNotIn) return condition.traitNotIn.every((trait) => !state.traits.includes(trait));
   if (condition.eventOccurred) return Boolean(state.occurredEvents[condition.eventOccurred]);
   if (condition.eventNotOccurred) return !state.occurredEvents[condition.eventNotOccurred];
   if (condition.eventOccurredWithin) {

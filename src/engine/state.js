@@ -1,5 +1,5 @@
 import { calculateEnvironment } from "./environment.js";
-import { applyEffects, addTag, normalizeState } from "./effects.js";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
@@ -71,6 +71,7 @@ export function createInitialState(setup, data, context) {
       income: 0,
     },
     talents: [...setup.talents],
+    traits: [],
     tags: [],
     counters: {},
     flags: {},
@@ -87,7 +88,9 @@ export function createInitialState(setup, data, context) {
   for (const talentId of setup.talents) {
     const talent = data.talents.find((item) => item.id === talentId);
     if (!talent) continue;
+    addTrait(state, talent.id);
     applyEffects(talent.effects, state, { id: `talent:${talent.id}` });
+    for (const trait of talent.traits ?? []) addTrait(state, trait);
     for (const tag of talent.tags ?? []) addTag(state, tag);
   }
 

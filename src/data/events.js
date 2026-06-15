@@ -56,6 +56,25 @@ export const events = [
     ],
   },
   {
+    id: "mock_slow_recovery",
+    title: "病后体虚",
+    category: "health",
+    ageRange: [3, 80],
+    maxOccurrences: 1,
+    baseWeight: 24,
+    conditions: {
+      all: [
+        { path: "resources.health", lte: 35 },
+        { missingTrait: "frail_body" },
+      ],
+    },
+    text: "一场病过去了，但身体没有立刻回来。你开始更早感到疲惫，也更懂得保存力气。",
+    effects: [
+      { addTrait: "frail_body" },
+      { path: "attrs.mental", add: -1 },
+    ],
+  },
+  {
     id: "mock_school_start",
     title: "入学",
     category: "school",
@@ -97,7 +116,7 @@ export const events = [
     baseWeight: 35,
     weightModifiers: [
       { path: "attrs.intelligence", gte: 6, multiply: 1.6 },
-      { hasTag: "exam_aptitude", multiply: 1.8 },
+      { hasTrait: "exam_aptitude", multiply: 1.8 },
     ],
     text: "这次考试你发挥不错。老师点了点头，家长群也短暂安静了。",
     effects: [

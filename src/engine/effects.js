@@ -9,6 +9,8 @@ export function applyEffects(effects = [], state, sourceEvent) {
     }
     if (effect.addTag) addTag(state, effect.addTag);
     if (effect.removeTag) state.tags = state.tags.filter((tag) => tag !== effect.removeTag);
+    if (effect.addTrait) addTrait(state, effect.addTrait);
+    if (effect.removeTrait) removeTrait(state, effect.removeTrait);
     if (effect.counter) state.counters[effect.counter] = (state.counters[effect.counter] ?? 0) + effect.add;
     if (effect.setFlag) state.flags[effect.setFlag] = effect.value;
     if (effect.cooldown) state.cooldowns[effect.cooldown] = effect.years;
@@ -42,12 +44,22 @@ export function makeEffectSummary(before, after) {
     mental: "心态",
   });
   for (const tag of after.tags.filter((tag) => !before.tags.includes(tag))) summary.push(`获得 ${tag}`);
+  for (const trait of after.traits.filter((trait) => !before.traits.includes(trait))) summary.push(`获得特质 ${trait}`);
+  for (const trait of before.traits.filter((trait) => !after.traits.includes(trait))) summary.push(`失去特质 ${trait}`);
   if (!after.meta.isAlive && before.meta.isAlive) summary.push(`死亡：${after.meta.deathReason}`);
   return summary.slice(0, 6);
 }
 
 export function addTag(state, tag) {
   if (!state.tags.includes(tag)) state.tags.push(tag);
+}
+
+export function addTrait(state, trait) {
+  if (!state.traits.includes(trait)) state.traits.push(trait);
+}
+
+export function removeTrait(state, trait) {
+  state.traits = state.traits.filter((item) => item !== trait);
 }
 
 export function writeSnapshot(state) {
@@ -63,6 +75,7 @@ export function writeSnapshot(state) {
     relationships: clone(state.relationships),
     education: clone(state.education),
     career: clone(state.career),
+    traits: [...state.traits],
     tags: [...state.tags],
   });
 }

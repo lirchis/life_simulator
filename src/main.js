@@ -264,6 +264,8 @@ function statsContent() {
   return `
     <h2>状态</h2>
     ${statRows(state.resources)}
+    <h2>特质</h2>
+    <div class="tags">${state.traits.slice(0, 12).map((trait) => `<span>${tagLabel(trait)}</span>`).join("") || "<em>暂无</em>"}</div>
     <h2>标签</h2>
     <div class="tags">${state.tags.slice(0, 16).map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无</em>"}</div>
   `;
@@ -274,7 +276,7 @@ function mobileHud() {
   return `
     <section class="mobile-hud" aria-label="状态摘要">
       <div class="hud-stats">${statRows(state.resources, priorityStats)}</div>
-      <div class="hud-tags">${state.tags.slice(-4).map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无标签</em>"}</div>
+      <div class="hud-tags">${[...state.traits.slice(-2), ...state.tags.slice(-2)].map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无标签</em>"}</div>
     </section>
   `;
 }
@@ -584,6 +586,8 @@ function tagLabel(tag) {
 }
 
 function formatEffectSummary(item) {
+  if (item.startsWith("获得特质 ")) return `获得特质 ${tagLabel(item.slice(5))}`;
+  if (item.startsWith("失去特质 ")) return `失去特质 ${tagLabel(item.slice(5))}`;
   if (item.startsWith("获得 ")) return `获得 ${tagLabel(item.slice(3))}`;
   if (item.startsWith("失去 ")) return `失去 ${tagLabel(item.slice(3))}`;
   return item;

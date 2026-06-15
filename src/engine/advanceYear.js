@@ -4,6 +4,7 @@ import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
 import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js";
 import { matchConditions } from "./conditions.js";
+import { applyNaturalChanges } from "./naturalChanges.js";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], choiceEvent: null, ended: true };
@@ -14,6 +15,7 @@ export function advanceYear(state, data, context) {
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   tickCooldowns(state);
   removeExpiredTimedModifiers(state);
+  applyNaturalChanges(state);
 
   const candidates = uniqueEvents([...baseCandidates(state, data.events, context), ...scheduledCandidates(state, data.events, context)]);
   const selected = selectEvents(candidates, state, context);
