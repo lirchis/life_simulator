@@ -4,8 +4,15 @@ import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js";
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
   const effectiveHukou = data.getEffectiveHukou(setup.birthYear, setup.cityTier, setup.hukou);
+  const gender = setup.gender ?? "female";
   const familyMeta = data.familyClassMeta[setup.familyClass] ?? { score: 3, tags: [] };
-  const familyScore = familyMeta.score;
+  const familyRange = data.getFamilyAttrRange({
+    birthYear: setup.birthYear,
+    province: birthProvince.currentCode,
+    cityTier: setup.cityTier,
+    familyClass: setup.familyClass,
+  });
+  const familyScore = clamp(setup.attrs.family, familyRange.min, familyRange.max);
   const state = {
     meta: {
       lifeId: crypto.randomUUID?.() ?? String(Date.now()),
@@ -20,6 +27,7 @@ export function createInitialState(setup, data, context) {
     },
     birth: {
       year: setup.birthYear,
+      gender,
       province: birthProvince.currentCode,
       provinceHistoryCode: birthProvince.code,
       provinceNameAtBirth: birthProvince.name,
@@ -39,7 +47,7 @@ export function createInitialState(setup, data, context) {
       physique: setup.attrs.physique,
       intelligence: setup.attrs.intelligence,
       charm: setup.attrs.charm,
-      family: Math.max(setup.attrs.family, familyScore),
+      family: familyScore,
       luck: setup.attrs.luck,
       mental: setup.attrs.mental,
     },
@@ -79,6 +87,7 @@ export function createInitialState(setup, data, context) {
     occurredEvents: {},
     scheduledEvents: [],
     timedModifiers: [],
+    yearlyChanges: [],
     snapshots: [],
     history: [],
   };
@@ -97,4 +106,8 @@ export function createInitialState(setup, data, context) {
   normalizeState(state);
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   return state;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }

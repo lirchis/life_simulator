@@ -163,6 +163,12 @@ dd { margin: 0; font-weight: 850; }
   gap: 8px;
   align-items: center;
 }
+.attr-hint {
+  grid-column: 2 / -1;
+  margin: -4px 0 2px 52px;
+  color: var(--muted);
+  font-size: 12px;
+}
 .talents {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -259,6 +265,21 @@ dd { margin: 0; font-weight: 850; }
 .event header span { color: var(--muted); font-size: 12px; font-weight: 750; }
 .event p { margin: 8px 0 0; color: var(--muted); line-height: 1.65; }
 .event .result { color: var(--text); font-weight: 750; }
+.year-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 253, 248, 0.7);
+}
+.year-flow b {
+  color: var(--muted);
+  font-size: 12px;
+}
+.year-flow .effects { margin-top: 0; }
 .effects { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .effects span, .tags span {
   border-radius: 999px;

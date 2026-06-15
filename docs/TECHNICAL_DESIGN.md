@@ -53,6 +53,7 @@ type PlayerState = {
   occurredEvents: Record<string, OccurredEventState>;
   scheduledEvents: ScheduledEvent[];
   timedModifiers: TimedModifier[];
+  yearlyChanges: YearlyChangeEntry[];
   snapshots: LifeSnapshot[];
   history: LifeLogEntry[];
 };
@@ -87,6 +88,7 @@ type MetaState = {
 ```ts
 type BirthState = {
   year: number;
+  gender: GenderType;
   province: ProvinceCode;
   provinceHistoryCode?: string;
   provinceNameAtBirth?: string;
@@ -126,6 +128,7 @@ type RegionCode =
 type CityTier = "village" | "town" | "county" | "city" | "tier2" | "tier1";
 type HukouType = "urban" | "rural";
 type FamilyClass = "poor" | "working" | "middle" | "rich" | "elite";
+type GenderType = "female" | "male";
 ```
 
 ### 3.2.1 历史地区和时代口径
@@ -315,6 +318,12 @@ type LifeLogEntry = {
   effectsSummary?: string[];
   snapshot?: Partial<PlayerState>;
 };
+
+type YearlyChangeEntry = {
+  age: number;
+  year: number;
+  effectsSummary: string[];
+};
 ```
 
 用途：
@@ -327,9 +336,10 @@ type LifeLogEntry = {
 - `occurredEvents`：快速判断某事件是否发生过，不必扫描历史。
 - `scheduledEvents`：支持后续事件和剧情链。
 - `timedModifiers`：支持跨时间概率影响，例如未来 5 年内创业事件概率提升。
+- `yearlyChanges`：记录年度自然变化摘要，例如健康自然恢复 `+1`、年龄导致健康下降 `-1`、自然获得或失去特质。它不占事件位，只用于同一年时间线的轻量提示。
 - `snapshots`：记录每年结束后的关键状态，用于判断“过去某个年龄段 / 年份段是否满足过某条件”。
 
-年度推进中允许存在自然变化层。自然变化不需要表现为单独事件，例如生病导致健康大幅下降后，后续年份可以根据体质、年龄、医疗资源自动恢复一部分；年龄增长后健康也可能自然下滑。自然变化发生在当年事件抽取前，因此会影响当年的事件概率。
+年度推进中允许存在自然变化层。自然变化不需要表现为单独事件，例如生病导致健康大幅下降后，后续年份可以根据体质、年龄、医疗资源自动恢复一部分；年龄增长后健康也可能自然下滑。自然变化发生在当年事件抽取前，因此会影响当年的事件概率。若自然变化产生可见差异，引擎写入 `yearlyChanges`，前端在该年份标题下展示“自然流变”摘要，但不把它放进事件池，也不减少当年事件数量。
 
 前端展示层应基于 `history` 渲染同一个连续时间轴。年度推进时追加新的 `LifeLogEntry`，不要替换整页内容或只保留当前年份事件。玩家可以一直向上回看过往年份，底部继续推进新年份。
 
@@ -338,6 +348,7 @@ type LifeLogEntry = {
 - 不为每一年创建大面积封面。
 - 年份分隔符只展示年龄和公历年份。
 - 每条事件优先展示标题、正文、变化摘要。
+- 年度自然变化以更轻的提示条展示，例如“自然流变：健康 +1”，不能做成完整事件卡。
 - 状态变化摘要由 `effectsSummary` 生成紧凑标签。
 - 列表中不默认展开完整属性快照。
 - 同屏应尽量容纳多个年份或多条事件，尤其是手机端。
@@ -387,6 +398,7 @@ type LifeEvent = {
   ageRange?: [number, number];
   yearRange?: [number, number];
   birthYearRange?: [number, number];
+  genders?: GenderType[];
   birthRegions?: RegionFilter;
   currentRegions?: RegionFilter;
   tags?: string[];
@@ -410,6 +422,12 @@ type LifeEvent = {
   followUps?: FollowUp[];
   ending?: EndingConfig;
 };
+
+type TextVariant = {
+  text: string;
+  conditions?: ConditionGroup;
+  weight?: number;
+};
 ```
 
 事件字段应尽量引用稳定的状态 path 和聚合 id。比如事件想表达“西部省份”，不应该在事件里直接写一长串省份 code，而应该引用 `province.region.west` 这类聚合。
@@ -417,6 +435,14 @@ type LifeEvent = {
 事件的触发限制字段全部是可选的。未配置某个限制，表示该维度不参与过滤，而不是不匹配。例如一个事件没有 `currentRegions`，就代表它不限制当前地区；没有 `yearRange`，就代表它不限制当前公历年份。
 
 事件的效果字段也是可选的。未配置 `effects` 或 `effects: []`，表示该事件只展示文本并写入历史，不改变状态。这类事件可用于氛围、铺垫、无事发生、人生切片等内容。
+
+事件文本支持同事件多表达。若一个事件的核心语义、效果和后续依赖相同，只是因为时代、省份、城市层级、家庭阶层、户口、性别或特质不同而需要不同措辞，应优先使用 `text: TextVariant[]`，每个 variant 通过 `conditions` 匹配状态，并可用 `weight` 控制同条件下的随机表达。引擎会先筛选满足条件的条件文本，再按权重随机选一条；若没有任何条件文本命中，才回退到无条件文本。无条件文本应被视为默认兜底，而不是与条件文本竞争。
+
+是否拆事件的规则：
+
+- 保持同一个事件：人生语义相同、效果相同或近似、后续依赖相同，只需要不同叙述。例如“平常一年”“夜里发烧”“入学”“考试不错”。
+- 拆成不同事件：触发概率模型不同、效果不同、优先级不同、后续依赖不同，或它在历史语境中已经是另一类事件。例如“高考”“恢复高考”“被拉壮丁”“分到土地”。
+- 不从历史文本里推断状态。表达差异只负责展示，状态差异必须通过 `conditions`、`effects`、`tags`、`traits` 等结构化字段体现。
 
 历史阶层事件可以直接通过 `birthFamilyClasses` 和 `familyTags` 触发。例如“贫农家庭在 1950-1953 年更容易触发分到土地”，事件可以写：
 
@@ -445,6 +471,12 @@ type Talent = {
   eraCosts?: Array<{ yearRange: [number, number]; cost: number }>;
   requirements?: {
     attrs?: Partial<Record<AttrKey, number>>;
+    genders?: GenderType[];
+    cityTiers?: CityTier[];
+    familyClasses?: FamilyClass[];
+    hukou?: HukouType[];
+    provinces?: ProvinceCode[];
+    provinceAggregates?: string[];
   };
   description: string;
   effects?: Effect[];
@@ -459,10 +491,11 @@ type Talent = {
 - `availableYearRange` 控制特质出现年代，例如“考试机器”只在高考恢复后出现，“卷王”只在改革开放后出现。
 - 所有带明显时代媒介、制度或技术语境的特质都必须配置 `availableYearRange`。例如“游戏高手”只能在电子游戏普及后的年代出现，不能出现在 1900 年开局；“旧学根底”只出现在传统教育语境仍强的早期年代。
 - `eraCosts` 控制同一特质在不同时代的成本。例如强运、家境类特质在乱世或集体年代成本更高。
-- `requirements.attrs` 控制特质和初始加点的联动。例如“考试机器”要求智力达到一定值，“敏感艺术家”要求魅力达到一定值。UI 可以展示但禁用不满足条件的特质，随机开局只从满足条件的特质组合中选择。
+- `requirements.attrs` 控制特质和初始加点的联动。例如“考试机器”要求智力达到一定值，“敏感艺术家”要求魅力达到一定值。家境本身由省份、城市层级和家庭阶层限定可调范围，因此 `attrs.family` 也可以作为出身资源要求。
+- `requirements.genders/cityTiers/familyClasses/hukou/provinces/provinceAggregates` 控制特质和性别、出身环境的可选联动。例如“新式学堂”可以要求县城以上，“留守韧性”可以要求乡土/农村口径，“算法嗅觉”可以要求互联网机会地区。所有这些条件都是可选字段，未配置时不限制。
 - `talents` 只记录开局选过哪些特质，真正进入事件系统后统一写入 `traits`。
 - 跨时代特质要拆成“时代外显名”和“底层特质”。例如 1900 年的“科举苗子”、民国/旧式教育语境下的“旧学根底”、1977 年后的“考试机器”都会让主角拥有 `exam_aptitude`，后续升学、考试、选拔类事件优先读取 `hasTrait: "exam_aptitude"`，而不是只绑定某个时代词。
-- 特质库按时代维护：1900-1948 偏传统社会、乱世、学徒、商埠和宗族经验；1949-1977 偏集体年代、成分、单位/工厂、公社和教育断档；1978-1999 偏市场化、下海、流动人口、下岗、电视和电脑房；2000-2020 偏互联网、补习、平台劳动、房价压力、留守和小镇教育路径。
+- 特质库按时代和性别维护：1900-1948 偏传统社会、乱世、女校/旧学、学徒、商埠、宗族与身体规训；1949-1977 偏集体年代、成分、单位/工厂、公社、兵役、妇女动员和教育断档；1978-1999 偏市场化、下海、流动人口、下岗、电视、电脑房、独生子女和沿海工厂；2000-2020 偏互联网、补习、平台劳动、房价压力、留守、小镇教育路径和网络边界意识。
 - 每个开局特质可以同时写入多个底层特质。例如“电脑房孩子”写入 `digital_native`，“敢下海”写入 `market_sense` 和 `risk_taker`。事件优先判断底层特质，避免把内容绑定到某个年代的具体措辞。
 - 必须选满 3 个特质且总成本不超过当年预算才能开始。
 - `traits` 和 `tags` 都使用稳定内部 id，UI 层通过 `tagLabels` 映射成中文展示；玩家界面不直接展示英文 id。
@@ -481,14 +514,16 @@ type Talent = {
 - 未配置 `ageRange`：不限制年龄。
 - 未配置 `yearRange`：不限制当前公历年份。
 - 未配置 `birthYearRange`：不限制出生年份。
+- 未配置 `genders`：不限制性别。
 - 未配置 `stage`：不限制人生阶段。
 
 ### 4.2 地区字段
 
-地区字段用于表达事件和出生地、当前位置、城市层级、户口之间的关系。
+地区字段用于表达事件和出生地、当前位置、城市层级、户口、性别之间的关系。性别也可以直接使用事件顶层 `genders` 字段表达；放在 `RegionFilter` 里主要是为了复合过滤结构保持一致。
 
 ```ts
 type RegionFilter = {
+  genders?: GenderType[];
   provinces?: ProvinceCode[];
   provinceGroups?: AggregateId[];
   regions?: RegionCode[];
@@ -1160,6 +1195,7 @@ data/
 - `stage`：年龄和人生阶段的互相映射。
 - `environment`：根据出生地、当前位置、年份计算外部环境。
 - `naturalChanges`：处理年度自然变化，例如病后恢复、随年龄健康下滑、长期低健康获得体弱特质。
+- `yearlyChanges`：记录自然变化产生的展示摘要，不参与事件筛选和权重计算。
 - `aggregateRegistry`：加载和解析聚合定义，支持 `inGroup`、地区 group、标签 group 等引用。
 - `conditions`：条件判断。
 - `weights`：事件权重计算。
@@ -1179,7 +1215,9 @@ function advanceYear(state: PlayerState, eventPool: LifeEvent[]): YearResult {
   state.environment = calculateEnvironment(state);
   tickCooldowns(state);
   removeExpiredTimedModifiers(state);
+  const beforeNatural = clone(state);
   applyNaturalChanges(state);
+  recordYearlyChange(beforeNatural, state);
 
   const candidates = eventPool
     .filter(event => matchTime(event, state))
@@ -1208,6 +1246,7 @@ function advanceYear(state: PlayerState, eventPool: LifeEvent[]): YearResult {
   return {
     state,
     events: selectedEvents,
+    yearlyChanges: state.yearlyChanges,
     ending
   };
 }

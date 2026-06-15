@@ -17,9 +17,10 @@ let screen = "home";
 const context = () => ({ aggregateRegistry, rng });
 
 function createDefaultSetup() {
-  return {
+  const initial = {
     seed: randomSeed(),
     birthYear: 1995,
+    gender: "female",
     province: "sichuan",
     provinceHistoryCode: "sichuan_old",
     cityTier: "county",
@@ -36,6 +37,8 @@ function createDefaultSetup() {
     talents: [],
     talentPool: [],
   };
+  normalizeSetupAttrs(initial);
+  return initial;
 }
 
 function makeLabels(source) {
@@ -43,6 +46,7 @@ function makeLabels(source) {
     province: Object.fromEntries(source.provinces),
     cityTier: Object.fromEntries(source.cityTiers),
     familyClass: Object.fromEntries(source.familyClasses),
+    gender: Object.fromEntries(source.genderTypes),
     hukou: Object.fromEntries(source.hukouTypes),
     tag: source.tagLabels,
   };
@@ -122,6 +126,7 @@ function renderSetup() {
         </div>
         <div class="setup-grid">
           ${selectField("birthYear", "出生年份", yearOptions())}
+          ${selectField("gender", "性别", data.genderTypes)}
           ${provinceField(provinceOptions)}
           ${selectField("cityTier", "城市层级", cityTierOptions)}
           ${hukouOptions.length ? selectField("hukou", "户口", hukouOptions) : eraDerivedField("城乡口径", effectiveHukou === "rural" ? "乡土 / 农村" : "城镇 / 市民")}
@@ -206,14 +211,16 @@ function attrRows() {
     mental: "心态",
   };
   const left = 20 - Object.values(setup.attrs).reduce((sum, value) => sum + value, 0);
+  const familyRange = getSetupFamilyRange();
   return `
     <div class="point-left">剩余 ${left}</div>
     ${Object.entries(names).map(([key, label]) => `
       <label class="attr-row">
         <span>${label}</span>
-        <input type="range" min="0" max="10" value="${setup.attrs[key]}" data-attr="${key}" />
+        <input type="range" min="${key === "family" ? familyRange.min : 0}" max="${key === "family" ? familyRange.max : 10}" value="${setup.attrs[key]}" data-attr="${key}" />
         <b>${setup.attrs[key]}</b>
       </label>
+      ${key === "family" ? `<p class="attr-hint">由省份、城市层级和家庭阶层限定：${familyRange.min}-${familyRange.max}</p>` : ""}
     `).join("")}
   `;
 }
@@ -240,7 +247,7 @@ function renderLife() {
       <section class="life-main">
         <div class="life-status">
           <strong>${state.meta.age} 岁</strong>
-          <span>${state.meta.currentYear} 年 · ${stageLabel(state.meta.stage)} · ${provinceDisplayName(state)}</span>
+          <span>${state.meta.currentYear} 年 · ${labels.gender[state.birth.gender] ?? state.birth.gender} · ${stageLabel(state.meta.stage)} · ${provinceDisplayName(state)}</span>
           <button data-action="copy-seed">Seed ${state.meta.seed}</button>
         </div>
         ${mobileHud()}
@@ -282,19 +289,34 @@ function mobileHud() {
 }
 
 function renderTimeline() {
-  if (!state.history.length) {
+  if (!state.history.length && !(state.yearlyChanges ?? []).length) {
     return `<article class="year-block"><h2>档案已建立</h2><p>点击“下一年”，开始记录这一生。</p></article>`;
   }
   const groups = groupBy(state.history, (log) => `${log.age}|${log.year}`);
-  return Object.entries(groups).map(([key, logs]) => {
+  const flowGroups = groupBy(state.yearlyChanges ?? [], (change) => `${change.age}|${change.year}`);
+  const keys = [...new Set([...Object.keys(flowGroups), ...Object.keys(groups)])]
+    .sort((a, b) => Number(a.split("|")[1]) - Number(b.split("|")[1]));
+  return keys.map((key) => {
     const [age, year] = key.split("|");
+    const logs = groups[key] ?? [];
+    const flows = flowGroups[key] ?? [];
     return `
       <section class="year-block">
         <h2>${age} 岁 <span>${year} 年</span></h2>
+        ${flows.map(flowCard).join("")}
         ${logs.map(eventCard).join("")}
       </section>
     `;
   }).join("");
+}
+
+function flowCard(change) {
+  return `
+    <div class="year-flow">
+      <b>自然流变</b>
+      <div class="effects">${change.effectsSummary.map((item) => `<span>${formatEffectSummary(item)}</span>`).join("")}</div>
+    </div>
+  `;
 }
 
 function eventCard(log) {
@@ -374,20 +396,23 @@ function bindEvents() {
   document.querySelectorAll("[data-setup]").forEach((input) => input.addEventListener("input", () => {
     const key = input.dataset.setup;
     setup[key] = key === "birthYear" ? Number(input.value) : input.value;
-    if (["birthYear", "cityTier", "hukou"].includes(key)) syncEraSensitiveSetup();
+    if (["birthYear", "cityTier", "hukou", "familyClass"].includes(key)) syncEraSensitiveSetup();
     if (key === "birthYear") refreshTalents(true);
+    normalizeSetupAttrs();
     render();
   }));
   document.querySelectorAll("[data-province-history]").forEach((input) => input.addEventListener("input", () => {
     const province = data.resolveHistoricalProvince(input.value, setup.birthYear);
     setup.provinceHistoryCode = province.code;
     setup.province = province.currentCode;
+    normalizeSetupAttrs();
     render();
   }));
   document.querySelectorAll("[data-attr]").forEach((input) => input.addEventListener("input", () => {
     const key = input.dataset.attr;
+    const range = getAttrRange(key);
     const old = setup.attrs[key];
-    const next = Number(input.value);
+    const next = clamp(Number(input.value), range.min, range.max);
     const usedWithout = Object.entries(setup.attrs).reduce((sum, [attr, value]) => sum + (attr === key ? 0 : value), 0);
     setup.attrs[key] = usedWithout + next > 20 && next > old ? old : next;
     pruneInvalidTalents();
@@ -450,6 +475,7 @@ function randomizeSetup() {
   setup.seed = randomSeed();
   rng = createRng(setup.seed);
   setup.birthYear = 1900 + Math.floor(rng() * 121);
+  setup.gender = pick(data.genderTypes.map(([code]) => code), rng);
   const province = data.resolveHistoricalProvince(pick(data.getProvinceOptionsForYear(setup.birthYear).map(([code]) => code), rng), setup.birthYear);
   setup.provinceHistoryCode = province.code;
   setup.province = province.currentCode;
@@ -457,7 +483,7 @@ function randomizeSetup() {
   const hukouOptions = data.getHukouOptionsForYear(setup.birthYear);
   setup.hukou = hukouOptions.length ? pick(hukouOptions.map(([code]) => code), rng) : data.getEffectiveHukou(setup.birthYear, setup.cityTier, setup.hukou);
   setup.familyClass = pick(data.getFamilyClassOptionsForContext(setup.birthYear, setup.cityTier, setup.hukou).map(([code]) => code), rng);
-  setup.attrs = randomAttrs();
+  setup.attrs = randomAttrs(getSetupFamilyRange());
   refreshTalents(true);
   setup.talents = chooseRandomValidTalents(setup.talentPool);
 }
@@ -479,6 +505,7 @@ function syncEraSensitiveSetup() {
   if (!familyOptions.some(([code]) => code === setup.familyClass)) {
     setup.familyClass = familyOptions[0][0];
   }
+  normalizeSetupAttrs();
 }
 
 function selectedTalentCost(ids = setup.talents) {
@@ -511,10 +538,30 @@ function chooseRandomValidTalents(pool) {
 }
 
 function unmetTalentRequirements(talent) {
-  const requiredAttrs = talent.requirements?.attrs ?? {};
-  return Object.entries(requiredAttrs)
+  const requirements = talent.requirements ?? {};
+  const requiredAttrs = requirements.attrs ?? {};
+  const messages = Object.entries(requiredAttrs)
     .filter(([attr, value]) => setup.attrs[attr] < value)
     .map(([attr, value]) => `需要${attrLabel(attr)} ${value}`);
+  if (requirements.cityTiers && !requirements.cityTiers.includes(setup.cityTier)) {
+    messages.push(`需要${formatOptions(requirements.cityTiers, "cityTier")}出身`);
+  }
+  if (requirements.familyClasses && !requirements.familyClasses.includes(setup.familyClass)) {
+    messages.push(`需要${formatOptions(requirements.familyClasses, "familyClass")}家庭`);
+  }
+  if (requirements.genders && !requirements.genders.includes(setup.gender)) {
+    messages.push(`需要性别${formatOptions(requirements.genders, "gender")}`);
+  }
+  if (requirements.hukou && !requirements.hukou.includes(data.getEffectiveHukou(setup.birthYear, setup.cityTier, setup.hukou))) {
+    messages.push(`需要${formatOptions(requirements.hukou, "hukou")}口径`);
+  }
+  if (requirements.provinces && !requirements.provinces.includes(setup.province)) {
+    messages.push(`需要${formatOptions(requirements.provinces, "province")}出身`);
+  }
+  if (requirements.provinceAggregates && !requirements.provinceAggregates.some((id) => aggregateRegistry.includes(id, setup.province))) {
+    messages.push(`需要${requirements.provinceAggregates.map(aggregateName).join(" / ")}出身`);
+  }
+  return messages;
 }
 
 function pruneInvalidTalents() {
@@ -535,22 +582,79 @@ function attrLabel(attr) {
   }[attr] ?? attr;
 }
 
-function randomAttrs() {
+function formatOptions(values, type) {
+  const optionSource = {
+    cityTier: data.getCityTierOptionsForYear(setup.birthYear),
+    familyClass: data.getFamilyClassOptionsForYear(setup.birthYear),
+    gender: data.genderTypes,
+    hukou: data.hukouTypes,
+    province: data.provinces,
+  }[type] ?? [];
+  return values.map((value) => data.getOptionLabel(optionSource, value)).join(" / ");
+}
+
+function aggregateName(id) {
+  return data.aggregates.find((item) => item.id === id)?.name ?? id;
+}
+
+function randomAttrs(familyRange = getSetupFamilyRange()) {
   const attrs = { physique: 0, intelligence: 0, charm: 0, family: 0, luck: 0, mental: 0 };
-  const keys = Object.keys(attrs);
-  for (let i = 0; i < 20; i += 1) {
+  attrs.family = familyRange.min + Math.floor(rng() * (familyRange.max - familyRange.min + 1));
+  const keys = Object.keys(attrs).filter((key) => key !== "family");
+  for (let i = attrs.family; i < 20; i += 1) {
     const available = keys.filter((key) => attrs[key] < 10);
     attrs[pick(available, rng)] += 1;
   }
   return attrs;
 }
 
+function getSetupFamilyRange() {
+  return data.getFamilyAttrRange({
+    birthYear: setup.birthYear,
+    province: setup.province,
+    cityTier: setup.cityTier,
+    familyClass: setup.familyClass,
+  });
+}
+
+function getAttrRange(key) {
+  return key === "family" ? getSetupFamilyRange() : { min: 0, max: 10 };
+}
+
+function normalizeSetupAttrs(target = setup) {
+  const range = data.getFamilyAttrRange({
+    birthYear: target.birthYear,
+    province: target.province,
+    cityTier: target.cityTier,
+    familyClass: target.familyClass,
+  });
+  target.attrs.family = clamp(target.attrs.family || range.defaultValue, range.min, range.max);
+  let total = Object.values(target.attrs).reduce((sum, value) => sum + value, 0);
+  const reducible = ["luck", "mental", "charm", "intelligence", "physique"];
+  while (total > 20) {
+    const key = reducible.find((attr) => target.attrs[attr] > 0);
+    if (!key) break;
+    target.attrs[key] -= 1;
+    total -= 1;
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function refreshTalents(clear = false) {
   const pool = [...data.getTalentsForYear(data.talents, setup.birthYear)];
-  setup.talentPool = [];
-  while (setup.talentPool.length < 10 && pool.length) {
+  const shuffled = [];
+  while (pool.length) {
     const index = Math.floor(rng() * pool.length);
-    setup.talentPool.push(pool.splice(index, 1)[0]);
+    shuffled.push(pool.splice(index, 1)[0]);
+  }
+  const unlocked = shuffled.filter((talent) => !unmetTalentRequirements(talent).length);
+  setup.talentPool = unlocked.slice(0, 3);
+  for (const talent of shuffled) {
+    if (setup.talentPool.length >= 10) break;
+    if (!setup.talentPool.some((item) => item.id === talent.id)) setup.talentPool.push(talent);
   }
   if (clear) setup.talents = [];
 }
@@ -560,7 +664,7 @@ function buildReport() {
   const reason = state.meta.deathReason || "人生暂告一段落";
   return {
     title,
-    text: `你出生于 ${state.birth.year} 年的${state.birth.provinceNameAtBirth || labels.province[state.birth.province]}，最终因“${reason}”结束。财富 ${state.resources.wealth}，幸福 ${state.resources.happiness}，成就 ${state.resources.achievement}。Seed: ${state.meta.seed}`,
+    text: `你出生于 ${state.birth.year} 年的${state.birth.provinceNameAtBirth || labels.province[state.birth.province]}，性别${labels.gender[state.birth.gender] ?? state.birth.gender}，最终因“${reason}”结束。财富 ${state.resources.wealth}，幸福 ${state.resources.happiness}，成就 ${state.resources.achievement}。Seed: ${state.meta.seed}`,
   };
 }
 
@@ -614,6 +718,7 @@ function categoryLabel(category) {
     relationship: "关系",
     wealth: "财富",
     migration: "迁移",
+    war: "战乱",
     random: "日常",
     ending: "结局",
   }[category] ?? category;

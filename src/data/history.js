@@ -363,6 +363,33 @@ export const familyClassAvailability = {
   elite: { cityTier: ["city", "tier2", "tier1"] },
 };
 
+const cityFamilyModifiers = {
+  village: -1,
+  town: 0,
+  county: 0,
+  city: 1,
+  tier2: 1,
+  tier1: 2,
+};
+
+const richDeltaProvinces = ["beijing", "shanghai", "tianjin", "jiangsu", "zhejiang", "guangdong", "xianggang", "aomen"];
+const reformCoastalProvinces = ["fujian", "shandong", "liaoning", "hainan"];
+const northeastIndustrialProvinces = ["liaoning", "jilin", "heilongjiang"];
+const westernProvinces = ["sichuan", "guizhou", "yunnan", "xizang", "shaanxi", "gansu", "qinghai", "ningxia", "xinjiang", "chongqing", "guangxi"];
+
+export function getFamilyAttrRange({ birthYear, province, cityTier, familyClass }) {
+  const familyScore = familyClassMeta[familyClass]?.score ?? 3;
+  const cityModifier = cityFamilyModifiers[cityTier] ?? 0;
+  const provinceModifier = getProvinceFamilyModifier(province, birthYear);
+  const center = clamp(familyScore + cityModifier + provinceModifier, 0, 10);
+  const spread = familyScore <= 2 || familyScore >= 8 ? 1 : 2;
+  return {
+    min: clamp(center - spread, 0, 10),
+    max: clamp(center + spread, 0, 10),
+    defaultValue: center,
+  };
+}
+
 export function getProvinceOptionsForYear(year) {
   const specialCurrentCodes = new Set();
   const historical = historicalProvinceAliases
@@ -447,9 +474,21 @@ function isFamilyClassAvailable(code, cityTier, hukou) {
   return true;
 }
 
+function getProvinceFamilyModifier(province, year) {
+  if (richDeltaProvinces.includes(province)) return year >= 1978 ? 1 : 0;
+  if (reformCoastalProvinces.includes(province)) return year >= 1992 ? 1 : 0;
+  if (northeastIndustrialProvinces.includes(province)) return year >= 1953 && year <= 1985 ? 1 : 0;
+  if (westernProvinces.includes(province)) return year < 2000 ? -1 : 0;
+  return 0;
+}
+
 function resolveAlias(alias, rng) {
   const currentCode = pickWeightedCurrentCode(alias, rng);
   return { code: alias.code, name: alias.name, currentCode, note: alias.note };
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function getAliasCurrentCodes(alias) {
