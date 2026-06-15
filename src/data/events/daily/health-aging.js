@@ -231,5 +231,229 @@ export const dailyHealthAgingEvents = [
         "addTag": "video_call_grandparent"
       }
     ]
+  },
+  {
+    "id": "daily_toothache_delay",
+    "title": "牙疼拖了几天",
+    "category": "health",
+    "ageRange": [
+      12,
+      80
+    ],
+    "baseWeight": 24,
+    "weightModifiers": [
+      {
+        "path": "resources.wealth",
+        "lte": 35,
+        "multiply": 1.4
+      }
+    ],
+    "text": "你牙疼拖了几天，吃饭时总要避开一边。小疼痛不体面，却很会占据生活。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": -4
+      },
+      {
+        "path": "resources.happiness",
+        "add": -3
+      },
+      {
+        "addTag": "toothache_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_prescription_bag",
+    "title": "一袋子药",
+    "category": "health",
+    "ageRange": [
+      45,
+      90
+    ],
+    "baseWeight": 26,
+    "weightModifiers": [
+      {
+        "path": "resources.health",
+        "lte": 55,
+        "multiply": 1.5
+      }
+    ],
+    "text": "你从医院拎回一袋子药，盒子上写满陌生词。身体像一台旧机器，开始需要定期上油和检修。",
+    "effects": [
+      {
+        "path": "resources.wealth",
+        "add": -4
+      },
+      {
+        "path": "resources.health",
+        "add": 2
+      },
+      {
+        "addTag": "medicine_bag_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_blood_pressure_machine",
+    "title": "量血压",
+    "category": "health",
+    "yearRange": [
+      1990,
+      2035
+    ],
+    "ageRange": [
+      50,
+      90
+    ],
+    "baseWeight": 24,
+    "text": "你坐下来量血压，袖带慢慢收紧。数字跳出来的一刻，晚年像被压缩成了几行指标。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": 1
+      },
+      {
+        "path": "resources.happiness",
+        "add": -1
+      },
+      {
+        "addTag": "blood_pressure_routine"
+      }
+    ]
+  },
+  {
+    "id": "daily_elder_lost_in_market",
+    "title": "一时迷路",
+    "category": "health",
+    "ageRange": [
+      68,
+      95
+    ],
+    "baseWeight": 14,
+    "weightModifiers": [
+      {
+        "path": "resources.health",
+        "lte": 45,
+        "multiply": 1.8
+      }
+    ],
+    "text": "你在熟悉的街口一时转错了方向。路没有变太多，变的是你忽然不敢完全相信自己的记忆。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -5
+      },
+      {
+        "path": "attrs.mental",
+        "add": -1
+      },
+      {
+        "addTag": "elder_confusion_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_rehab_walk_after_illness",
+    "title": "病后慢慢走",
+    "category": "health",
+    "ageRange": [
+      35,
+      90
+    ],
+    "baseWeight": 18,
+    "weightModifiers": [
+      {
+        "path": "resources.health",
+        "lte": 45,
+        "multiply": 1.7
+      },
+      {
+        "hasTag": "chronic_weakness",
+        "multiply": 1.4
+      }
+    ],
+    "text": "病后你扶着栏杆慢慢走，几步路也要算力气。身体没有立刻回来，但你愿意一点点把它接回来。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": 4
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "rehab_walk_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_elder_community_clinic",
+    "title": "社区门诊",
+    "category": "health",
+    "yearRange": [
+      2000,
+      2035
+    ],
+    "ageRange": [
+      55,
+      90
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "baseWeight": 24,
+    "text": "你去社区门诊量血糖、开常用药。医生认识你的脸，病历也像一本慢慢变厚的日记。",
+    "effects": [
+      {
+        "path": "resources.health",
+        "add": 3
+      },
+      {
+        "path": "resources.wealth",
+        "add": -2
+      },
+      {
+        "addTag": "community_clinic_memory"
+      }
+    ]
+  },
+  {
+    "id": "daily_elder_empty_room",
+    "title": "屋里安静",
+    "category": "family",
+    "ageRange": [
+      60,
+      95
+    ],
+    "baseWeight": 20,
+    "conditions": {
+      "all": [
+        {
+          "path": "relationships.children",
+          "gte": 1
+        }
+      ]
+    },
+    "text": "孩子们各自忙去了，屋里安静得能听见钟走。你知道这不是没人爱你，只是每个人都被自己的生活带走。",
+    "effects": [
+      {
+        "path": "resources.happiness",
+        "add": -4
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "empty_nest_memory"
+      }
+    ]
   }
 ];
