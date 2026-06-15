@@ -1,0 +1,53 @@
+import { aggregates } from "./aggregates.js";
+import { events } from "./events.js";
+import {
+  cityTierEras,
+  familyClassEras,
+  familyClassMeta,
+  getFamilyClassOptionsForContext,
+  getCityTierOptionsForYear,
+  getEffectiveHukou,
+  getFamilyClassOptionsForYear,
+  getHukouOptionsForYear,
+  getOptionLabel,
+  getProvinceDisplayName,
+  getProvinceOptionsForYear,
+  historicalProvinceAliases,
+  hasHukouChoiceForYear,
+  hukouEras,
+  resolveHistoricalProvince,
+} from "./history.js";
+import { familyClasses, cityTiers, hukouTypes, provinces } from "./regions.js";
+import { tagLabels } from "./tagLabels.js";
+import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js";
+
+export const data = {
+  aggregates,
+  events,
+  familyClasses,
+  familyClassEras,
+  familyClassMeta,
+  getFamilyClassOptionsForContext,
+  getCityTierOptionsForYear,
+  getEffectiveHukou,
+  getFamilyClassOptionsForYear,
+  getHukouOptionsForYear,
+  getOptionLabel,
+  getProvinceDisplayName,
+  getProvinceOptionsForYear,
+  historicalProvinceAliases,
+  hasHukouChoiceForYear,
+  hukouEras,
+  cityTiers,
+  hukouTypes,
+  provinces,
+  cityTierEras,
+  resolveHistoricalProvince,
+  tagLabels,
+  getTalentBudgetForYear,
+  getTalentCost,
+  getTalentEraName,
+  getTalentsForYear,
+  talentBudgetEras,
+  talents,
+};
