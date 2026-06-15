@@ -58,7 +58,25 @@ const coreEvents = [
     title: "平常一年",
     category: "random",
     baseWeight: 74,
-    text: "这一年没有被史书记住，也没有被亲戚反复提起。日子只是往前挪了一格。",
+    text: [
+      {
+        conditions: { all: [{ path: "meta.currentYear", lte: 1948 }, { path: "birth.hukou", eq: "rural" }] },
+        text: "这一年没有被史书记住。村里的季节按老规矩换，麦子、柴火和亲戚的闲话把日子往前推了一格。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1958 }, { path: "meta.currentYear", lte: 1977 }, { path: "birth.hukou", eq: "rural" }] },
+        text: "这一年没有大事。队里的钟声、工分本和灶台烟火照常轮转，你在集体生活的缝隙里慢慢长大。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1990 }, { path: "birth.gender", eq: "female" }, { path: "birth.hukou", eq: "rural" }] },
+        text: "这一年没有被人专门记住。你帮家里做事，也把自己的小心思藏起来，日子像一条窄路，还是一步步往前。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 2000 }, { path: "birth.cityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "这一年没有特别的标题。通勤、消息、账单和节假日把生活切成小块，你就在这些小块之间继续往前。",
+      },
+      { text: "这一年没有被史书记住，也没有被亲戚反复提起。日子只是往前挪了一格。" },
+    ],
     effects: [
       { path: "resources.happiness", add: 1 },
     ],
@@ -73,7 +91,21 @@ const coreEvents = [
       { path: "attrs.physique", lte: 3, multiply: 1.8 },
       { path: "environment.healthcareAccess", lte: 3, multiply: 1.4 },
     ],
-    text: "你夜里烧得迷迷糊糊，家里人轮流摸你的额头。那几天，门轴和药味一起被你记住。",
+    text: [
+      {
+        conditions: { all: [{ path: "meta.currentYear", lte: 1949 }, { path: "environment.healthcareAccess", lte: 3 }] },
+        text: "你夜里烧得迷迷糊糊，大人把土方、热水和请来的郎中都试了一遍。那几天，门轴、汗味和低声祈祷一起被你记住。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1960 }, { path: "meta.currentYear", lte: 1985 }, { path: "birth.hukou", eq: "rural" }] },
+        text: "你夜里发烧，家里人去找赤脚医生。针头在开水里滚过，药味很苦，但有人把你从昏沉里一点点拉回来。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 2000 }, { path: "birth.cityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "你夜里烧起来，家里人挂号、量体温、看化验单。医院灯光很白，你第一次知道小病也能把全家弄得手忙脚乱。",
+      },
+      { text: "你夜里烧得迷迷糊糊，家里人轮流摸你的额头。那几天，门轴和药味一起被你记住。" },
+    ],
     effects: [
       { path: "resources.health", add: -5 },
       { path: "relationships.family", add: 3 },
@@ -106,7 +138,21 @@ const coreEvents = [
     priority: 80,
     maxOccurrences: 1,
     baseWeight: 100,
-    text: "你背着书包走进学校。人生第一次被铃声、课表和作业本切成一格一格。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 1948 }, { path: "attrs.family", lte: 3 }] },
+        text: "你终于走进学堂，但家里人说女孩子读几年识字就够了。你把课本抱得很紧，像抱住一段随时会被收回的时间。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1950 }, { path: "meta.currentYear", lte: 1977 }] },
+        text: "你背着书包走进学校。课本、队列和墙上的标语一起教你认字，也教你把个人愿望放进更大的句子里。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1995 }, { path: "birth.cityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "你背着新书包走进学校。铃声、兴趣班传单和家长群里的消息，慢慢把童年切成一格一格。",
+      },
+      { text: "你背着书包走进学校。人生第一次被铃声、课表和作业本切成一格一格。" },
+    ],
     effects: [
       { path: "education.level", set: "primary" },
       { path: "education.score", add: 6 },
@@ -143,7 +189,21 @@ const coreEvents = [
       { hasTrait: "exam_aptitude", multiply: 1.8 },
       { hasTrait: "pressure_trained", multiply: 1.2 },
     ],
-    text: "这次考试你发挥不错。老师点了点头，家里人把卷子又看了一遍，像确认一张小小的船票。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "meta.currentYear", lte: 1977 }, { path: "birth.hukou", eq: "rural" }] },
+        text: "这次考试你发挥不错。老师夸了你，家里人却先算你还能读多久。那张卷子像一小块亮处，照得人高兴，也照出路的窄。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1995 }, { hasTrait: "pressure_trained" }] },
+        text: "这次考试你发挥不错。分数刚出来，下一轮目标也跟着来了；你被夸奖，也被继续推着往前跑。",
+      },
+      {
+        conditions: { all: [{ path: "attrs.family", gte: 6 }, { path: "birth.cityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "这次考试你发挥不错。家里人很快开始比较学校、老师和下一阶段规划，喜悦还没落地，就被安排成新的路线。",
+      },
+      { text: "这次考试你发挥不错。老师点了点头，家里人把卷子又看了一遍，像确认一张小小的船票。" },
+    ],
     effects: [
       { path: "education.score", add: 8 },
       { path: "resources.achievement", add: 4 },
@@ -198,7 +258,21 @@ const coreEvents = [
         { path: "education.score", gte: 45 },
       ],
     },
-    text: "录取通知到了。红纸、邮戳和亲戚的目光一起落到桌上，你第一次认真想象另一个城市里的自己。",
+    text: [
+      {
+        conditions: { all: [{ path: "birth.gender", eq: "female" }, { path: "birth.hukou", eq: "rural" }, { path: "meta.currentYear", lte: 1995 }] },
+        text: "录取通知到了。有人替你高兴，也有人小声算女孩子读这么远值不值。你把通知书压在书页里，第一次认真想象另一个城市里的自己。",
+      },
+      {
+        conditions: { all: [{ path: "birth.hukou", eq: "rural" }, { path: "attrs.family", lte: 3 }] },
+        text: "录取通知到了。家里先高兴，随后开始算路费、学费和行李。那张纸很轻，却把一家人的指望都压上去了。",
+      },
+      {
+        conditions: { all: [{ path: "meta.currentYear", gte: 1999 }, { path: "birth.cityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "录取通知到了。亲友群里很快热闹起来，你在祝贺、专业排名和城市想象之间，慢慢看见下一段人生。",
+      },
+      { text: "录取通知到了。红纸、邮戳和亲戚的目光一起落到桌上，你第一次认真想象另一个城市里的自己。" },
+    ],
     effects: [
       { path: "education.level", set: "college" },
       { path: "resources.achievement", add: 10 },

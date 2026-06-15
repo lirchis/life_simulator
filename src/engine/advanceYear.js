@@ -63,7 +63,7 @@ export function applyEvent(event, choice, state, context) {
     year: state.meta.currentYear,
     eventId: event.id,
     title: event.title,
-    text: selectText(event.text, context.rng),
+    text: selectText(event.text, state, context),
     category: event.category,
     priority: event.priority ?? 0,
     choiceId: choice?.id,
@@ -238,8 +238,11 @@ function uniqueEvents(events) {
   return [...new Map(events.map((event) => [event.id, event])).values()];
 }
 
-function selectText(text, rng) {
+function selectText(text, state, context) {
   if (typeof text === "string") return text;
-  const item = text[Math.floor(rng() * text.length)];
+  const conditional = text.filter((item) => typeof item !== "string" && item.conditions && matchConditions(item.conditions, state, context));
+  const fallback = text.filter((item) => typeof item === "string" || !item.conditions);
+  const pool = conditional.length ? conditional : fallback.length ? fallback : text;
+  const item = weightedPick(pool, (variant) => typeof variant === "string" ? 1 : variant.weight ?? 1, context.rng) ?? pool[0];
   return item.text ?? String(item);
 }
