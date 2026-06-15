@@ -640,5 +640,326 @@ export const historyContemporaryEvents = [
         "addTag": "remote_work_memory"
       }
     ]
+  },
+  {
+    "id": "era_wto_quality_check_line",
+    "title": "外贸质检",
+    "category": "career",
+    "yearRange": [
+      2002,
+      2012
+    ],
+    "ageRange": [
+      18,
+      55
+    ],
+    "currentRegions": {
+      "provinceGroups": [
+        "province.coastal"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "wto_wave_worker"
+        },
+        {
+          "path": "career.field",
+          "eq": "factory"
+        }
+      ]
+    },
+    "baseWeight": 22,
+    "text": "外贸单要求严，质检表一项项压下来。你开始知道，世界市场不是远方的词，它会落在每一道针脚和每一个零件上。",
+    "effects": [
+      {
+        "path": "career.level",
+        "add": 4
+      },
+      {
+        "path": "resources.achievement",
+        "add": 3
+      },
+      {
+        "path": "resources.health",
+        "add": -2
+      },
+      {
+        "addTag": "export_quality_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_taobao_small_shop",
+    "title": "开网店",
+    "category": "career",
+    "yearRange": [
+      2005,
+      2016
+    ],
+    "ageRange": [
+      18,
+      50
+    ],
+    "conditions": {
+      "any": [
+        {
+          "hasTrait": "market_sense"
+        },
+        {
+          "hasTag": "getihu_path"
+        },
+        {
+          "hasTrait": "digital_native"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "你试着开了个网店，拍照、上架、回消息、打包发货。小小的屏幕背后，生意变成了昼夜不分的敲击声。",
+    "effects": [
+      {
+        "path": "career.status",
+        "set": "self_employed"
+      },
+      {
+        "path": "career.field",
+        "set": "ecommerce"
+      },
+      {
+        "path": "resources.wealth",
+        "add": 8
+      },
+      {
+        "path": "resources.health",
+        "add": -3
+      },
+      {
+        "addTag": "ecommerce_seller"
+      }
+    ]
+  },
+  {
+    "id": "era_mobile_payment_first_time",
+    "title": "第一次扫码付款",
+    "category": "random",
+    "yearRange": [
+      2013,
+      2020
+    ],
+    "ageRange": [
+      12,
+      80
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "baseWeight": 24,
+    "text": "你第一次用手机扫码付款，钱没有从手里递出去，却真的少了。生活忽然变轻，也变得更容易花出去。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": 4
+      },
+      {
+        "path": "resources.wealth",
+        "add": -1
+      },
+      {
+        "addTag": "mobile_payment_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_rent_shared_room",
+    "title": "合租房间",
+    "category": "wealth",
+    "yearRange": [
+      2005,
+      2025
+    ],
+    "ageRange": [
+      18,
+      40
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "migrant_worker"
+        },
+        {
+          "hasTag": "corporate_worker"
+        },
+        {
+          "path": "career.status",
+          "eq": "employed"
+        }
+      ]
+    },
+    "baseWeight": 26,
+    "weightModifiers": [
+      {
+        "path": "environment.housingPressure",
+        "gte": 7,
+        "multiply": 1.5
+      }
+    ],
+    "text": "你住进合租房，冰箱格子、卫生间时间和房租日期都要仔细计算。城市很大，你拥有的先是一张床。",
+    "effects": [
+      {
+        "path": "resources.wealth",
+        "add": -6
+      },
+      {
+        "path": "resources.freedom",
+        "add": -2
+      },
+      {
+        "path": "relationships.friendship",
+        "add": 2
+      },
+      {
+        "addTag": "shared_rent_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_platform_algorithm_penalty",
+    "title": "平台扣分",
+    "category": "career",
+    "yearRange": [
+      2014,
+      2025
+    ],
+    "ageRange": [
+      18,
+      60
+    ],
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "platform_worker"
+        },
+        {
+          "path": "career.status",
+          "eq": "gig_worker"
+        },
+        {
+          "hasTrait": "gig_adapted"
+        }
+      ]
+    },
+    "baseWeight": 22,
+    "text": "平台因为一次超时扣了分。你想解释天气、红灯和电梯，可系统只认一个数字。",
+    "effects": [
+      {
+        "path": "career.income",
+        "add": -5
+      },
+      {
+        "path": "resources.happiness",
+        "add": -5
+      },
+      {
+        "addTag": "algorithm_penalty_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_online_class_child",
+    "title": "孩子上网课",
+    "category": "family",
+    "yearRange": [
+      2020,
+      2022
+    ],
+    "ageRange": [
+      28,
+      55
+    ],
+    "conditions": {
+      "all": [
+        {
+          "path": "relationships.children",
+          "gte": 1
+        }
+      ]
+    },
+    "baseWeight": 28,
+    "text": "孩子在家上网课，屏幕、作业、摄像头和家务挤在同一张桌子上。你第一次发现，学校也能整个搬进家里。",
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": -2
+      },
+      {
+        "path": "resources.happiness",
+        "add": -4
+      },
+      {
+        "path": "education.score",
+        "add": 2
+      },
+      {
+        "addTag": "online_class_parent_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_internet_layoff_notice",
+    "title": "裁员通知",
+    "category": "career",
+    "yearRange": [
+      2018,
+      2025
+    ],
+    "ageRange": [
+      24,
+      45
+    ],
+    "conditions": {
+      "any": [
+        {
+          "path": "career.field",
+          "eq": "corporate"
+        },
+        {
+          "hasTag": "corporate_worker"
+        },
+        {
+          "hasTag": "startup_path"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "裁员通知传来得很快，会议室、表格和补偿方案把一段努力压缩成几行字。你走出门时，工牌还没来得及摘。",
+    "effects": [
+      {
+        "path": "career.status",
+        "set": "unemployed"
+      },
+      {
+        "path": "career.income",
+        "add": -12
+      },
+      {
+        "path": "resources.happiness",
+        "add": -8
+      },
+      {
+        "addTag": "internet_layoff_memory"
+      }
+    ]
   }
 ];

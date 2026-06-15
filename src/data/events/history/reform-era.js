@@ -871,5 +871,371 @@ export const historyReformEraEvents = [
         "addTag": "college"
       }
     ]
+  },
+  {
+    "id": "era_rural_surplus_to_market",
+    "title": "挑着余粮去卖",
+    "category": "wealth",
+    "yearRange": [
+      1981,
+      1988
+    ],
+    "birthRegions": {
+      "hukou": [
+        "rural"
+      ]
+    },
+    "ageRange": [
+      14,
+      65
+    ],
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "household_responsibility_memory"
+        },
+        {
+          "hasTag": "peasant_household"
+        }
+      ]
+    },
+    "baseWeight": 24,
+    "text": "家里把一点余粮和土货挑到集上卖。称杆一抬一落，你第一次看见土地之外也有价钱和机会。",
+    "effects": [
+      {
+        "path": "resources.wealth",
+        "add": 7
+      },
+      {
+        "path": "resources.freedom",
+        "add": 3
+      },
+      {
+        "addTag": "rural_market_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_getihu_license_window",
+    "title": "办个体户执照",
+    "category": "career",
+    "yearRange": [
+      1980,
+      1992
+    ],
+    "ageRange": [
+      18,
+      55
+    ],
+    "conditions": {
+      "none": [
+        {
+          "hasTag": "getihu_path"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "birth.gender",
+              "eq": "female"
+            }
+          ]
+        },
+        "text": "你站在窗口前打听个体户执照。有人说女人做买卖太抛头露面，你却更关心明天能不能多赚一块钱。"
+      },
+      {
+        "text": "你站在窗口前打听个体户执照。章盖下去的时候，稳定和风险像两枚硬币一起落进口袋。"
+      }
+    ],
+    "choices": [
+      {
+        "id": "open_small_stall",
+        "text": "试着摆个小摊",
+        "resultText": "你开始摆摊。天亮前进货，天黑后数钱，城市的缝隙里也能长出一条路。",
+        "effects": [
+          {
+            "path": "career.status",
+            "set": "self_employed"
+          },
+          {
+            "path": "career.field",
+            "set": "small_business"
+          },
+          {
+            "path": "resources.wealth",
+            "add": 8
+          },
+          {
+            "path": "resources.freedom",
+            "add": 7
+          },
+          {
+            "addTag": "getihu_path"
+          },
+          {
+            "addTrait": "market_sense"
+          }
+        ]
+      },
+      {
+        "id": "keep_waiting",
+        "text": "再观望一阵",
+        "resultText": "你暂时没有下场。街上的叫卖声越来越熟，你知道机会还会来，也可能擦肩而过。",
+        "effects": [
+          {
+            "path": "resources.happiness",
+            "add": -1
+          },
+          {
+            "addTag": "market_wait_and_see"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "era_southern_tour_fever",
+    "title": "南方谈话后的热",
+    "category": "career",
+    "yearRange": [
+      1992,
+      1995
+    ],
+    "ageRange": [
+      18,
+      50
+    ],
+    "currentRegions": {
+      "provinces": [
+        "guangdong",
+        "fujian",
+        "hainan",
+        "shanghai",
+        "zhejiang",
+        "jiangsu"
+      ]
+    },
+    "baseWeight": 24,
+    "weightModifiers": [
+      {
+        "hasTag": "coastal_dream",
+        "multiply": 1.4
+      },
+      {
+        "hasTrait": "risk_taker",
+        "multiply": 1.5
+      }
+    ],
+    "text": "南方的消息一阵阵传来，工地、厂房、公司牌子都像被太阳晒得发烫。你站在路口，觉得时代正在催人快走。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": 6
+      },
+      {
+        "path": "resources.achievement",
+        "add": 4
+      },
+      {
+        "addTag": "southern_tour_fever"
+      }
+    ]
+  },
+  {
+    "id": "era_factory_girl_dormitory",
+    "title": "厂妹宿舍",
+    "category": "migration",
+    "genders": [
+      "female"
+    ],
+    "yearRange": [
+      1988,
+      2005
+    ],
+    "ageRange": [
+      16,
+      30
+    ],
+    "currentRegions": {
+      "provinceGroups": [
+        "province.coastal"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "migrant_worker"
+        },
+        {
+          "path": "career.field",
+          "eq": "factory"
+        }
+      ]
+    },
+    "baseWeight": 28,
+    "text": "你住进女工宿舍，上铺下铺挂满衣服和远方寄来的牵挂。机器声很硬，姐妹们夜里说话的声音却很软。",
+    "effects": [
+      {
+        "path": "relationships.friendship",
+        "add": 6
+      },
+      {
+        "path": "resources.health",
+        "add": -3
+      },
+      {
+        "path": "resources.wealth",
+        "add": 5
+      },
+      {
+        "addTag": "factory_sisterhood"
+      }
+    ]
+  },
+  {
+    "id": "era_temporary_residence_permit",
+    "title": "暂住证",
+    "category": "migration",
+    "yearRange": [
+      1985,
+      2003
+    ],
+    "ageRange": [
+      16,
+      55
+    ],
+    "currentRegions": {
+      "cityTiers": [
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "migrant_worker"
+        },
+        {
+          "hasTag": "coastal_worked"
+        },
+        {
+          "hasTrait": "floating_population"
+        }
+      ]
+    },
+    "baseWeight": 24,
+    "text": "你去办暂住证，表格、照片和队伍把外地两个字写得很具体。城市接纳你的劳力，却不急着接纳你这个人。",
+    "effects": [
+      {
+        "path": "resources.freedom",
+        "add": -5
+      },
+      {
+        "path": "resources.happiness",
+        "add": -4
+      },
+      {
+        "addTag": "temporary_residence_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_spring_festival_motorbike_return",
+    "title": "骑摩托返乡",
+    "category": "migration",
+    "yearRange": [
+      1995,
+      2015
+    ],
+    "ageRange": [
+      18,
+      55
+    ],
+    "birthRegions": {
+      "provinces": [
+        "guangxi",
+        "guangdong",
+        "hunan",
+        "jiangxi",
+        "guizhou",
+        "sichuan"
+      ]
+    },
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "migrant_worker"
+        },
+        {
+          "hasTag": "coastal_worked"
+        }
+      ]
+    },
+    "baseWeight": 18,
+    "text": "春节前，你和一队人骑摩托往家赶。风钻进袖口，行李绑得很紧，回家的路长得像一场硬仗。",
+    "effects": [
+      {
+        "path": "relationships.family",
+        "add": 6
+      },
+      {
+        "path": "resources.health",
+        "add": -4
+      },
+      {
+        "addTag": "motorbike_return_memory"
+      }
+    ]
+  },
+  {
+    "id": "era_layoff_reemployment_market",
+    "title": "再就业市场",
+    "category": "career",
+    "yearRange": [
+      1996,
+      2005
+    ],
+    "ageRange": [
+      35,
+      55
+    ],
+    "conditions": {
+      "any": [
+        {
+          "hasTag": "laid_off_shadow"
+        },
+        {
+          "hasTag": "laid_off_worker_family"
+        },
+        {
+          "path": "career.field",
+          "eq": "state_unit"
+        }
+      ]
+    },
+    "baseWeight": 22,
+    "text": "你去再就业市场看岗位，纸牌上写着年龄、工资和要求。曾经稳定的履历忽然变轻了，你只能把自己重新介绍一遍。",
+    "effects": [
+      {
+        "path": "career.income",
+        "add": -4
+      },
+      {
+        "path": "resources.happiness",
+        "add": -6
+      },
+      {
+        "path": "attrs.mental",
+        "add": 1
+      },
+      {
+        "addTag": "reemployment_market_memory"
+      }
+    ]
   }
 ];
