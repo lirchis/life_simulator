@@ -29,7 +29,28 @@ export const historyFutureEvents = [
         "multiply": 1.3
       }
     ],
-    "text": "你第一次让 AI 帮你写东西、改表格、想方案。它不像同事，也不像工具，更像一面会回话的镜子。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 22 }
+          ]
+        },
+        "text": "你第一次让 AI 帮着梳理资料和修改作业，答案来得太快，快到必须反过来查它有没有编造。它替你省下几小时，也把‘哪些话算自己的’变成了新的作业。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.status", "in": ["self_employed", "gig_worker"] },
+            { "path": "career.field", "in": ["small_business", "trade", "ecommerce"] }
+          ]
+        },
+        "text": "你让 AI 写商品介绍、回客户消息、整理一周的订单。它把小店暂时变成了有文案和表格部门的公司，只是老板、客服和核对错误的人仍都是你。"
+      },
+      {
+        "text": "你第一次让 AI 帮你改表格、起草材料和整理会议要点。它几分钟交出一份像样的初稿，你也很快学会：省下的是从空白开始的时间，核实责任仍完整地留在自己名下。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.achievement",
@@ -251,7 +272,28 @@ export const historyFutureEvents = [
       65
     ],
     "baseWeight": 20,
-    "text": "家里开始讨论老人照护排班，谁请假、谁出钱、谁离得近，每一句都像在重新称量亲情。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.migratedTimes", "gte": 1 }
+          ]
+        },
+        "text": "老人需要长期照护后，你同兄弟姐妹在群里排班。离家最远的人多出钱，离得最近的人多出时间；高铁缩短了路程，却没有缩短一次请假的手续。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "relationships.children", "gte": 1 },
+            { "path": "resources.wealth", "lte": 40 }
+          ]
+        },
+        "text": "你把老人的复诊、孩子的接送和自己的工作排进同一张日历。请护工的钱和请假的损失各占一栏，亲情没有标价，照护的每个小时却都有成本。"
+      },
+      {
+        "text": "家里开始讨论老人照护排班，谁陪诊、谁夜里守、谁负责买药都写进表格。大家仍会争执，但表格至少让那句含糊的‘有空去看看’变成了具体日期。"
+      }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -353,7 +395,28 @@ export const historyFutureEvents = [
         "multiply": 1.5
       }
     ],
-    "text": "热浪压在城市和田野上，空气像一块拧不干的热毛巾。你照常出门，身体却比往年更早发出警告。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "career.field", "in": ["delivery", "construction", "manual_worker", "farm_work"] }
+          ]
+        },
+        "text": "热浪把路面、脚手架或田地晒得发白，你的工作却不能搬进天气预报。水很快喝完，手机和工头仍在催进度；高温补贴写在通知里，中暑先写在人的脸上。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "resources.health", "lte": 45 },
+            { "path": "meta.age", "gte": 60 }
+          ]
+        },
+        "text": "连续高温让你比往年更早感到胸闷和乏力。你把出门改到清晨，药和水装进同一个袋子；日历上的一天没有变长，能安全活动的时段却缩短了。"
+      },
+      {
+        "text": "热浪压住城市和田野，空调外机整夜轰鸣。你在通勤和工作间寻找阴影，下午的效率被汗水一点点拖慢；天气不再只是闲谈，而是当天能做多少事的上限。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.health",
@@ -468,7 +531,19 @@ export const historyFutureEvents = [
     conditions: { any: [{ path: "career.status", eq: "gig_worker" }, { path: "career.status", eq: "self_employed" }, { hasTag: "platform_worker" }, { hasTag: "ecommerce_seller" }] },
     maxOccurrences: 1,
     baseWeight: 22,
-    text: "你按灵活就业身份给自己缴社保，每月扣款时肉疼，停缴的念头也来坐过几次。想到年老和生病，它又像一封寄得很慢的回信。",
+    text: [
+      {
+        conditions: { any: [{ path: "career.status", eq: "gig_worker" }, { hasTag: "platform_worker" }] },
+        text: "平台按单结算收入，社保却要你按月自己缴。淡季时扣款尤其扎眼，你多跑几单才把它补回去；保障像一件必须先淋雨挣钱、再替未来买下的雨衣。"
+      },
+      {
+        conditions: { any: [{ path: "career.status", eq: "self_employed" }, { hasTag: "ecommerce_seller" }] },
+        text: "你以灵活就业身份自己缴社保，店里有收入便按时续上，生意清淡时也动过停缴的念头。账本只看这个月，养老和医疗却要求你替几十年后的自己留一行。"
+      },
+      {
+        text: "你第一次自己办完社保登记和扣款，每月到账前先少去固定一笔。没有单位替你分担，缴费显得格外具体；想到生病和年老，它又像一封寄得很慢、最好别退回来的信。"
+      }
+    ],
     effects: [
       { path: "resources.wealth", add: -4 },
       { path: "resources.health", add: 3 },
@@ -538,7 +613,19 @@ export const historyFutureEvents = [
     currentRegions: { cityTiers: ["village", "town", "county", "city", "tier2", "tier1"] },
     maxOccurrences: 1,
     baseWeight: 26,
-    text: "附近有了老年助餐点，你中午去吃一份热饭，价钱和盐都放得克制。几张桌子慢慢坐熟，谁哪天没来，反而成了大家最先发现的事。",
+    text: [
+      {
+        conditions: { all: [{ path: "location.currentCityTier", in: ["village", "town"] }] },
+        text: "村镇助餐点开在旧活动室里，中午按人头盛热饭。你走过去不远，顺手替腿脚更慢的邻居带一份；一项公共服务落到日常，先变成饭盒上的名字。"
+      },
+      {
+        conditions: { any: [{ path: "resources.health", lte: 48 }, { path: "relationships.partnerStatus", eq: "none" }] },
+        text: "附近有了老年食堂，你不必每天站在灶前，也少用剩菜凑合一顿。几张桌子慢慢坐熟，谁哪天没来，大家便先打电话问是不是身体不舒服。"
+      },
+      {
+        text: "社区助餐点中午供应一荤一素，价钱和盐都放得克制。你起初只图省事，后来习惯同几位老人拼桌；饭菜每天不同，彼此的旧故事倒常有续集。"
+      }
+    ],
     effects: [
       { path: "resources.health", add: 4 },
       { path: "relationships.friendship", add: 4 },
@@ -591,7 +678,19 @@ export const historyFutureEvents = [
     conditions: { any: [{ path: "resources.health", lte: 62 }, { path: "attrs.physique", lte: 4 }] },
     maxOccurrences: 1,
     baseWeight: 24,
-    text: "社区医生提醒你复查血压、血糖和用药，问得比有些亲戚还细。你嘴上说都记着，挂电话后还是老实把药盒摆到了显眼处。",
+    text: [
+      {
+        conditions: { any: [{ path: "meta.age", gte: 75 }, { path: "resources.health", lte: 40 }] },
+        text: "社区医生隔一阵便来电话，核对血压、血糖和药量，还问最近有没有头晕。你嫌问题重复，回答却一次比一次认真；年纪大后，有人按时追问本身也是一种治疗。"
+      },
+      {
+        conditions: { all: [{ path: "location.currentCityTier", in: ["village", "town", "county"] }] },
+        text: "基层医生把随访日期记在册上，赶集日顺便替你量血压，缺药便提醒去补。诊室设备不算多，好处是他认得你，也知道你那句‘一直按时吃’通常要打一点折扣。"
+      },
+      {
+        text: "社区医生提醒你复查指标和调整用药，又把注意事项发到手机上。你嘴上说都记得，挂电话后仍老实把药盒挪到餐桌旁；提醒若足够具体，倔强也会配合。"
+      }
+    ],
     effects: [
       { path: "resources.health", add: 5 },
       { path: "resources.happiness", add: 2 },
@@ -608,7 +707,19 @@ export const historyFutureEvents = [
     conditions: { any: [{ hasTag: "migrant" }, { hasTag: "migrant_worker" }, { path: "location.migratedTimes", gte: 1 }] },
     maxOccurrences: 1,
     baseWeight: 19,
-    text: "你在外地看病时办了异地就医结算，不必再攥着一袋票据回老家跑手续。窗口少跑几趟，病并不会更轻，人的疲惫却会。",
+    text: [
+      {
+        conditions: { any: [{ hasTag: "migrant_worker" }, { path: "resources.wealth", lte: 38 }] },
+        text: "你在务工地住院时直接结算了医保，不必先四处借齐全款，再带票据回老家报销。病床费仍让人心疼，但少压几个月现金，对一个靠工资周转的家已经很要紧。"
+      },
+      {
+        conditions: { any: [{ path: "meta.age", gte: 65 }, { path: "resources.health", lte: 45 }] },
+        text: "你随子女在外地生活，复诊时终于能直接结算，不必为盖章和票据再坐长途车。病并没有因此变轻，腿脚和家人却少替手续受一遍累。"
+      },
+      {
+        text: "你在外地看病时完成异地就医结算，出院窗口直接算清应付部分。过去要装满文件袋的一摞票据，如今只留几张清单；制度的进步有时就是少跑几扇门。"
+      }
+    ],
     effects: [
       { path: "resources.wealth", add: 4 },
       { path: "resources.health", add: 3 },
@@ -663,7 +774,19 @@ export const historyFutureEvents = [
     currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
     maxOccurrences: 1,
     baseWeight: 20,
-    text: "老楼商量加装电梯，低层谈采光，高层谈膝盖，费用分摊开了好几轮会。邻居们争得面红耳赤，最后仍一起盯着施工队有没有按时来。",
+    text: [
+      {
+        conditions: { any: [{ path: "meta.age", gte: 70 }, { path: "resources.health", lte: 45 }] },
+        text: "老楼商量加装电梯时，你拿自己的膝盖解释六层有多高。低层担心采光，费用也谈不拢；你每次爬到家门口，都觉得会议纪要还差一段楼梯的证词。"
+      },
+      {
+        conditions: { all: [{ path: "resources.wealth", lte: 40 }] },
+        text: "加装电梯的方案通过了，分摊到你家的费用却不是小数。你同邻居比较补贴、楼层系数和付款期限，终于明白便利可以按楼层计算，难处却按各家的存款计算。"
+      },
+      {
+        text: "老楼为加装电梯开了好几轮会，低层谈采光，高层谈膝盖，家家都拿出自己的道理。争论结束后，大家又一起盯施工噪声和进度；邻里关系从未升降得这样频繁。"
+      }
+    ],
     effects: [
       { path: "resources.wealth", add: -4 },
       { path: "resources.health", add: 3 },

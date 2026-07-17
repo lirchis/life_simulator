@@ -85,3 +85,65 @@ npm run batch -- --count 2 --historical-life chronicle_hunan_1893_a --seed CHRON
 - 随机开局遵守游戏内的时代、省份、户口、家庭阶层、家境范围和特质条件。
 - 遇到多结果事件时复用正式引擎，根据条件、权重和 seed 自动决定结果。
 - CSV 中复杂列表使用 `|` 连接，事件分类计数使用紧凑 JSON 字符串，便于表格软件读取。
+
+## 分层开局矩阵
+
+纯随机批测容易漏掉少数群体。`scripts/stratified_batch.js` 会用正式引擎生成可复现的开局矩阵，固定覆盖以下维度：
+
+- 8 个代表性出生世代：1840、1870、1900、1925、1950、1970、1990、2010。
+- 男女两种性别。
+- 乡村与城市两种开局环境。
+- 低、中、高三档家庭资源；脚本会从该年份、城乡和户口真正可选的家庭阶层中选取对应分位。
+- 华北、东北、江南沿海、东南沿海、岭南、中部、西南、西北、边疆西部、台湾、香港 11 个代表地区。
+- 低体质/低心态、均衡、高体质/高心态三种属性档位；属性仍严格遵守总点数 20。
+
+推荐基线：
+
+```bash
+npm run batch:stratified -- \
+  --matrix balanced \
+  --seed STRATIFIED-BASELINE \
+  --max-age 112 \
+  --out reports/stratified-baseline.csv
+```
+
+`balanced` 会完整组合出生世代、性别、城乡、家庭资源与代表地区，并让三种属性档位在组合间均匀轮换，共 1056 局。其他模式：
+
+- `--matrix smoke`：96 局快速检查，每个核心出生/性别/城乡/阶级单元轮换一个地区和属性档位。
+- `--matrix full`：把属性档位也加入全笛卡尔积，共 3168 局。
+- `--region-set all`：用全部省级地区替代 11 个代表地区。
+- `--replicates N`：每个矩阵单元运行 N 个确定性副本。
+- `--talents none`：禁用开局特质，用于隔离属性与事件条件；默认 `random`，但同一 seed 下选择稳定。
+
+除了与普通批测兼容的 summary、`.years.csv`、`.events.csv`，脚本还会输出 `.manifest.json`。manifest 记录参数、所有维度、每局开局输入及输出行数；同一代码版本、参数和 seed 会得到相同开局与人生正文，便于修改前后逐行比较。
+
+分层 events 表额外记录事件触发前的所在地，以及事件结束后的婚姻、子女、教育、职业等状态，供语义审查使用。
+
+## 分层自动审查
+
+```bash
+npm run review:stratified -- \
+  --summary reports/stratified-baseline.csv \
+  --report reports/stratified-baseline.review.md \
+  --json reports/stratified-baseline.review.json
+```
+
+审查范围包括：
+
+- 年龄语义、性别身体叙述、婚姻/子女/教育/职业状态矛盾。
+- 事件明示的年代、出生阶层、性别、出生地和当前所在地条件。
+- 现代词汇过早出现，以及窑洞、青稞、弄堂等强地点纹理风险。
+- 同局重复事件、完全重复文案、单一文案支配率。
+- 事件总占比与“人生渗透率”。后者回答的是一条事件进入了多少人的一生，比总触发次数更适合发现几乎人人都会遇到的万能事件。
+- 头部事件集中度、平常年占比，以及出生世代/性别/城乡/阶层/地区/属性各分群的覆盖缺口。
+- 终年 P10/P50/P90、婴幼儿/未成年/40 岁前结束率、死亡年龄尖峰和年龄上限截尾。
+
+启发式风险进入人工审查队列；CSV 关联错误、明示条件冲突、明显性别生理冲突与高置信时代词穿越属于阻断项。用 `--strict` 开启自动门禁：
+
+```bash
+npm run review:stratified -- \
+  --summary reports/stratified-baseline.csv \
+  --strict
+```
+
+默认数值门槛为：重复可见文案不超过 3%、头部十事件不超过 45%、平常年不超过 35%、年龄上限截尾不超过 2%、事件定义覆盖不低于 45%。可分别用 `--max-repeat-copy-rate`、`--max-top10-share`、`--max-quiet-rate`、`--max-age-cap-rate`、`--min-event-coverage` 覆盖。阈值是回归护栏，不替代对完整人生的人工通读。

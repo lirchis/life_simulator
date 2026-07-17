@@ -80,7 +80,29 @@ export const historyContemporaryEvents = [
     "maxOccurrences": 1,
     "priority": 48,
     "baseWeight": 45,
-    "text": "口罩、体温计和消毒水占满生活。城市忽然安静下来，连咳嗽都变得很有重量。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 6 },
+            { "path": "meta.age", "lte": 18 }
+          ]
+        },
+        "text": "学校停课，老师隔着电话布置作业，大人每天给你量体温。你第一次看见春天的操场空着，也第一次知道一声咳嗽会让整节楼道同时安静。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.field", "in": ["healthcare", "doctor", "nurse"] },
+            { "path": "resources.health", "lte": 40 }
+          ]
+        },
+        "text": "口罩勒痕、体温表和消毒水成了每天的次序。你离发热门诊或病床比多数人更近，回家前先在门外换衣服，怕把工作里看不见的东西带给家人。"
+      },
+      {
+        "text": "小区登记出入，单位反复量体温，口罩和消毒水占满生活。城市忽然安静下来，你同家人把新闻声音调得很小，仿佛大声说话也会惊动风险。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.health",
@@ -114,7 +136,28 @@ export const historyContemporaryEvents = [
     "priority": 42,
     "maxOccurrences": 1,
     "baseWeight": 90,
-    "text": "那一夜，很多人围着电视看北京。烟火升起时，你忽然觉得一个国家也会在某个瞬间屏住呼吸。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 8 }
+          ]
+        },
+        "text": "那一夜，大人把你抱到电视前看烟火和会发光的脚印。你未必懂开幕式意味着什么，只记得所有人同时喊好，平常催你睡觉的人也破例熬了夜。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "hasTag": "migrant_worker" },
+            { "path": "career.field", "in": ["construction", "factory", "logistics", "manual_worker"] }
+          ]
+        },
+        "text": "你同工友挤在宿舍或值班室的小电视前看开幕式。镜头里的北京灯火通明，镜头外还有夜班要接；你为那份盛大高兴，也知道盛大是许多普通人的工时搭起来的。"
+      },
+      {
+        "text": "那一夜，一家人围着电视看北京，烟火升起时楼上楼下同时传来掌声。你跟着高兴，也把遥控器放在桌上——这样完整地一起看完一个节目，已经很久没有过。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -209,7 +252,28 @@ export const historyContemporaryEvents = [
       ]
     },
     "baseWeight": 26,
-    "text": "你坐高铁回家，窗外的城市和田野被压成一条流光。距离还在，但它第一次显得没那么硬。",
+    "text": [
+      {
+        "conditions": {
+          "any": [
+            { "hasTag": "migrant_worker" },
+            { "path": "resources.wealth", "lte": 40 }
+          ]
+        },
+        "text": "你算过普快、长途车和误工的价钱，最后买了一张高铁二等座。票不便宜，省下的十几个小时却能多在家吃一顿饭；速度第一次被你按工资和团聚一起衡量。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.children", "gte": 1 }
+          ]
+        },
+        "text": "你带着孩子坐高铁回家，零食、行李和老人催问到哪儿的电话挤在小桌板上。孩子嫌几个小时太久，你想起从前在站外排一夜队，觉得抱怨也是交通进步的一种证据。"
+      },
+      {
+        "text": "你坐高铁回家，熟悉的城市和田野在窗外迅速后退。距离没有消失，只从一整天的颠簸变成几个小时的安静，让临时决定回去看看不再像一项工程。"
+      }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -261,7 +325,27 @@ export const historyContemporaryEvents = [
         "multiply": 1.4
       }
     ],
-    "text": "售楼处的沙盘灯火通明，价格却像另一种高山。你站在模型前，感觉未来被按揭切成很多小块。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "你在中介橱窗前把总价除以一年收入，又除了一遍，仍觉得计算器出了问题。买房暂时不像选择，更像一道负责提醒差距的应用题；你转身继续问下个月房租。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.children", "gte": 1 }
+          ]
+        },
+        "text": "你和家人看房时同时比较通勤、学位、老人能否帮忙和孩子住哪一间。沙盘只展示楼间距，没有展示接下来二十多年谁不敢失业。"
+      },
+      {
+        "text": "售楼处的沙盘灯火通明，你在首付、月供和通勤时间之间反复移动预算。未来终于有了门牌号，也被银行整齐地切成许多个还款日。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -374,7 +458,28 @@ export const historyContemporaryEvents = [
         "multiply": 1.4
       }
     ],
-    "text": "你在网上开了个小店。旺旺提示音响起时，你感觉柜台忽然变得没有边界。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "birth.hukou", "eq": "rural" }
+          ]
+        },
+        "text": "你把家乡的干货和土产拍照挂到网上，白天收拾货，晚上学着回消息。快递车第一次频繁开进村里，田地没有变小，通向买家的路却忽然多了。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.status", "in": ["self_employed", "gig_worker"] },
+            { "path": "resources.wealth", "lte": 38 }
+          ]
+        },
+        "text": "你在租住的房间里开网店，床边堆货，纸箱占走半条过道。提示音半夜也会响，每一个订单都很小，却让你暂时不用先向老板解释自己的时间。"
+      },
+      {
+        "text": "你在网上开了个小店，给商品拍照、量尺寸、同陌生买家解释色差。柜台从街边搬进屏幕以后没有了关门时间，生意的边界远了，客服的下班也远了。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -598,7 +703,46 @@ export const historyContemporaryEvents = [
     "priority": 70,
     "maxOccurrences": 1,
     "baseWeight": 100,
-    "text": "街道安静得像被按下暂停。你每天看数字、量体温、等消息，春天隔着窗户慢慢走远。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 3 }
+          ]
+        },
+        "text": "街道忽然安静，大人很少带你出门，抱着你时也常低头看消息。你不懂口罩和数字，只知道熟悉的脸被遮住了一半。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 4 },
+            { "path": "meta.age", "lte": 18 }
+          ]
+        },
+        "text": "学校和玩耍都搬进屏幕，窗外的春天照常变绿。老师问听见没有，许多同学同时沉默，网络替全班保守了不少秘密。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 19 },
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
+        "text": "村口多了登记和劝返，远方的家人一时回不来。田里的季节没有停，走亲访友却第一次成了需要忍住的习惯。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 19 },
+            { "path": "career.status", "in": ["employed", "self_employed", "gig_worker"] }
+          ]
+        },
+        "text": "工作、出门和回家都有了新手续。你每天看数字、量体温、等消息，也第一次发现，维持普通生活本身就是一份工作。"
+      },
+      {
+        "text": "街道安静得像被按下暂停。你每天看数字、量体温、等消息，春天隔着窗户慢慢走远。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",

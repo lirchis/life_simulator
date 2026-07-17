@@ -135,44 +135,6 @@ export const coreLifecycleEvents = [
     ]
   },
   {
-    "id": "life_newborn_dies_before_dawn",
-    "title": "没等到天亮",
-    "category": "ending",
-    "ageRange": [
-      0,
-      0
-    ],
-    "priority": 90,
-    "maxOccurrences": 1,
-    "baseWeight": 1,
-    "weightModifiers": [
-      {
-        "path": "attrs.luck",
-        "lte": 1,
-        "multiply": 4
-      },
-      {
-        "path": "resources.health",
-        "lte": 32,
-        "multiply": 5
-      },
-      {
-        "path": "environment.healthcareAccess",
-        "lte": 2,
-        "multiply": 2
-      }
-    ],
-    "text": "你只在这个世界短暂停了一会儿。窗纸发白以前，哭声已经轻得听不见。",
-    "effects": [
-      {
-        "die": "新生儿夭折"
-      },
-      {
-        "triggerEnding": "newborn_death"
-      }
-    ]
-  },
-  {
     "id": "life_quiet_year",
     "title": "平常一年",
     "category": "random",
@@ -471,6 +433,7 @@ export const coreLifecycleEvents = [
       12
     ],
     "maxOccurrences": 1,
+    "lifetimeProbability": 0.42,
     "baseWeight": 28,
     "weightModifiers": [
       {
@@ -498,14 +461,14 @@ export const coreLifecycleEvents = [
             }
           ]
         },
-        "text": "你夜里烧得迷迷糊糊，大人把土方、热水和请来的郎中都试了一遍。那几天，门轴、汗味和低声祈祷一起被你记住。"
+        "text": "你夜里烧得迷迷糊糊，大人把土方、热水和请来的郎中都试了一遍。门轴响了一夜，汗味和低声祈祷留在照看你的人心里。"
       },
       {
         "conditions": {
           "all": [
             {
               "path": "meta.currentYear",
-              "gte": 1960
+              "gte": 1968
             },
             {
               "path": "meta.currentYear",
@@ -536,10 +499,10 @@ export const coreLifecycleEvents = [
             }
           ]
         },
-        "text": "你夜里烧起来，家里人挂号、量体温、看化验单。医院灯光很白，你第一次知道小病也能把全家弄得手忙脚乱。"
+        "text": "你夜里烧起来，家里人挂号、量体温、看化验单。医院灯光很白，小小的病号睡睡醒醒，全家已经忙乱了一夜。"
       },
       {
-        "text": "你夜里烧得迷迷糊糊，家里人轮流摸你的额头。那几天，门轴和药味一起被你记住。"
+        "text": "你夜里烧得迷迷糊糊，家里人轮流摸你的额头。那几天后来未必留在你的记忆里，门轴和药味却被家人讲了很多年。"
       }
     ],
     "effects": [
@@ -640,7 +603,7 @@ export const coreLifecycleEvents = [
           "all": [
             {
               "path": "meta.currentYear",
-              "gte": 1995
+              "gte": 2010
             },
             {
               "path": "birth.cityTier",
@@ -695,6 +658,13 @@ export const coreLifecycleEvents = [
         "rural"
       ]
     },
+    "currentRegions": {
+      "cityTiers": [
+        "village",
+        "town",
+        "county"
+      ]
+    },
     "priority": 78,
     "maxOccurrences": 1,
     "baseWeight": 100,
@@ -712,7 +682,7 @@ export const coreLifecycleEvents = [
             }
           ]
         },
-        "text": "村里丈量田地，你也跟着家里去听分配。地契和名字多半不写你，但你知道明年的口粮也有你弯腰的一份。"
+        "text": "村里丈量田地，分配被一笔笔写进名册。纸面上女人也有了权利，回到家里谁作主却未必立刻改变；你知道每一垄地同样要落下自己的劳动。"
       },
       {
         "text": "村里丈量田地，你家第一次把几亩地说成“自己的”。大人没有大声笑，只是在夜里反复算明年的口粮。"
@@ -750,6 +720,12 @@ export const coreLifecycleEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 34,
+    "conditions": {
+      "any": [
+        { "hasTag": "student" },
+        { "path": "education.level", "in": ["primary", "middle", "high", "college"] }
+      ]
+    },
     "weightModifiers": [
       {
         "path": "attrs.intelligence",
@@ -1063,6 +1039,7 @@ export const coreLifecycleEvents = [
         "tier2"
       ]
     },
+    "lifetimeProbability": 0.56,
     "maxOccurrences": 1,
     "baseWeight": 14,
     "weightModifiers": [
@@ -1528,6 +1505,7 @@ export const coreLifecycleEvents = [
       24,
       40
     ],
+    "lifetimeProbability": 0.7,
     "maxOccurrences": 1,
     "baseWeight": 28,
     "conditions": {
@@ -1648,6 +1626,7 @@ export const coreLifecycleEvents = [
       35,
       56
     ],
+    "lifetimeProbability": 0.52,
     "maxOccurrences": 1,
     "baseWeight": 42,
     "text": [
@@ -1741,17 +1720,47 @@ export const coreLifecycleEvents = [
     "text": [
       {
         "conditions": {
-          "all": [
+          "any": [
             {
               "path": "meta.currentYear",
               "lte": 1948
+            },
+            {
+              "path": "location.currentCityTier",
+              "in": ["village", "town"]
+            },
+            {
+              "path": "career.field",
+              "in": ["farm_work", "manual_worker", "self_employed", "gig_worker"]
             }
           ]
         },
         "text": "你渐渐歇下最重的活，把手里的事交给晚辈。没有正式的退休日子，只是某天起，大家不再让你扛最沉的那一头。"
       },
       {
+        "conditions": {
+          "all": [
+            {
+              "path": "career.status",
+              "in": ["none", "unemployed"]
+            }
+          ]
+        },
+        "text": "你到了渐渐该少做重活的年纪，却没有一张正式通知替生活划线。只是找你的活变少了，身体拒绝的事变多了，日子慢慢换了称呼。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "career.status",
+              "in": ["employed", "retired"]
+            }
+          ]
+        },
         "text": "你退休了。闹钟终于不再像命令，但身体已经记住了多年早醒。"
+      },
+      {
+        "text": "你把最重、最急的事情交出去一些。人没有一下子闲下来，只是从此做每件事，都更愿意先问问身体。"
       }
     ],
     "effects": [
@@ -1825,7 +1834,44 @@ export const coreLifecycleEvents = [
         "multiply": 1.2
       }
     ],
-    "text": "你走完了这一生。很多事没有答案，但它们都真实发生过，像一条河终于流进安静的地方。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 1949 }
+          ]
+        },
+        "text": "灯火比从前暗了一点，你在家人的守候中走完一生。许多旧事无人再能说全，只剩用过的器物和活着的人替你作证。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
+        "text": "你在熟悉的屋檐下走完一生。田地还会换季，灶烟还会升起；少掉的那个人，要到许多件小事里才慢慢显出来。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.children", "gte": 1 },
+            { "path": "relationships.family", "gte": 35 }
+          ]
+        },
+        "text": "家人守在身边，你走完了这一生。最后没有宏大的话，只有被角、呼吸和一只迟迟没有松开的手。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.health", "lte": 30 }
+          ]
+        },
+        "text": "身体把日子一点点收窄，终于连疼痛也安静下来。你走完一生，留下的不是结论，是别人往后仍会照做的几种习惯。"
+      },
+      {
+        "text": "你走完了这一生。很多事没有答案，但它们都真实发生过，像一条河终于流进安静的地方。"
+      }
+    ],
     "effects": [
       {
         "die": "自然死亡"

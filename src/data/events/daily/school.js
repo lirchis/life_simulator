@@ -60,7 +60,17 @@ export const dailySchoolEvents = [
         "multiply": 1.3
       }
     ],
-    "text": "你读到一本让自己停下来想很久的书。它没有立刻改变人生，只是在心里多开了一扇小窗。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "resources.wealth", "lte": 45 }] },
+        "text": "你借到一本翻得起毛的书，怕弄坏，连饭桌上的油点都躲着它。许多页并未全懂，仍第一次知道自家门外还有别种活法。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }, { "path": "education.score", "lte": 55 }] },
+        "text": "你在学校或镇上的小书架找到一本书，借期不长，只好赶着读。农活与家务不会替阅读让路，书便常摊在一盏快没电的灯旁。"
+      },
+      { "text": "你偶然读到一本让人停下来的书。它没有替你解决现实，只把一个原来不知怎样提出的问题，安静地摆到了桌面上。" }
+    ],
     "effects": [
       {
         "path": "education.score",
@@ -85,7 +95,17 @@ export const dailySchoolEvents = [
       18
     ],
     "baseWeight": 22,
-    "text": "老师随口说了一句难听的话，教室里没人接住你。那句话后来变轻了，但没有立刻消失。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "education.score", "lte": 40 }] },
+        "text": "老师当众说你不是读书的料，同学的目光一齐转来。成绩本来只是一次没学会，那句话却差点把它说成了你这个人。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "老师拿你的旧衣、欠费或家境开了一句难听的玩笑。教室里有人笑，你回家没有提；贫穷已经够忙，不该还替大人提供笑料。"
+      },
+      { "text": "老师随口用一句刻薄话评价你，教室里没人接住。它后来也许变轻，却让你早早明白，站在讲台上的人同样可能说错。" }
+    ],
     "effects": [
       {
         "path": "education.score",
@@ -122,7 +142,17 @@ export const dailySchoolEvents = [
         "multiply": 1.2
       }
     ],
-    "text": "有个老师认真看了你的作业，说你可以再往前走一点。那一刻，教室像多了一扇窗。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "education.score", "lte": 42 }] },
+        "text": "老师没有只在错题旁画叉，而是放学后陪你重新做了一遍。你仍不是班里最快的，却第一次知道慢一点也能抵达答案。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 38 }] },
+        "text": "老师看出家里难处，悄悄替你留了旧教材和一套能用的文具，没有在全班面前说明。真正的照顾不只给东西，也替人保留体面。"
+      },
+      { "text": "老师认真读完你的作业，指出一处真正做得好的地方，又说还能再往前走。夸奖没有很响，却把下一步说得具体。" }
+    ],
     "effects": [
       {
         "path": "education.score",
@@ -264,7 +294,17 @@ export const dailySchoolEvents = [
       16
     ],
     "baseWeight": 24,
-    "text": "你忘带了作业本，心一路沉到早读铃响。那天你学到的东西，未必在课本里。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1911 }] },
+        "text": "你把先生布置的习字页落在家里，进塾后才想起来。戒尺搁在案边，比没交的那张纸更早抵达课堂。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }, { "path": "meta.currentYear", "lte": 1990 }] },
+        "text": "你走到学校才发现作业本压在家里，回去取已经来不及。同桌替你作证确实写过，老师的脸色仍像阴天一样没有立刻转晴。"
+      },
+      { "text": "早读铃快响时，你才发现作业忘在家里。解释听起来总像借口，那天你先承认疏忽，回家便把书包从底到顶整理了一遍。" }
+    ],
     "effects": [
       {
         "path": "education.score",
@@ -289,7 +329,17 @@ export const dailySchoolEvents = [
       18
     ],
     "baseWeight": 30,
-    "text": "同桌把一个小秘密告诉了你。你们压低声音笑了一会儿，好像世界短暂地只剩两张课桌那么大。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "同窗趁先生转身，把一件家里的小秘密写在纸角推给你。你看完便揉进袖口，纸团很小，信任却需要保管一整天。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 15 }] },
+        "text": "同桌把一件不愿让全班知道的烦恼告诉你。你没有拿它换笑声，只在放学路上陪对方多走了一段。"
+      },
+      { "text": "同桌压低声音告诉你一个小秘密，你也认真保证不外传。上课铃打断了谈话，两张课桌之间却多了一点只有你们知道的信任。" }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",
@@ -351,8 +401,10 @@ export const dailySchoolEvents = [
         "text": "成绩贴在墙上，你的名字排得靠前。有人羡慕，有人不服，你也开始习惯被数字衡量。"
       },
       {
-        "text": "成绩贴在墙上，你从上往下找自己的名字。那张纸轻飘飘的，却能让人心里一沉。"
-      }
+        "conditions": { "all": [{ "path": "education.score", "lte": 40 }] },
+        "text": "名次从高到低贴满一张纸，你的名字靠后。真正难受的不只是分数，而是路过的人都可以顺手把你看成那一个位置。"
+      },
+      { "text": "成绩贴在墙上，你在人群肩膀之间找自己的名字。有人先看自己，有人先看别人；一张纸很轻，却临时替全班排出了高低。" }
     ],
     "effects": [
       {
@@ -512,4 +564,11 @@ export const dailySchoolEvents = [
       }
     ]
   }
-].map((event) => ({ yearRange: event.yearRange ?? [1912, 2035], ...event }));
+].map((event) => ({
+  yearRange: event.yearRange ?? [1912, 2035],
+  ...event,
+  conditions: {
+    ...(event.conditions ?? {}),
+    all: [...(event.conditions?.all ?? []), { hasTag: "student" }],
+  },
+}));

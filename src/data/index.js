@@ -1,6 +1,6 @@
 import { aggregates } from "./aggregates.js";
-import { birthYearRange } from "./config.js?v=deep-literature-2";
-import { events } from "./events.js?v=deep-literature-2";
+import { birthYearRange } from "./config.js?v=library-qa-1";
+import { events } from "./events.js?v=library-qa-1";
 import {
   cityTierEras,
   familyClassEras,
@@ -18,11 +18,11 @@ import {
   hasHukouChoiceForYear,
   hukouEras,
   resolveHistoricalProvince,
-} from "./history.js?v=deep-literature-2";
+} from "./history.js?v=library-qa-1";
 import { familyClasses, cityTiers, genderTypes, hukouTypes, provinces } from "./regions.js";
-import { tagLabels } from "./tagLabels.js?v=deep-literature-2";
-import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js?v=deep-literature-2";
-import { historicalLives } from "./historicalLives/index.js?v=deep-literature-2";
+import { tagLabels } from "./tagLabels.js?v=library-qa-1";
+import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js?v=library-qa-1";
+import { historicalLives } from "./historicalLives/index.js?v=library-qa-1";
 
 export const data = {
   aggregates,

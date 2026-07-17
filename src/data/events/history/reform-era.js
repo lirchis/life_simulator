@@ -181,6 +181,9 @@ export const historyReformEraEvents = [
         "rural"
       ]
     },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
+    },
     "ageRange": [
       8,
       70
@@ -250,6 +253,8 @@ export const historyReformEraEvents = [
       ]
     },
     "baseWeight": 26,
+    "lifetimeProbability": 0.4,
+    "maxOccurrences": 1,
     "text": "亲戚从南方寄来照片，楼房和招牌像一夜长出来。你盯着照片看了很久，心里有东西开始松动。",
     "effects": [
       {
@@ -297,7 +302,36 @@ export const historyReformEraEvents = [
         }
       ]
     },
-    "text": "家里买了第一台电视，邻居搬着凳子来看。雪花点很多，但世界从此有了更多入口。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 3 }
+          ]
+        },
+        "text": "家里买回第一台电视，大人把你抱到屏幕前。你只会追着亮处和声音转头；至于全家怎样调天线、招呼邻居，是他们后来讲给你听的。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 4 },
+            { "path": "meta.age", "lte": 14 }
+          ]
+        },
+        "text": "家里买回第一台电视，你早早坐到屏幕前。雪花很多，节目时间却记得很清楚；从前只在图画里的地方，忽然会在晚饭后自己出现。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
+        "text": "村里少有的电视搬进你家后，邻居自带板凳，院子一到晚上便坐满。天线要有人在屋顶慢慢转，屋里的人齐声喊‘有了’，看电视也成了一项集体协作。"
+      },
+      {
+        "text": "家里买了第一台电视，邻居和亲戚陆续过来看。你不时起身调天线，雪花点仍在屏幕上游动；世界的入口不算清楚，却从此按节目表准时抵达客厅。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -693,7 +727,27 @@ export const historyReformEraEvents = [
         }
       ]
     },
-    "text": "你攥着一张回家的票，像攥着一年里最硬的一点盼头。人潮推着人潮，方向只有一个：回去。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "hasTag": "migrant_worker" }
+          ]
+        },
+        "text": "你在售票窗外排了很久，终于买到一张硬座或站票。蛇皮袋里装着给家人的衣物和糖，车厢里几乎转不开身；一年挣来的体面，常先要经得住这趟拥挤。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.children", "gte": 1 }
+          ]
+        },
+        "text": "你带着孩子挤上春运列车，行李架塞满，热水口前也排队。孩子问还有多久到家，你看一眼表，又看一眼窗外，知道老人已经把这班车的时刻念了许多遍。"
+      },
+      {
+        "text": "你几次托人、排队，终于攥住一张回家的车票。候车室里的人睡在行李旁，广播一响便同时起身；这一年走过很多方向，到春节才有一个方向被直接叫作回去。"
+      }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -777,6 +831,8 @@ export const historyReformEraEvents = [
       ]
     },
     "baseWeight": 35,
+    "lifetimeProbability": 0.48,
+    "maxOccurrences": 1,
     "weightModifiers": [
       {
         "path": "attrs.intelligence",
@@ -1223,6 +1279,8 @@ export const historyReformEraEvents = [
       ]
     },
     "baseWeight": 22,
+    "lifetimeProbability": 0.42,
+    "maxOccurrences": 1,
     "text": "你去再就业市场看岗位，纸牌上写着年龄、工资和要求。曾经稳定的履历忽然变轻了，你只能把自己重新介绍一遍。",
     "effects": [
       {
@@ -1367,7 +1425,15 @@ export const historyReformEraEvents = [
         { hasTag: "township_enterprise_worker" }
       ]
     },
-    text: "外地客商带走一只样品，要求针脚、尺寸和交期全照单执行。你们第一次明白，远处的订单不会体谅停电、农忙或机器闹脾气；市场把世界拉近，也把误差压得更窄。",
+    text: [
+      {
+        conditions: { all: [{ path: "location.currentCityTier", in: ["town", "county"] }] },
+        text: "外地客商带走一只样品，要求针脚、尺寸和交期全照单执行。你们第一次明白，远处的订单不会体谅停电、农忙或机器闹脾气；市场把世界拉近，也把误差压得更窄。"
+      },
+      {
+        text: "外地客商带走一只样品，要求针脚、尺寸和交期全照单执行。你们第一次明白，远处的订单不会体谅停电、缺料或机器闹脾气；市场把世界拉近，也把误差压得更窄。"
+      }
+    ],
     effects: [
       { path: "career.income", add: 7 },
       { path: "resources.wealth", add: 7 },
@@ -2111,7 +2177,7 @@ export const historyReformEraEvents = [
         { path: "relationships.children", lte: 1 }
       ]
     },
-    text: "你把婚姻、户口和检查证明装进一个纸袋，在几个窗口之间来回。长辈讨论香火，单位和村里核对指标，医生询问身体；关于生育的决定看似属于一家人，却有许多双手同时按在纸上。",
+    text: "你把婚姻、户口和检查证明装进一个纸袋，在几个窗口之间来回。长辈讨论香火，单位或户籍所在地核对指标，医生询问身体；关于生育的决定看似属于一家人，却有许多双手同时按在纸上。",
     effects: [
       { path: "resources.freedom", add: -6 },
       { path: "resources.happiness", add: -4 },

@@ -8,6 +8,7 @@ export const dailyWorkWealthEvents = [
       10,
       80
     ],
+    "lifetimeProbability": 0.35,
     "baseWeight": 24,
     "weightModifiers": [
       {
@@ -16,7 +17,17 @@ export const dailyWorkWealthEvents = [
         "multiply": 1.5
       }
     ],
-    "text": "你丢了点钱，数额不大，但足够让这一天变得别扭。人有时就是会被小损失牵着走很久。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 30 }] },
+        "text": "你丢了点钱。数目在别人看来不大，却正好够买几样已经算过的东西；你沿原路找了两遍，最后只捡回一肚子自责。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "你不知在哪里掉了几枚钱。衣袋翻过，来路走过，钱仍没有回来；那一天的日子并未停下，只是处处都像多收了一点价。"
+      },
+      { "text": "你丢了点钱，数额不大，却足够让这一天变得别扭。小损失最会占便宜：拿走的不多，留在心里的时间倒很长。" }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -37,7 +48,17 @@ export const dailyWorkWealthEvents = [
       45
     ],
     "baseWeight": 26,
-    "text": "你花了一段时间练一门实用手艺。进步很慢，但手上多一点本事，心里就多一点底。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "你跟着熟手练认料、磨刃或走针，先做许多看不出成果的基本功。师傅很少夸人，只在一天收工时把更难的活递给了你。"
+      },
+      {
+        "conditions": { "all": [{ "path": "career.status", "in": ["self_employed", "gig_worker"] }] },
+        "text": "为了多接一种活，你在空闲时反复练一门实用技能。第一次成品只能自己留着，第二次勉强能交付，手艺便这样从废料里长出来。"
+      },
+      { "text": "你花一段时间练习一门实用手艺，把同一个动作做了又做。进步不显眼，直到某天遇到问题，双手先于脑子知道下一步。" }
+    ],
     "effects": [
       {
         "path": "career.level",
@@ -68,7 +89,17 @@ export const dailyWorkWealthEvents = [
       ]
     },
     "baseWeight": 28,
-    "text": "你去了一趟更大的城里。渡口、店铺、招牌和人群挤在一起，让你忽然知道外面的日子还有很多种样子。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1978 }] },
+        "text": "你跟着大人或同伴去了一趟城里，先在车站、渡口或城门边辨方向。供销店、医院和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 12 }] },
+        "text": "大人带你去更大的城里办事，始终叮嘱别松手。你记住高楼、车流和一份路上吃的东西，至于办了什么手续，很快便忘了。"
+      },
+      { "text": "你从村镇去了一趟更大的城市，办事之外也看了看橱窗、车站和匆忙的人群。回程时景物已不新鲜，自己的生活却像被从外面看了一眼。" }
+    ],
     "effects": [
       {
         "path": "resources.freedom",
@@ -175,7 +206,17 @@ export const dailyWorkWealthEvents = [
         }
       ]
     },
-    "text": "你因为一件事被夸了一次。夸奖很快过去，但那天你走路比平时轻了一点。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "career.status", "eq": "self_employed" }] },
+        "text": "一位老客人当面夸你做事可靠，还介绍了新生意。自雇者没有表扬栏，回头客就是盖在账本上的红章。"
+      },
+      {
+        "conditions": { "all": [{ "path": "career.income", "lte": 35 }] },
+        "text": "上级或同事夸你把一件琐碎工作做得稳妥，夸奖没有带来加薪。你仍高兴了一阵，也更清楚肯定与待遇不是同一种货币。"
+      },
+      { "text": "你妥善处理了一件工作，被人在众人面前认真肯定。掌声很短，回到座位仍是原来的活；那几句话却让疲惫暂时有了出处。" }
+    ],
     "effects": [
       {
         "path": "career.level",
@@ -199,8 +240,23 @@ export const dailyWorkWealthEvents = [
       18,
       85
     ],
+    "lifetimeProbability": 0.4,
     "baseWeight": 24,
-    "text": "你在市集上讲了半天价。省下的钱不多，但那一刻你觉得自己从生活手里掰回了一点主动权。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "你在集上同摊主讲了许久价。铜钱、秤星和彼此的脸色来回移动，最后各退一步；买卖做成了，双方仍坚持自己吃了亏。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "你为几样日用品讲了半天价。省下的钱很少，却能再添一顿菜；体面先站在旁边，等日子宽些再请回来。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2015 }] },
+        "text": "你比较了几家价格，又领券、凑单，终于省下一点钱。为了证明自己没有被算法安排，你认真配合了算法的全部步骤。"
+      },
+      { "text": "你在市集上讲了半天价。省下的钱不多，但那一刻你觉得自己从生活手里掰回了一点主动权。" }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -236,7 +292,17 @@ export const dailyWorkWealthEvents = [
         "multiply": 2
       }
     ],
-    "text": "你随手买的一张票中了小奖。金额不大，但足够让这一天显得像被命运眨了一下眼。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "一张票中了小奖，你先高兴，随后便把钱分给几项欠着的开支。好运在手里停得很短，倒确实让这个月松了一口气。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 60 }] },
+        "text": "你核对几遍才相信中了小奖，笑着说够请家里吃顿饭。金额不大，晚辈却难得听你主动说一次‘今天我来付’。"
+      },
+      { "text": "你偶然买的一张票中了小奖，金额离改变人生很远，却够让一天变得轻快。领奖后你把票根留了一阵，像保存命运一次不太正式的道歉。" }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -343,7 +409,17 @@ export const dailyWorkWealthEvents = [
       ]
     },
     "baseWeight": 24,
-    "text": "你在工作里出了点错，被人当面说了几句。事情后来补上了，脸上的热却退得更慢。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "career.status", "in": ["self_employed", "gig_worker"] }] },
+        "text": "你把一单活的时间、尺寸或地址弄错，只能自己赔礼、返工并承担损失。没人正式训你，顾客的一句质问和少掉的收入已经够完整。"
+      },
+      {
+        "conditions": { "all": [{ "path": "career.income", "lte": 35 }] },
+        "text": "工作里一处小错被上级当众放大，你低头补救，不敢争辩语气是否过分。岗位越不稳，人的尊严越常被要求等下班后再处理。"
+      },
+      { "text": "你在工作中漏掉一个环节，被当面说了几句。事情后来补上，你也记下怎样避免再犯；错误是一课，羞辱并不是必需的教材。" }
+    ],
     "effects": [
       {
         "path": "career.level",
@@ -489,7 +565,17 @@ export const dailyWorkWealthEvents = [
         "multiply": 1.4
       }
     ],
-    "text": "到了还账的日子，你把钱数了又数。欠条、情分和利息压在一起，连呼吸都像要算成本。",
+    "text": [
+      {
+        "conditions": { "all": [{ "hasTag": "kinship_debt_memory" }] },
+        "text": "向亲友借的钱到了约定归还的时候，你把数目凑齐，也带上一点礼。熟人不一定催，正因为不催，这笔账在心里反而更响。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "还款日到了，钱仍差一点。你重新安排吃穿，又打电话商量期限；欠债让每个普通开支都像站到法庭上说明自己为何必要。"
+      },
+      { "text": "到了还账的日子，你把本金、利息和手头余钱重新核了一遍。钱转出去以后并不轻松，只是那张一直悬着的日历终于翻过一页。" }
+    ],
     "effects": [
       {
         "path": "resources.wealth",

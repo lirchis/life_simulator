@@ -1,6 +1,6 @@
 import { calculateEnvironment } from "./environment.js";
-import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=deep-literature-2";
-import { attachHistoricalLife } from "./historicalLives.js?v=deep-literature-2";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=library-qa-1";
+import { attachHistoricalLife } from "./historicalLives.js?v=library-qa-1";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);

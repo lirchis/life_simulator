@@ -413,6 +413,8 @@ type LifeEvent = {
   requiresAnyEvent?: string[];
   blocksAnyEvent?: string[];
   baseWeight: number;
+  lifetimeProbability?: number;
+  triggerProbability?: number;
   weightModifiers?: WeightModifier[];
   priority?: number;
   cooldown?: number;
@@ -775,7 +777,13 @@ type AggregateDomain =
 
 ## 7. 权重系统
 
-事件通过 `baseWeight` 和 `weightModifiers` 计算最终权重。
+候选事件先经过“终身资格”和“当年触发”两层概率，再通过 `baseWeight` 和 `weightModifiers` 计算最终权重：
+
+- `lifetimeProbability`：用 `seed + event.id` 做稳定抽样，决定这一生是否可能写到该事件。同一人生逐年推进时结果不会反复摇摆。适合“并非人人都会遇见”的日常切片；未显式配置的 `daily_` 事件默认使用较保守的终身资格率。
+- `triggerProbability`：资格与其他条件都满足后，决定该事件在这一年是否进入候选池；它是逐年抽样。
+- `baseWeight` / `weightModifiers`：多个已进入候选池的事件之间，决定谁更容易成为当年的主叙事。
+
+三者不能互相替代。只降低权重不能防止一个事件覆盖绝大多数人生；只使用逐年概率又会让长寿人生凭借重复试验几乎必然命中。需要普遍发生的生命周期节点不应配置低终身资格率。
 
 ```text
 finalWeight = baseWeight

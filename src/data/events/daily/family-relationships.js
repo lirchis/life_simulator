@@ -119,10 +119,19 @@ export const dailyFamilyRelationshipsEvents = [
       {
         "conditions": {
           "all": [
+            { "path": "meta.age", "lte": 3 }
+          ]
+        },
+        "text": "过年时，大人给你换上了一件新衣，也可能是亲戚家的旧衣改小的。你只顾摸扣子和袖口；至于这件衣服有多难得，是家人后来才说给你听的。"
+      },
+      {
+        "conditions": {
+          "all": [
             {
               "path": "resources.wealth",
               "lte": 30
-            }
+            },
+            { "path": "meta.age", "gte": 4 }
           ]
         },
         "text": "过年时你得了一件新衣服，也可能是亲戚改小的旧衣服。你还是把它叠得很平，像叠住一点体面。"
@@ -155,7 +164,17 @@ export const dailyFamilyRelationshipsEvents = [
       70
     ],
     "baseWeight": 36,
-    "text": "家里因为一点小事拌了几句嘴。锅铲、门声和沉默轮流响起，过一会儿又像什么都没发生。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 16 }] },
+        "text": "家里为作业、晚归或一件弄坏的东西拌了几句。大人的火气来得快，饭仍旧盛到你面前；和好没有仪式，只是筷子又开始往同一盘菜里伸。"
+      },
+      {
+        "conditions": { "all": [{ "hasTag": "married" }] },
+        "text": "你和伴侣为家务或一句没听清的话拌嘴，门声比事情本身响。过一会儿谁也没道歉，只把晾在外面的衣服一起收了。"
+      },
+      { "text": "家里因为一点小事拌了几句，锅铲、脚步和沉默轮流响起。事情未必真正解决，只是日子还要继续，水开了总得有人关火。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -175,8 +194,29 @@ export const dailyFamilyRelationshipsEvents = [
       0,
       90
     ],
+    "lifetimeProbability": 0.4,
     "baseWeight": 34,
-    "text": "邻居顺手帮了你家一个忙。人情不大，却像一根细线，把附近几户人的日子轻轻系在一起。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "邻里来搭了一把手，可能是借牲口、抬东西，也可能只是替你家守了一阵门。乡下的人情不写收据，却记得比收据久。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
+            { "path": "meta.currentYear", "lte": 1995 },
+            { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }
+          ]
+        },
+        "text": "邻居顺手帮了你家一个忙。楼道里锅碗和脚步声挨得近，谁家有难处，也很难真正关在门后。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2000 }] },
+        "text": "邻居替你收了东西，又在消息里说了一声。城市里的人情常被压缩成几句话和一次顺手，分量却不一定轻。"
+      },
+      { "text": "邻居顺手帮了你家一个忙。事情不大，日后也未必专门提起；许多关系，就是这样在小事里没有散掉。" }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",
@@ -204,7 +244,17 @@ export const dailyFamilyRelationshipsEvents = [
       95
     ],
     "baseWeight": 24,
-    "text": "你翻到一张旧照片。照片里的人还年轻，时间却已经在背面悄悄写了很多行小字。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1965 }] },
+        "text": "你从木箱或旧书里翻出一张发黄的合影，背面只写了年月。有人已经叫不出名字，留下的人便围着衣着和站位，一点点把关系认回来。"
+      },
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "gte": 1 }] },
+        "text": "孩子翻到你年轻时的照片，先笑那时的衣服，又追问旁边是谁。你讲了很久，才发现一张小照片装得下许多他们从未见过的人。"
+      },
+      { "text": "你整理旧物时翻到一张照片，影中人仍停在当年的年龄。背面的字已经淡了，几段往事却因一个站姿、一扇旧门重新有了声音。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -261,7 +311,17 @@ export const dailyFamilyRelationshipsEvents = [
       35
     ],
     "baseWeight": 32,
-    "text": "家里人没有说漂亮话，只是在你需要的时候多塞了一点钱、多留了一盏灯。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "家里拿不出多少余钱，只把你出门要带的饭装得更实，又悄悄塞进一点零用。支持不够解决难处，却是从本来就紧的日子里挤出来的。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 24 }, { "path": "career.status", "in": ["employed", "self_employed"] }] },
+        "text": "你为工作进退犹豫，父母没有替你作决定，只说累了可以回来吃饭。那句话不提供方案，却替最坏的结果留了一把椅子。"
+      },
+      { "text": "家里人不擅长说漂亮话，只在你晚归时留灯，在需要时把能给的东西放进包里。关心没有署名，你一看摆放的位置便知道是谁。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -379,12 +439,46 @@ export const dailyFamilyRelationshipsEvents = [
     "id": "daily_friend_night_noodles",
     "title": "深夜面摊",
     "category": "relationship",
+    "yearRange": [
+      1880,
+      2035
+    ],
     "ageRange": [
       18,
       45
     ],
+    "lifetimeProbability": 0.32,
+    "currentRegions": {
+      "cityTiers": [
+        "town",
+        "county",
+        "city",
+        "tier2",
+        "tier1"
+      ]
+    },
     "baseWeight": 30,
-    "text": "你和朋友坐在夜里的面摊边，聊活计、钱和不敢说出口的害怕。汤很烫，话也是真话。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 1949 }
+          ]
+        },
+        "text": "收市以后，你和相熟的人蹲在夜摊边分一碗热面，谈工钱，也谈白日里不便谈的话。汤寡淡，话倒有些分量。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 1992 }
+          ]
+        },
+        "text": "夜班散了，你和朋友在小面摊坐下，谈单位、家用和不敢让家里听见的发愁。辣椒放得豪爽，办法仍旧没有。"
+      },
+      {
+        "text": "你和朋友坐在夜里的面摊边，聊活计、钱和不敢说出口的害怕。汤很烫，话也是真话。"
+      }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",
@@ -467,6 +561,7 @@ export const dailyFamilyRelationshipsEvents = [
       42
     ],
     "maxOccurrences": 3,
+    "lifetimeProbability": 0.82,
     "baseWeight": 20,
     "conditions": {
       "all": [
@@ -518,6 +613,7 @@ export const dailyFamilyRelationshipsEvents = [
       45
     ],
     "maxOccurrences": 3,
+    "lifetimeProbability": 0.82,
     "baseWeight": 20,
     "conditions": {
       "all": [
@@ -639,7 +735,17 @@ export const dailyFamilyRelationshipsEvents = [
       16
     ],
     "baseWeight": 30,
-    "text": "家里只有一点零食，你和兄弟姐妹或邻居孩子分着吃。甜味很快没了，分给谁、留给谁却记得更久。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 7 }] },
+        "text": "大人把仅有的一小块吃食掰开，放进几个孩子手里。你先盯着别人那块是不是更大，吃完又把纸递给还没分到的人。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 32 }, { "path": "meta.currentYear", "lte": 1985 }] },
+        "text": "家里难得有一点糖果或糕点，兄弟姐妹按人数分开。每份都小，负责分的人却切了又比，像在主持一场很严肃的公平。"
+      },
+      { "text": "你把手里不多的零食分给兄弟姐妹或邻居孩子。甜味很快吃完，大家仍把包装折来折去，仿佛还能从里面找出一点。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -710,7 +816,17 @@ export const dailyFamilyRelationshipsEvents = [
       35
     ],
     "baseWeight": 28,
-    "text": "家里的老人讲起旧事，讲到一半又停住。你那时未必懂，只觉得一个人的沉默里也住着很多年。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "老人借着灯火讲起逃荒、兵乱或一次远行，许多地名你没听过。讲到难处时他停下来拨了拨灯芯，故事便由那一小段沉默继续。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 10 }] },
+        "text": "老人讲起年轻时住过的房子，你听着听着去摆弄手边东西，只记住其中一个好笑的细节。多年以后，留下来的也许正是这一小段。"
+      },
+      { "text": "家中老人说起一件旧事，前后年份有些对不上，情绪却没有记错。你没有急着纠正，只把尚能确认的人名和地方再问一遍。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -734,7 +850,37 @@ export const dailyFamilyRelationshipsEvents = [
       70
     ],
     "baseWeight": 24,
-    "text": "家里有人去看病，药包和欠下的账摊在桌上。那天你发现，身体一疼，钱也会跟着疼。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 1949 },
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "家里有人病了，药铺的纸包和借来的钱一起摊在桌上。郎中说要静养，欠账却很有精神，当晚便跟着全家一起醒着。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["village", "town"] },
+            { "path": "meta.currentYear", "lte": 2000 }
+          ]
+        },
+        "text": "家里有人去看病，车钱、药钱和误工的日子被一项项算出来。病人躺着，一家人的生计也跟着歇了半边。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "检查单和缴费单在手里越攒越厚。医生谈身体，家里谈钱，两边说的其实是同一场难处。"
+      },
+      {
+        "text": "家里有人去看病，药包和账单摊在桌上。身体一疼，时间、钱和照料便一起有了具体数目。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -761,6 +907,7 @@ export const dailyFamilyRelationshipsEvents = [
       3,
       90
     ],
+    "lifetimeProbability": 0.45,
     "baseWeight": 26,
     "text": [
       {
@@ -773,6 +920,23 @@ export const dailyFamilyRelationshipsEvents = [
           ]
         },
         "text": "年夜饭桌上的菜不一定多，但每个人都像在给过去一年收尾。有人夹菜，有人算账，有人悄悄叹气。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 30 }
+          ]
+        },
+        "text": "年夜饭的菜不多，每一碗却都摆得认真。大人说够吃就是福气，孩子看着盘底，负责判断这句话是否需要复议。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1990 },
+            { "path": "location.migratedTimes", "gte": 1 }
+          ]
+        },
+        "text": "你赶回去吃了一顿年夜饭。路上花了许多时间，桌边真正安静下来的只有几分钟；一家人用夹菜代替了不少不会说的话。"
       },
       {
         "text": "年夜饭桌上热闹了一阵。祝福、催问、玩笑和沉默混在一起，像每个家都会熬的一锅汤。"
@@ -847,7 +1011,17 @@ export const dailyFamilyRelationshipsEvents = [
       45
     ],
     "baseWeight": 20,
-    "text": "你和父母难得认真谈了一次。话没有全说开，但至少有些沉默终于换成了句子。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 22 }] },
+        "text": "你和父母谈到升学、离家或喜欢做的事。他们先说现实，你先觉得不被理解；谈到最后仍没一致，至少彼此知道争执背后在怕什么。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 35 }] },
+        "text": "父母年纪大了，你们难得把病情、养老和过去的误会放在一张桌上谈。许多旧事无法重来，今后的安排总算不再全靠猜。"
+      },
+      { "text": "你和父母认真谈了一次工作、家庭和彼此的期待。话没有全说开，也有几句说重了；临走前有人把水果塞给你，谈话便获得一个不算漂亮但可以继续的结尾。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -916,8 +1090,19 @@ export const dailyFamilyRelationshipsEvents = [
       10,
       90
     ],
+    "lifetimeProbability": 0.4,
     "baseWeight": 18,
-    "text": "附近有人家办丧事，巷道或村路忽然安静下来。你第一次或又一次意识到，每个熟面孔都会有告别的一天。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "村里有人家办丧事，来帮忙的人各自找到事情做。锅灶、白布和压低的说话声连成几天，你看见一个人的离开怎样由许多人共同料理。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 18 }] },
+        "text": "附近有人家办丧事，大人不让你多问。你从突然安静的巷道和几张疲惫的脸上，先明白了告别，再慢慢学会那个词。"
+      },
+      { "text": "附近有人家办丧事，巷道或楼道忽然安静下来。一个熟面孔从日常里消失以后，人们才发现他原来占着那么具体的位置。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -991,7 +1176,17 @@ export const dailyFamilyRelationshipsEvents = [
       50
     ],
     "baseWeight": 20,
-    "text": "你参加了一场婚宴。敬酒、红包、玩笑和比较挤在一张桌上，喜庆里也藏着许多现实的账。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1978 }] },
+        "text": "你去吃一场婚宴，借来的桌凳摆满院子，菜从灶房一盆盆端来。喜帖很薄，两家为席面、礼金和人情记下的账却要翻很久。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "你参加婚宴前把礼金数了几遍，既不能太少，也不能让这个月太难。席间人人说添福，回家后还是要把余下日子重新算平。"
+      },
+      { "text": "婚宴桌上挤着敬酒、亲戚玩笑和对新人的各种盘问。喜庆是真的，彼此比较也是真的；最后打包的剩菜比大多数祝词更实在。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -1033,7 +1228,17 @@ export const dailyFamilyRelationshipsEvents = [
         "multiply": 1.5
       }
     ],
-    "text": "你们为了钱拌了几句嘴。账单不大，却能把很多没说出口的不安一并翻出来。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "你们为一笔必要开支争起来：每一项都省过，每个人也都觉得自己已经退让。钱少时，账本不只记数字，还替疲惫寻找责任人。"
+      },
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "gte": 1 }] },
+        "text": "你们为孩子的花费拌嘴，一个怕亏待眼前，一个怕拖累以后。争的看似是一张账单，其实是两种都说得通的担心。"
+      },
+      { "text": "你和伴侣为储蓄、花费或谁承担得更多争了几句。计算器按得很响，真正需要重新分配的却不只是钱。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -1057,7 +1262,17 @@ export const dailyFamilyRelationshipsEvents = [
       55
     ],
     "baseWeight": 22,
-    "text": "一个熟悉的朋友搬走了。路口还是那个路口，只是少了一个会喊你名字的人。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 16 }] },
+        "text": "朋友随家人搬走，最后一天把几样小东西分给你。第二天你仍走原来的路，只是到了约好的地方，才想起以后不用等了。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1990 }, { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }] },
+        "text": "朋友因为工作或房租搬到城市另一头。联系方式还在，见面却从‘下楼就来’变成要提前两周翻日程。"
+      },
+      { "text": "一个熟悉的朋友搬走了，临行前说以后常联系。住处留下空房，关系没有立刻消失，只是从日常碰面改成偶尔想起。" }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",
@@ -1088,7 +1303,17 @@ export const dailyFamilyRelationshipsEvents = [
       ]
     },
     "baseWeight": 18,
-    "text": "姻亲来家里坐了一阵，客气话和真心话隔着茶水来回试探。婚姻不只是两个人，也是一串人情往来。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "姻亲带着自家种的东西来坐，先问收成和身体，再慢慢绕到夫妻过日子的事。茶换了几次，真正想说的话才走进屋里。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 38 }] },
+        "text": "姻亲来访，你们把家里体面的东西摆出来，谁也不先提最近的难处。临走时对方悄悄留下一个信封，客气话终于有了一点实际重量。"
+      },
+      { "text": "姻亲来家里坐了一阵，茶水、礼物和近况依次摆上桌。双方都在关心，也都小心不把关心问得太像审查。" }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -1120,7 +1345,17 @@ export const dailyFamilyRelationshipsEvents = [
       ]
     },
     "baseWeight": 18,
-    "text": "孩子半夜发烧，你摸着额头、找药、等体温降下来。那一夜很长，长到足够让人重新理解牵挂。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1985 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "孩子半夜烧得滚烫，你和家人轮流用湿布擦身，天没亮便准备去找卫生员。钟表不在手边，漫长主要由一次次摸额头来丈量。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "孩子半夜发烧，你一边量体温、找药，一边盘算若去医院要花多少。最后还是把钱塞进口袋；有些账可以以后再怕。"
+      },
+      { "text": "孩子半夜发烧，你记体温、喂水，又在灯下等药慢慢起效。每隔一会儿便去摸额头，那一夜被切成许多短短的担心。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -1148,7 +1383,17 @@ export const dailyFamilyRelationshipsEvents = [
       70
     ],
     "baseWeight": 18,
-    "text": "你见到多年不见的老同学。大家说起从前，又悄悄比较现在；笑声里有亲近，也有一点无法回头的距离。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 55 }] },
+        "text": "老同学聚在一起，先认人，再对着旧照片确认谁坐过哪排。有人谈退休，有人谈病，最响的笑声仍来自一件几十年前不肯承认的糗事。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 38 }] },
+        "text": "同学聚会选的地方不算便宜，你犹豫后还是去了。席间有人谈房车职位，你把近况说得简短；真正让你放松的，是还有人记得你当年怕哪门课。"
+      },
+      { "text": "你见到多年不见的老同学，大家一边说从前，一边小心交换现在。亲近和比较同桌坐着，散席时仍有人陪你走到车站。" }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",

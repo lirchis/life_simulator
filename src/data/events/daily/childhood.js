@@ -16,7 +16,17 @@ export const dailyChildhoodEvents = [
       ]
     },
     "baseWeight": 42,
-    "text": "夏夜很黑，萤火虫一闪一闪。你把它们捧在手心，像捧住了一小把会呼吸的星星。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "稻田边的夏夜没有多少灯，你跟着伙伴用蒲扇轻轻拢住几点萤光。虫子很快放走，空罐子却被大家轮流看了半天。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1990 }, { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }] },
+        "text": "城边难得见到几只萤火虫，大人让你关掉手电再看。黑暗安静下来以后，那几点微光才终于肯出现。"
+      },
+      { "text": "夏夜里，草丛间有萤火虫忽明忽暗。你同孩子们追了一阵，最后摊开手，掌心只剩一点草叶的凉气。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -39,8 +49,28 @@ export const dailyChildhoodEvents = [
       30,
       90
     ],
+    "lifetimeProbability": 0.4,
     "baseWeight": 28,
-    "text": "你偶然听到一首旧歌。旋律一响，很多早就不提的年份忽然从心里抬头。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "你听见有人哼起一支旧调。词已经记不全了，腔却还在；许多没留下相片的年月，顺着那一点旋律回到眼前。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
+            { "path": "meta.currentYear", "lte": 1995 }
+          ]
+        },
+        "text": "收音机里忽然响起一首旧歌。旋律比记忆可靠，前奏才走几步，你已经回到另一个屋子和另一张年轻的脸旁边。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2005 }] },
+        "text": "播放列表偶然推来一首旧歌。机器并不知道它替你打开了哪一年，只知道你停下来，完整听完了一遍。"
+      },
+      { "text": "你偶然听到一首旧歌。旋律一响，很多早就不提的年份忽然从心里抬头。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -68,7 +98,17 @@ export const dailyChildhoodEvents = [
       ]
     },
     "baseWeight": 34,
-    "text": "雨停以后，你和孩子们在泥地边踩出一串脚印。鞋脏了要挨说，可那一刻世界软得像能重新捏一遍。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 3 }] },
+        "text": "雨停后，大人牵着三岁的孩子绕过泥坑，鞋尖还是不慎踩进去。孩子低头看水花，大人先把人抱稳，再去想这双鞋怎样洗。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "雨后田边的土软了，你和孩子们挑不深的地方踩脚印。回家前先在草上蹭鞋，办法很认真，效果比较谦虚。"
+      },
+      { "text": "雨停后，几个孩子带着你在泥地边留下一串大小不一的脚印。大人远远喊别再踩了，队伍这才拖着湿鞋往回走。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -156,7 +196,17 @@ export const dailyChildhoodEvents = [
       13
     ],
     "baseWeight": 28,
-    "text": "你和几个孩子躲着大人玩了一阵。秘密地点其实很近，但对你们来说，已经像一块独立的小国土。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "你和几个孩子躲到柴垛或屋后玩，大人一喊名字，大家立刻安静。秘密地点离灶台没几步，胆量倒像走了很远。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1995 }, { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }] },
+        "text": "你们躲在楼梯转角或小区角落玩，约好不让大人找到。监控和家长的喊声使这块领地很短命，规矩却由孩子们自己定。"
+      },
+      { "text": "你和几个孩子找到一处不太显眼的角落，躲着大人玩了一阵。谁负责望风、谁可以加入，第一次都由你们自己商量。" }
+    ],
     "effects": [
       {
         "path": "relationships.friendship",
@@ -180,7 +230,17 @@ export const dailyChildhoodEvents = [
       9
     ],
     "baseWeight": 20,
-    "text": "半夜雷声滚过屋顶，你被吓醒了。有人把你往怀里搂了搂，世界才慢慢从黑暗里退远。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 3 }] },
+        "text": "雷声在半夜突然压过屋顶，两三岁的孩子惊醒大哭。照料者摸黑抱起他，轻拍后背；窗外仍在闪，怀里的呼吸先慢下来。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }, { "path": "meta.currentYear", "lte": 1985 }] },
+        "text": "雷声滚过瓦屋，窗纸一亮一暗。大人起身查看门窗，又把你往被里掖好；他们也怕屋漏，只是先顾不上表现。"
+      },
+      { "text": "半夜一声闷雷把你惊醒，家人来到床边，开一盏小灯陪了片刻。雷雨没有马上过去，屋里有人在便已不同。" }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -211,7 +271,17 @@ export const dailyChildhoodEvents = [
       ]
     },
     "baseWeight": 26,
-    "text": "你跟着大人去赶集，人声、秤砣、牲口味和油锅香混在一起。小地方的热闹，也能把眼睛塞得很满。",
+    "text": [
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1978 }] },
+        "text": "你跟着大人赶集，布匹、农具和几筐时鲜排在土路两边。大人反复还价，你盯着油锅，双方关心的都是有限家用怎样花。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
+        "text": "集上吃食很多，大人只给你买了最便宜的一小份，又把要买的盐和针线逐项数清。热闹可以随便看，花钱仍要排次序。"
+      },
+      { "text": "你随大人去赶集，人声、秤砣、车铃和熟食香挤在一路。大人怕你走散，始终攥着你的手；你走得慢，眼睛却忙得很。" }
+    ],
     "effects": [
       {
         "path": "attrs.intelligence",

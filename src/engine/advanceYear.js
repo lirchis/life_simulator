@@ -2,11 +2,11 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=deep-literature-2";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=library-qa-1";
 import { matchConditions } from "./conditions.js";
 import { applyNaturalChanges } from "./naturalChanges.js";
-import { getHistoricalLife } from "./historicalLives.js?v=deep-literature-2";
-import { composeQuietYearText } from "./quietYearText.js?v=deep-literature-2";
+import { getHistoricalLife } from "./historicalLives.js?v=library-qa-1";
+import { composeQuietYearText } from "./quietYearText.js?v=library-qa-1";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], ended: true };
@@ -145,6 +145,7 @@ function baseCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchLifetimeProbability(event, state))
     .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));
 }
@@ -159,8 +160,25 @@ function scheduledCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchLifetimeProbability(event, state))
     .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));
+}
+
+function matchLifetimeProbability(event, state) {
+  const configured = event.lifetimeProbability ?? (event.id.startsWith("daily_") ? 0.38 : undefined);
+  if (configured === undefined) return true;
+  const probability = Math.min(1, Math.max(0, configured));
+  return stableUnitInterval(`${state.meta.seed}|${event.id}`) < probability;
+}
+
+function stableUnitInterval(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
 }
 
 function matchTriggerProbability(event, state, context) {

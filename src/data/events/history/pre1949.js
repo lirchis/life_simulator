@@ -36,6 +36,12 @@ export const historyPre1949Events = [
         "id": "farm_work",
         "text": "留在田里，先帮家里扛活",
         "resultText": "你留在田里。土地给不了太多想象，但每天都要人把腰弯下去。",
+        "conditions": {
+          "all": [
+            { "path": "birth.hukou", "eq": "rural" },
+            { "path": "location.currentCityTier", "in": ["village", "town", "county"] }
+          ]
+        },
         "effects": [
           {
             "path": "career.status",
@@ -69,6 +75,11 @@ export const historyPre1949Events = [
         "id": "apprentice",
         "text": "进铺子当学徒",
         "resultText": "你进了铺子。师傅的话比钟还准，手艺和委屈都要一点点熬出来。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] }
+          ]
+        },
         "effects": [
           {
             "path": "career.status",
@@ -100,8 +111,13 @@ export const historyPre1949Events = [
       },
       {
         "id": "dock_or_factory",
-        "text": "去码头或厂里做工",
-        "resultText": "你跟着人去了码头或厂里。活重、钱少，但城市的门缝从此露出一点光。",
+        "text": "去码头、矿场或工场做工",
+        "resultText": "你跟着人去了码头、矿场或工场。活重、钱少，但另一种谋生的门缝从此露出一点光。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] }
+          ]
+        },
         "effects": [
           {
             "path": "career.status",
@@ -230,8 +246,14 @@ export const historyPre1949Events = [
       },
       {
         "id": "textile_or_factory",
-        "text": "进纱厂或作坊做女工",
-        "resultText": "你进了纱厂或作坊。机器声很硬，工钱很薄，但你第一次有了自己挣来的钱。",
+        "text": "进缫丝场、纺织作坊或机器厂做工",
+        "resultText": "你进了缫丝场、纺织作坊或新式机器厂。活计又响又累，工钱很薄，但你第一次有了自己挣来的钱。",
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1870 },
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] }
+          ]
+        },
         "effects": [
           {
             "path": "career.status",
@@ -317,11 +339,36 @@ export const historyPre1949Events = [
       {
         "id": "early_household_work",
         "text": "先学着干活",
-        "resultText": "你没有进学。下田、看铺、带弟妹或给师傅递东西，才是每天真正要交的功课。",
+        "resultText": "你没有进学。下田、拾柴、带弟妹或替大人照看牲口，才是每天真正要交的功课。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
         "baseWeight": 5,
         "weightModifiers": [
           { "path": "attrs.family", "lte": 3, "multiply": 1.8 },
           { "path": "birth.hukou", "eq": "rural", "multiply": 1.3 }
+        ],
+        "effects": [
+          { "path": "education.score", "add": -3 },
+          { "path": "resources.wealth", "add": 2 },
+          { "addTrait": "practical_skill" },
+          { "addTag": "early_household_work" }
+        ]
+      },
+      {
+        "id": "early_urban_work",
+        "text": "先学着干活",
+        "resultText": "你没有进学。看铺、带弟妹、跑腿或给师傅递东西，才是每天真正要交的功课。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }
+          ]
+        },
+        "baseWeight": 5,
+        "weightModifiers": [
+          { "path": "attrs.family", "lte": 3, "multiply": 1.8 }
         ],
         "effects": [
           { "path": "education.score", "add": -3 },
@@ -432,6 +479,9 @@ export const historyPre1949Events = [
       "hukou": [
         "rural"
       ]
+    },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
     },
     "ageRange": [
       8,
@@ -1060,6 +1110,10 @@ export const historyPre1949Events = [
         "anhui"
       ]
     },
+    "currentRegions": {
+      "provinces": ["hebei", "shanxi", "shandong", "henan", "jiangsu", "anhui"],
+      "cityTiers": ["village", "town", "county"]
+    },
     "maxOccurrences": 1,
     "baseWeight": 16,
     "text": "你替村里人送过几次消息。青纱帐一动，心也跟着动，脚下每一步都可能踩响命运。",
@@ -1097,7 +1151,28 @@ export const historyPre1949Events = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 20,
-    "text": "某个亲人的消息断在战乱里。饭桌上少了一副碗筷，后来谁也不主动提起。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 14 }
+          ]
+        },
+        "text": "家里有个大人的消息断在战乱里。长辈仍照旧摆过几次碗，见你要问，又把那只碗轻轻收回橱柜；你先记住的是饭桌突然空了一角。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "location.migratedTimes", "gte": 1 },
+            { "hasTag": "wartime_refugee" }
+          ]
+        },
+        "text": "逃难的路线一改再改，某个亲人的家书也停在半途。你托返乡的人打听，在车站和收容所抄过名字，最后只得到一句‘没有见过’。"
+      },
+      {
+        "text": "某个亲人的消息断在战乱里。家里没有等到阵亡通知，也没有等到归人，只把他常坐的位置慢慢让给杂物；没有结论的失去，比一句噩耗更难收拾。"
+      }
+    ],
     "effects": [
       {
         "path": "relationships.family",
@@ -1247,7 +1322,28 @@ export const historyPre1949Events = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 24,
-    "text": "地方上又添了一项捐。名目换来换去，最后都落到米袋、铺账和一家人的饭桌上。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "birth.hukou", "eq": "rural" }
+          ]
+        },
+        "text": "乡里又来催一项捐，按亩、按户还是按牲口，各处算法不同。你从准备留种的粮里挪出一份，官差带走的是谷子，地里少下去的却是来年的指望。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.field", "in": ["apprentice", "manual_worker", "small_business", "trade"] },
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "地方上又添一项捐，摊到铺面和摊位时已经换了几次名目。你把当天薄利重新拨了一遍算盘，发现官府的那一份总比晚饭更先结清。"
+      },
+      {
+        "text": "地方上又添了一项捐，公文上的名目很整齐，催收时却只认现钱。你翻遍铺账、米缸和抽屉，最后明白地方财政缺的口子，总能在一家人的饭桌上找到边。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -1331,7 +1427,28 @@ export const historyPre1949Events = [
       ]
     },
     "baseWeight": 18,
-    "text": "你在码头扛过包。船笛一响，货、汗、骂声和江风混在一起，城市的饭碗沉得很具体。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 20 }
+          ]
+        },
+        "text": "你初到码头，只能跟着老脚夫学怎样让麻包落在肩胛最硬的地方。船笛一响便要抢活，年轻并不自动多挣几个钱，只是摔倒后爬得快些。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "location.migratedTimes", "gte": 1 },
+            { "path": "birth.hukou", "eq": "rural" }
+          ]
+        },
+        "text": "从乡下到埠头后，你靠扛包换当天的饭钱。货袋上印着远方商号，自己睡的通铺却离江岸只有几条街；货走得比人远，也比人轻松。"
+      },
+      {
+        "text": "你在码头按包计钱，遇上大船靠岸便从天亮忙到灯火起来。货、汗、工头的催声和江风混在一起，城市的繁华先以重量落到你的肩上。"
+      }
+    ],
     "effects": [
       {
         "path": "career.income",
@@ -1554,7 +1671,28 @@ export const historyPre1949Events = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 28,
-    "text": "钱忽然变得很薄，今天能买的东西，明天就差一截。你看见大人把钞票捏得很紧，像捏住一把正在漏的沙。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "birth.hukou", "eq": "rural" }
+          ]
+        },
+        "text": "纸币一天比一天轻，乡下人卖粮后不敢久留现钱，赶紧换成盐、布和农具。你第一次见到卖出一担谷子的人抱着一叠钞票，却仍舍不得在茶摊坐下。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.status", "eq": "employed" },
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "薪水发到手时已追不上米价，你下班便往店铺赶，怕多过一夜又少买半升。钞票的零越来越多，布袋里的东西却越来越少。"
+      },
+      {
+        "text": "钱忽然变得很薄，上午谈好的价钱，下午便要重写。你把钞票扎成一捆去买日用品，找回来的不是零钱，而是店主一句‘明天还要涨’。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -1846,7 +1984,28 @@ export const historyPre1949Events = [
     "maxOccurrences": 1,
     "priority": 45,
     "baseWeight": 80,
-    "text": "胜利的消息传来，有人哭，有人笑，也有人先问失散的人还能不能回来。八年像一条长河，终于听见了回声。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 7 }
+          ]
+        },
+        "text": "胜利的消息传来，大人忽然把你抱起来，街上有人敲锣，也有人站着流泪。你还不懂八年有多长，只知道这一天家里的灯点得比平常久。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "eventOccurred": "era_war_lost_family_member" },
+            { "path": "location.migratedTimes", "gte": 1 }
+          ]
+        },
+        "text": "胜利的消息传到临时住处，人群欢呼，你却先去邮局和车站打听失散的亲人。战争结束是一张大告示，家能不能重新拼齐，仍要等一封很小的信。"
+      },
+      {
+        "text": "胜利的消息沿着广播、报纸和街头传来，有人放鞭炮，有人抱头痛哭。你跟着人群松了一口气，也知道停火不会把死者、废墟和欠下的日子一并送还。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",

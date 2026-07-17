@@ -7,6 +7,9 @@ import { createInitialState } from "../src/engine/state.js";
 const errors = [];
 const eventIds = new Set();
 const [minBirthYear, maxBirthYear] = data.birthYearRange;
+const INFANT_ADULT_PERSPECTIVE = /你(?:知道|第一次知道|意识到|明白|懂得|发现|觉得|认为|盘算|决定|期待|担心|记住|记得|回想|先记起|学会|只好|终于|从此)|后来回想|多年以后你仍记得|日子像被洗亮/;
+const INFANT_MEMORY_DISCLAIMER = /记不起|无法证明你记住|没有人能证明你记住|由(?:家人|长辈|旁人).{0,12}(?:讲述|转述|保存)/;
+const YOUNG_CHILD_ABSTRACTION = /(?:你|他|她)(?:逐渐)?(?:明白|懂得|意识到|理解|归纳|认为|看出).{0,45}(?:秩序|结构|权威|机会|伦理|阶级|制度|命运|时代)|阅读伦理|结构性机会|不肯把.{0,12}当作天理|权威可以/;
 
 if (minBirthYear !== 1840 || maxBirthYear !== 2020) {
   errors.push(`出生年份范围应为 1840-2020，实际为 ${minBirthYear}-${maxBirthYear}`);
@@ -42,6 +45,9 @@ for (const event of data.events) {
   }
   if (event.triggerProbability !== undefined && !(event.triggerProbability >= 0 && event.triggerProbability <= 1)) {
     errors.push(`${event.id} 的 triggerProbability 必须在 [0, 1] 内`);
+  }
+  if (event.lifetimeProbability !== undefined && !(event.lifetimeProbability >= 0 && event.lifetimeProbability <= 1)) {
+    errors.push(`${event.id} 的 lifetimeProbability 必须在 [0, 1] 内`);
   }
 
   if (!event.outcomes) continue;
@@ -106,6 +112,12 @@ function validateHistoricalLives() {
       seenYears.add(item.year);
       if (!item.title || typeof item.title !== "string") errors.push(`${life.id}:${item.year} 缺少固定标题`);
       if (!item.text || typeof item.text !== "string") errors.push(`${life.id}:${item.year} 缺少固定正文`);
+      if (index <= 3 && INFANT_ADULT_PERSPECTIVE.test(item.text) && !INFANT_MEMORY_DISCLAIMER.test(item.text)) {
+        errors.push(`${life.id}:${item.year} 的0—3岁正文疑似使用成人认知或稳定自传记忆`);
+      }
+      if (index >= 4 && index <= 7 && YOUNG_CHILD_ABSTRACTION.test(item.text)) {
+        errors.push(`${life.id}:${item.year} 的4—7岁正文疑似倒灌成人式结构分析`);
+      }
       if (Object.hasOwn(item, "choices") || Object.hasOwn(item, "outcomes")) {
         errors.push(`${life.id}:${item.year} 不能包含选择或随机结果`);
       }

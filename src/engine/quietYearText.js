@@ -2,6 +2,7 @@ const RURAL_TIERS = new Set(["village", "town"]);
 
 export function composeQuietYearText(state, rng) {
   const year = state.meta.currentYear;
+  if (state.meta.age <= 3) return composeEarlyChildhoodText(state, rng);
   const scenes = getEraScenes(year, isRuralSetting(state));
   const details = getLifeDetails(state);
   const reflections = [
@@ -35,6 +36,81 @@ export function composeQuietYearText(state, rng) {
     if (!used.has(normalizeForReuse(text))) return text;
   }
   return `${year}年没有惊动传记作者。${choose(scenes, rng)}${choose(details, rng)}${choose(reflections, rng)}`;
+}
+
+function composeEarlyChildhoodText(state, rng) {
+  const year = state.meta.currentYear;
+  const age = state.meta.age;
+  const rural = isRuralSetting(state);
+  const scenes = getEarlyChildhoodScenes(year, rural);
+  const details = age <= 1 ? [
+    "你还不会理解大人的话，只认得抱你的手、常闻到的饭香和几种熟悉的脚步声。",
+    "你能分辨亲近的声音，却不知道屋外的人为什么忙，也不知道这一年叫什么。",
+  ] : age === 2 ? [
+    "你会跟着声音转头，会为一只碗、一扇门和突然离开的怀抱哭笑；世界仍只有眼前这么大。",
+    "你开始说一些短句，更多事情仍由哭声、手势和大人的猜测代为说明。",
+  ] : [
+    "你能跑几步，也会把听来的词说得似是而非；大人笑过以后，仍接着谈他们真正发愁的事。",
+    "你开始认得家门和常见的人，至于年份、钱和远处的局势，都还只是大人脸色的变化。",
+  ];
+  const closings = [
+    "后来这年多半不是你的记忆，而是家人偶尔讲起的一两句话。",
+    "这一年没有留成清楚的回忆，只在身体、口音和家人的讲述里留下了一点底色。",
+    "能被讲述的细节很少；幼年的时间，本来就多由旁人替一个人保存。",
+    "你后来记不起它，生活却已经在你身上安静地做了一年工。",
+  ];
+  const frames = [
+    (scene, detail, closing) => `${year}年，家里的日子照常向前。${scene}${detail}${closing}`,
+    (scene, detail, closing) => `${year}年没有留下你的自述。${scene}${detail}${closing}`,
+    (scene, detail, closing) => `关于${year}年，能说清的多半是大人的生活。${scene}${detail}${closing}`,
+    (scene, detail, closing) => `${year}年从屋檐、灶台和大人的脚步之间过去。${scene}${detail}${closing}`,
+  ];
+  const used = new Set(state.history
+    .filter((item) => item.eventId === "life_quiet_year")
+    .map((item) => normalizeForReuse(item.text)));
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    const text = choose(frames, rng)(choose(scenes, rng), choose(details, rng), choose(closings, rng));
+    if (!used.has(normalizeForReuse(text))) return text;
+  }
+  return `${year}年没有留下你的自述。${choose(scenes, rng)}${choose(details, rng)}${choose(closings, rng)}`;
+}
+
+function getEarlyChildhoodScenes(year, rural) {
+  if (year <= 1911) return rural ? [
+    "大人按节气做活，米缸和租账决定一家人的声调；你的冷暖夹在这些生计中间，被尽力照看。",
+    "鸡鸣、灶烟和田里的忙闲排着家中的日程，远处的政令到了屋里，常只剩粮价的一次变动。",
+  ] : [
+    "铺门、街声和煤油灯安排着大人的一天，屋里总有人一边算账，一边腾出手来照看你。",
+    "城里的消息从茶馆和码头传来，落到家中先变成房钱、米价，以及大人压低的一阵说话声。",
+  ];
+  if (year <= 1949) return rural ? [
+    "田里的活没有停，局势和粮价却常使大人改换打算；你被背在身上，也随一家人的脚步来回移动。",
+    "农时、欠账和远近的消息挤在一张饭桌上，大人尽量让孩子听见的仍只是碗筷声。",
+  ] : [
+    "报纸、车站和街口不断送来消息，大人谈到要紧处便放低声音，再回头看你有没有睡着。",
+    "城市的旗号和物价都在变化，家里仍先顾奶、米、药和一张能让孩子睡稳的小床。",
+  ];
+  if (year <= 1977) return rural ? [
+    "队里的活、口粮和灶台安排着大人的一天，你的吃睡由一家人从紧日子里轮流腾出手照看。",
+    "广播说着远处的事，屋里更在意你有没有发热、棉衣够不够厚，以及下一顿能添些什么。",
+  ] : [
+    "单位、票证和排队占去大人的许多时间，托儿、邻里和家中长辈把照看孩子的手一只只接上。",
+    "上班钟与院里的脚步声来回响，家人把有限的布、奶和睡眠重新分配，总要给你留一份。",
+  ];
+  if (year <= 2000) return rural ? [
+    "大人一面顾田地，一面谈外出做工和孩子读书；你的日常由留在家里的人一顿顿接起来。",
+    "电视和远方来信把世界带进屋里，你更熟悉的仍是院门、饭桌和傍晚回家的脚步。",
+  ] : [
+    "工作、住房和渐快的通讯牵着大人的注意力，他们在忙乱中轮流接送、喂饭，也轮流忘记带一件小东西。",
+    "城市比从前明亮，家里的日程却围着吃饭、睡觉和谁来照看你反复调整。",
+  ];
+  return rural ? [
+    "手机把远方的家人送到小小的屏幕里，院子和饭桌仍是你真正能摸到的世界。",
+    "大人谈工作、学校和县城的房子，你在这些话旁边吃饭、玩耍，也由他们轮流看顾。",
+  ] : [
+    "消息、通勤和账单把大人的一天切得很碎，你的吃睡却不肯按软件提醒，只照自己的时辰。",
+    "家里人一面回工作消息，一面替你擦嘴、找鞋和哄睡；所谓效率，到了幼儿面前常要重新解释。",
+  ];
 }
 
 function getEraScenes(year, rural) {
@@ -159,10 +235,10 @@ function getEraScenes(year, rural) {
 function getLifeDetails(state) {
   const age = state.meta.age;
   const options = [];
-  if (age <= 5) options.push(
+  if (age <= 5) return [
     "你能做的事还很少，大人的忙乱与耐心替你构成了整个世界。",
     "你在饭香、呵斥和怀抱之间长大，对年份没有概念，只知道谁的脚步最让人安心。",
-  );
+  ];
   else if (age <= 12) options.push(
     "你在玩耍、帮忙和受教训之间长高，口袋里常有几样大人看来毫无价值的宝物。",
     "大人忙着维持生活，你忙着理解他们为什么总说“以后就懂了”，双方进展都不算快。",

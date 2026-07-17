@@ -205,8 +205,8 @@ function evaluateBatch(batch, output) {
   const lightTextureCount = events.filter((row) => LIGHT_TEXTURE_TERMS.some((term) => row.final_text.includes(term))).length;
   const earlyDeathClusters = ERA_BUCKETS
     .map((era) => ({ era, stats: eraStats[era.id] }))
-    .filter(({ stats }) => stats.runs >= 20 && stats.early_death_under_40_rate > 0.15)
-    .map(({ era, stats }) => `${era.label}: ${stats.runs}局中${percent(stats.early_death_under_40_rate)}在40岁前结束`);
+    .filter(({ era, stats }) => stats.runs >= 200 && stats.early_death_under_40_rate > era.maxEarlyDeathUnder40)
+    .map(({ era, stats }) => `${era.label}: ${stats.runs}局中${percent(stats.early_death_under_40_rate)}在40岁前结束，校准上限${percent(era.maxEarlyDeathUnder40)}`);
 
   addFinding(output, "error", "CSV_INTEGRITY", `三张 CSV 关联或计数错误 ${integrityProblems.length} 处`, integrityProblems);
   addFinding(output, "error", "OBSERVED_CONDITION_CONFLICT", `实际触发记录违反事件时间/地区/阶级/性别条件 ${observedConflicts.length} 处`, observedConflicts);
@@ -215,7 +215,7 @@ function evaluateBatch(batch, output) {
   addFinding(output, "warning", "REPEATED_VISIBLE_COPY", `同一人生重复出现完全相同最终文案的额外次数 ${repeatedTextExcess.length}`, topCounts(repeatedTextExcess));
   addFinding(output, "warning", "OBSERVED_ANACHRONISM", `样本中出现疑似时代词汇穿越 ${anachronisms.length} 处`, anachronisms);
   addFinding(output, "warning", "INTRA_YEAR_LOCATION_BREAK", `同年先迁居、后出现只适用于旧地点的事件 ${locationReplay.orderConflicts.length} 处`, locationReplay.orderConflicts);
-  if (earlyDeathClusters.length) addFinding(output, "warning", "EARLY_DEATH_CLUSTER", `有 ${earlyDeathClusters.length} 个出生年代的40岁前结束率超过15%`, earlyDeathClusters);
+  if (earlyDeathClusters.length) addFinding(output, "warning", "EARLY_DEATH_CLUSTER", `有 ${earlyDeathClusters.length} 个出生年代的40岁前结束率超过分年代校准上限`, earlyDeathClusters);
   addFinding(output, "info", "NEVER_OBSERVED", `本批次未覆盖正式事件 ${neverObserved.length}/${data.events.length}`, neverObserved);
   if (ratio(topTenCount, events.length) > 0.42) {
     addFinding(output, "warning", "EVENT_CONCENTRATION", `触发最多的10个事件占全部事件 ${percent(ratio(topTenCount, events.length))}`, topEvents.map(([id, count]) => `${id}:${count}`));
@@ -899,11 +899,11 @@ function severityLabel(severity) {
 }
 
 const ERA_BUCKETS = [
-  { id: "late_qing", label: "晚清出生（1840-1911）", start: 1840, end: 1911 },
-  { id: "republic", label: "民国出生（1912-1948）", start: 1912, end: 1948 },
-  { id: "early_prc", label: "建国初期出生（1949-1977）", start: 1949, end: 1977 },
-  { id: "reform", label: "改革年代出生（1978-1999）", start: 1978, end: 1999 },
-  { id: "contemporary", label: "当代出生（2000-2020）", start: 2000, end: 2020 },
+  { id: "late_qing", label: "晚清出生（1840-1911）", start: 1840, end: 1911, maxEarlyDeathUnder40: 0.45 },
+  { id: "republic", label: "民国出生（1912-1948）", start: 1912, end: 1948, maxEarlyDeathUnder40: 0.4 },
+  { id: "early_prc", label: "建国初期出生（1949-1977）", start: 1949, end: 1977, maxEarlyDeathUnder40: 0.25 },
+  { id: "reform", label: "改革年代出生（1978-1999）", start: 1978, end: 1999, maxEarlyDeathUnder40: 0.1 },
+  { id: "contemporary", label: "当代出生（2000-2020）", start: 2000, end: 2020, maxEarlyDeathUnder40: 0.05 },
 ];
 
 const MODERN_TERMS = [

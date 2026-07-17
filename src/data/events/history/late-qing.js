@@ -6,7 +6,7 @@ export const historyLateQingEvents = [
     category: "wealth",
     yearRange: [1840, 1911],
     ageRange: [14, 70],
-    currentRegions: { hukou: ["rural"] },
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town", "county"] },
     maxOccurrences: 1,
     cooldown: 15,
     baseWeight: 20,
@@ -83,7 +83,7 @@ export const historyLateQingEvents = [
     category: "family",
     yearRange: [1840, 1911],
     ageRange: [18, 70],
-    currentRegions: { hukou: ["rural"] },
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town", "county"] },
     maxOccurrences: 1,
     baseWeight: 18,
     text: "两家人的争执被带到祠堂里。长辈按族里的旧规矩评理，事情算是平了，你却更明白这张网既护人，也勒人。",
@@ -384,7 +384,7 @@ export const historyLateQingEvents = [
   },
   {
     id: "era_late_qing_boxer_village_tension",
-    title: "村口扎起红布",
+    title: "街口扎起红布",
     category: "war",
     tags: ["war"],
     yearRange: [1899, 1901],
@@ -392,7 +392,15 @@ export const historyLateQingEvents = [
     currentRegions: { provinces: ["shandong", "hebei", "beijing", "tianjin", "shanxi", "henan"] },
     maxOccurrences: 1,
     baseWeight: 24,
-    text: "村口有人扎起红布，口号、仇怨和饥荒后的怒气搅在一起。你不敢靠得太近，也知道门闩已经挡不住外面的风声。",
+    text: [
+      {
+        conditions: { all: [{ path: "location.currentCityTier", in: ["city", "tier2", "tier1"] }] },
+        text: "街口有人扎起红布，口号、仇怨和流言搅在一起。店门比往日关得更早，城里人从脚步声里猜测下一阵风往哪里吹。",
+      },
+      {
+        text: "村口有人扎起红布，口号、仇怨和饥荒后的怒气搅在一起。你不敢靠得太近，也知道门闩已经挡不住外面的风声。",
+      },
+    ],
     effects: [
       { path: "resources.happiness", add: -7 },
       { path: "resources.freedom", add: -5 },

@@ -59,6 +59,14 @@ export const historyEarlyPrcEvents = [
         "id": "production_team",
         "text": "留在生产队挣工分",
         "resultText": "你留在生产队。日子被工分本记下，太阳每天都像一个准时的上级。",
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentCityTier",
+              "in": ["village", "town", "county"]
+            }
+          ]
+        },
         "effects": [
           {
             "path": "career.status",
@@ -265,7 +273,22 @@ export const historyEarlyPrcEvents = [
       45
     ],
     "baseWeight": 16,
-    "text": "村里给前线寄包裹，针脚、干粮和祝福塞得满满的。远方的战争也从此占了你家一角。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentCityTier",
+              "in": ["village", "town", "county"]
+            }
+          ]
+        },
+        "text": "村里给前线寄包裹，针脚、干粮和祝福塞得满满的。远方的战争也从此占了你家一角。"
+      },
+      {
+        "text": "街道和单位组织给前线寄包裹，针脚、干粮和祝福塞得满满的。远方的战争也从此占了你家一角。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -434,6 +457,9 @@ export const historyEarlyPrcEvents = [
         "rural"
       ]
     },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
+    },
     "ageRange": [
       0,
       70
@@ -441,7 +467,28 @@ export const historyEarlyPrcEvents = [
     "maxOccurrences": 1,
     "priority": 55,
     "baseWeight": 70,
-    "text": "锅灶并到一起，村里说吃饭不愁。热气一开始很足，后来每个人都学会看锅底的深浅。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 7 }
+          ]
+        },
+        "text": "各家的锅灶停了火，你跟着大人端碗去公共食堂。最初锣一响便有热饭，后来队伍仍照常排，盛到碗里的东西却越来越能照见碗底。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "resources.health", "lte": 45 },
+            { "path": "resources.wealth", "lte": 30 }
+          ]
+        },
+        "text": "公共食堂的锅灶烧得很大，你却渐渐吃不饱。掌勺人把勺子刮过锅底，前后多半勺都有人盯着；饥饿把一顿集体饭分成了许多私下的眼神。"
+      },
+      {
+        "text": "锅灶并到公共食堂后，家里省下了做饭的柴火和工夫。开头饭菜冒着足够的热气，后来定量越来越薄，你学会先看队伍有多长，再估计今天的锅有多深。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -760,7 +807,19 @@ export const historyEarlyPrcEvents = [
         "multiply": 2
       }
     ],
-    "text": "箱子被打开，旧书旧信散了一地。你站在墙边，觉得沉默也会发出很大的声音。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 3 }
+          ]
+        },
+        "text": "箱子被打开，旧书旧信散了一地。大人把你抱到墙边，不许出声；你不懂发生了什么，只被骤然变大的脚步和说话声吓哭。"
+      },
+      {
+        "text": "箱子被打开，旧书旧信散了一地。你站在墙边，觉得沉默也会发出很大的声音。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -784,13 +843,16 @@ export const historyEarlyPrcEvents = [
     "title": "赤脚医生",
     "category": "health",
     "yearRange": [
-      1965,
+      1968,
       1979
     ],
     "birthRegions": {
       "hukou": [
         "rural"
       ]
+    },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
     },
     "ageRange": [
       0,
@@ -1038,7 +1100,7 @@ export const historyEarlyPrcEvents = [
   },
   {
     "id": "era_marriage_law_whisper",
-    "title": "婚姻法传到村里",
+    "title": "婚姻法传到身边",
     "category": "family",
     "yearRange": [
       1950,
@@ -1054,13 +1116,10 @@ export const historyEarlyPrcEvents = [
       {
         "conditions": {
           "all": [
-            {
-              "path": "birth.gender",
-              "eq": "female"
-            }
+            { "path": "location.currentCityTier", "in": ["city", "tier2", "tier1"] }
           ]
         },
-        "text": "婚姻法的消息传到村里，有人低声议论婚事能不能自己说话。新法条很远，却让一些旧安排忽然显得不那么稳。"
+        "text": "街道和单位开始宣传新的婚姻法，有人认真听，也有人回家仍照旧规矩说话。法条已经进了城门，要走进每一户人家还需要时间。"
       },
       {
         "text": "婚姻法的消息传到村里，老人皱眉，年轻人偷听。纸上的新规矩，慢慢碰到了家里的旧规矩。"
@@ -1366,7 +1425,28 @@ export const historyEarlyPrcEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 20,
-    "text": "广播里念着劳模的名字，大家抬头听了一会儿。那种被看见的荣光很远，却也让手里的活多了一点劲。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 18 }
+          ]
+        },
+        "text": "学校广播介绍劳动模范，老师让大家记下他的事迹。你把那些数字抄进本子，也注意到广播没有说，他下班以后要不要补作业。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.field", "in": ["factory", "manual_worker", "farm_work"] },
+            { "path": "career.status", "eq": "employed" }
+          ]
+        },
+        "text": "车间或田间的广播念起劳动模范，身边人一边听一边没有停手。那份荣誉让人振奋，也悄悄抬高了今天的工额；榜样站在远处，汗落在各自脚边。"
+      },
+      {
+        "text": "广播里念着劳模的名字和完成的指标，大家抬头听了一会儿。被国家看见的荣光很远，你仍把手里的活做得更仔细，顺便想了想普通人的名字通常写在哪里。"
+      }
+    ],
     "effects": [
       {
         "path": "career.income",
@@ -1403,7 +1483,28 @@ export const historyEarlyPrcEvents = [
     },
     "maxOccurrences": 1,
     "baseWeight": 22,
-    "text": "你拿着粮票排队，前面的人一边等一边算。那时生活常常不是看想要什么，而是看票上还剩什么。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 14 }
+          ]
+        },
+        "text": "大人把粮票和钱分开叠好，让你去粮店排队。你一路捏着口袋，怕掉的是一张薄纸，回家少的却会是几顿饭。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "relationships.children", "gte": 1 },
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "你在粮店队伍里反复核对全家的定量，孩子长身体，票面却不会跟着长。轮到柜台时，你先问粗粮还有没有，再决定月底几顿饭该怎样搭配。"
+      },
+      {
+        "text": "你拿着粮票排队，前面的人算月份，后面的人打听供应品种。生活不只看手里有多少钱，还要看哪张票没有过期、柜台后面今天剩下什么。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -1434,6 +1535,9 @@ export const historyEarlyPrcEvents = [
       "hukou": [
         "rural"
       ]
+    },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
     },
     "maxOccurrences": 1,
     "baseWeight": 26,
@@ -1470,6 +1574,9 @@ export const historyEarlyPrcEvents = [
         "rural"
       ]
     },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
+    },
     "baseWeight": 22,
     "text": "家里那点自留地又慢慢绿起来。菜苗很小，却让人相信饭桌还能一点点缓过来。",
     "effects": [
@@ -1503,7 +1610,12 @@ export const historyEarlyPrcEvents = [
         "rural"
       ]
     },
+    "currentRegions": {
+      "cityTiers": ["village", "town", "county"]
+    },
     "baseWeight": 16,
+    "lifetimeProbability": 0.36,
+    "maxOccurrences": 1,
     "text": "夜里集合训练，木枪、口令和脚步声把村口变得严肃。你不一定上战场，却也被时代练出一副绷紧的身体。",
     "effects": [
       {
@@ -1617,7 +1729,28 @@ export const historyEarlyPrcEvents = [
     "maxOccurrences": 1,
     "priority": 42,
     "baseWeight": 70,
-    "text": "那一年，广播、讣告和人群的沉默一阵阵传来。很多人说不清未来，只觉得一个旧章节正在合上。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 12 }
+          ]
+        },
+        "text": "那一年，学校几次组织大家听广播、低头默哀。你未必明白每个名字同国家有什么关系，只记得老师的声音很轻，操场上那么多人，竟能同时安静下来。"
+      },
+      {
+        "conditions": {
+          "any": [
+            { "path": "career.field", "in": ["factory", "manual_worker", "farm_work", "grassroots_post"] },
+            { "path": "career.status", "eq": "employed" }
+          ]
+        },
+        "text": "广播传来讣告，单位停下手里的活组织悼念。有人真心落泪，有人只把帽子攥在手里；机器重新响起后，大家仍压低声音谈论接下来会怎样。"
+      },
+      {
+        "text": "一九七六年的讣告接连从广播里传来，家人围坐着听，谁也没有急着发表意见。你说不清未来，只觉得熟悉的政治语言忽然失去了几个最常被提起的人。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -1875,7 +2008,19 @@ export const historyEarlyPrcEvents = [
     currentRegions: { hukou: ["urban"], cityTiers: ["county", "city", "tier2", "tier1"] },
     maxOccurrences: 1,
     baseWeight: 26,
-    text: "家里按户口领粮本，人口、定量和月份写得清清楚楚。吃饭从来是家事，此后也成了表格里的事；月底锅里还剩多少，常比任何算术题都更准确。",
+    text: [
+      {
+        conditions: { all: [{ path: "meta.age", lte: 18 }] },
+        text: "粮本写着全家人口和定量，大人让你拿它去粮店时反复叮嘱不能折、不能丢。你对制度还没有概念，只知道柜台盖下一个章，家里的米缸便多出这个月的刻度。"
+      },
+      {
+        conditions: { any: [{ path: "relationships.children", gte: 1 }, { path: "resources.wealth", lte: 38 }] },
+        text: "你按粮本核对一家老小的定量，谁出差、谁生病、孩子又长了饭量，都要在同一页数字里周转。月底锅里还剩多少，常比任何算术题都更准确。"
+      },
+      {
+        text: "家里按户口领粮本，人口、定量和月份写得清清楚楚。你把它同粮票一起夹在抽屉深处；吃饭仍是家事，也从此成了表格、印章和供应日期的事。"
+      }
+    ],
     effects: [
       { path: "resources.wealth", add: 1 },
       { path: "resources.freedom", add: -4 },
