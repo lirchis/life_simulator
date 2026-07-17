@@ -2,7 +2,7 @@ import { createAggregateRegistry } from "./engine/aggregates.js";
 import { advanceYear } from "./engine/advanceYear.js";
 import { createRng, pick, randomSeed } from "./engine/random.js";
 import { createInitialState } from "./engine/state.js";
-import { data } from "./data/index.js";
+import { data } from "./data/index.js?v=birth-1840-story-1";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
@@ -79,7 +79,7 @@ function renderHome() {
   shell(`
     <main class="home">
       <section class="home-copy">
-        <p class="eyebrow">一九零零以来的普通人命运</p>
+        <p class="eyebrow">一八四零以来的普通人命运</p>
         <h1>从一个出生年份开始，穿过时代的浪潮。</h1>
         <p>选择出身、地域、家庭、属性和天赋；此后每一年都会留下新的痕迹。相同 seed 可以重走同一条人生。</p>
         <div class="actions">
@@ -95,7 +95,7 @@ function renderHome() {
           <button data-action="use-seed">使用</button>
         </div>
         <dl class="compact-list">
-          <div><dt>起点</dt><dd>1900-2020</dd></div>
+          <div><dt>起点</dt><dd>${data.birthYearRange[0]}-${data.birthYearRange[1]}</dd></div>
           <div><dt>地域</dt><dd>省级口径</dd></div>
           <div><dt>记录</dt><dd>${data.events.length} 种片段</dd></div>
         </dl>
@@ -198,7 +198,8 @@ function selectedProvinceHint(options) {
 
 function yearOptions() {
   const years = [];
-  for (let year = 1900; year <= 2020; year += 1) years.push([String(year), String(year)]);
+  const [minYear, maxYear] = data.birthYearRange;
+  for (let year = minYear; year <= maxYear; year += 1) years.push([String(year), String(year)]);
   return years;
 }
 
@@ -258,7 +259,10 @@ function renderLife() {
         <div class="advance-bar">
           ${state.meta.isAlive
             ? `<button class="primary" data-action="advance">下一年</button>`
-            : `<button class="danger" data-action="report">查看报告</button>`}
+            : `
+              <button class="danger" data-action="report">查看报告</button>
+              <button class="primary" data-action="copy-life">复制这一生</button>
+            `}
         </div>
       </section>
       <aside class="panel stats">
@@ -357,7 +361,7 @@ function renderReport() {
         <p>${summary.text}</p>
         <div class="actions">
           <button class="primary" data-action="new">再来一局</button>
-          <button data-action="copy-report">复制摘要</button>
+          <button data-action="copy-life">复制完整人生</button>
         </div>
       </section>
       <section class="panel report-grid">
@@ -461,7 +465,10 @@ function handleAction(action) {
   }
   if (action === "report") screen = "report";
   if (action === "copy-seed") navigator.clipboard?.writeText(state.meta.seed);
-  if (action === "copy-report") navigator.clipboard?.writeText(buildReport().text);
+  if (action === "copy-life") {
+    copyLifeStory();
+    return;
+  }
   render();
 }
 
@@ -485,7 +492,8 @@ function startLife(options = {}) {
 function randomizeSetup() {
   setup.seed = randomSeed();
   rng = createRng(setup.seed);
-  setup.birthYear = 1900 + Math.floor(rng() * 121);
+  const [minYear, maxYear] = data.birthYearRange;
+  setup.birthYear = minYear + Math.floor(rng() * (maxYear - minYear + 1));
   setup.gender = pick(data.genderTypes.map(([code]) => code), rng);
   const province = data.resolveHistoricalProvince(pick(data.getProvinceOptionsForYear(setup.birthYear).map(([code]) => code), rng), setup.birthYear);
   setup.provinceHistoryCode = province.code;
@@ -677,6 +685,86 @@ function buildReport() {
     title,
     text: `你出生于 ${state.birth.year} 年的${state.birth.provinceNameAtBirth || labels.province[state.birth.province]}，性别${labels.gender[state.birth.gender] ?? state.birth.gender}，最终因“${reason}”结束。财富 ${state.resources.wealth}，幸福 ${state.resources.happiness}，成就 ${state.resources.achievement}。Seed: ${state.meta.seed}`,
   };
+}
+
+function buildLifeStory() {
+  const summary = buildReport();
+  const birthProvince = state.birth.provinceNameAtBirth || labels.province[state.birth.province] || state.birth.province;
+  const cityTier = data.getOptionLabel(data.getCityTierOptionsForYear(state.birth.year), state.birth.cityTier);
+  const familyClass = data.getOptionLabel(data.getFamilyClassOptionsForYear(state.birth.year), state.birth.familyClass);
+  const talents = state.talents
+    .map((id) => data.talents.find((talent) => talent.id === id)?.name ?? id)
+    .join("、");
+  const eventGroups = groupBy(state.history, (log) => `${log.age}|${log.year}`);
+  const changeGroups = groupBy(state.yearlyChanges ?? [], (change) => `${change.age}|${change.year}`);
+  const keys = [...new Set([...Object.keys(changeGroups), ...Object.keys(eventGroups)])]
+    .sort((a, b) => Number(a.split("|")[1]) - Number(b.split("|")[1]));
+  const lines = [
+    `《${summary.title}》`,
+    "",
+    `出生：${state.birth.year} 年，${birthProvince}，${cityTier}，${labels.gender[state.birth.gender] ?? state.birth.gender}。`,
+    `家庭：${familyClass}。`,
+    `开局天赋：${talents || "无"}。`,
+    "",
+    "—— 一生 ——",
+  ];
+
+  for (const key of keys) {
+    const [age, year] = key.split("|");
+    const logs = eventGroups[key] ?? [];
+    lines.push("", `${year} 年｜${age} 岁`);
+    if (!logs.length) {
+      lines.push("这一年没有留下明确的故事，时间仍在身体和生活里缓慢经过。");
+      continue;
+    }
+    for (const log of logs) {
+      lines.push(`${log.title}：${log.text}`);
+      if (log.resultText) lines.push(log.resultText);
+    }
+  }
+
+  lines.push(
+    "",
+    "—— 终章 ——",
+    `${state.meta.currentYear} 年，${state.meta.age} 岁。${state.meta.deathReason || "这一生暂告一段落"}。`,
+    `最终留下：财富 ${state.resources.wealth}，幸福 ${state.resources.happiness}，成就 ${state.resources.achievement}，名声 ${state.resources.reputation}，自由 ${state.resources.freedom}。`,
+    `Seed：${state.meta.seed}`,
+  );
+  return lines.join("\n");
+}
+
+async function copyLifeStory() {
+  const story = buildLifeStory();
+  let copied = false;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(story);
+      copied = true;
+    }
+  } catch {
+    copied = false;
+  }
+  if (!copied) copied = fallbackCopyText(story);
+  const button = document.querySelector('[data-action="copy-life"]');
+  if (!button) return;
+  const oldText = button.textContent;
+  button.textContent = copied ? "已复制完整人生" : "复制失败，请重试";
+  window.setTimeout(() => {
+    if (button.isConnected) button.textContent = oldText;
+  }, 1800);
+}
+
+function fallbackCopyText(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  return copied;
 }
 
 function scrollToBottom() {

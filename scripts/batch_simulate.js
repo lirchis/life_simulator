@@ -13,6 +13,7 @@ const DEFAULT_BASE_SEED = "BATCH";
 const args = parseArgs(process.argv.slice(2));
 const count = readNumberArg(args, "count", DEFAULT_COUNT);
 const maxAge = readNumberArg(args, "max-age", DEFAULT_MAX_AGE);
+const fixedBirthYear = readBirthYearArg(args["birth-year"]);
 const baseSeed = args.seed ?? DEFAULT_BASE_SEED;
 const batchId = args["batch-id"] ?? `${baseSeed}-${timestamp()}`;
 const outFile = resolve(args.out ?? `reports/batch-simulations-${timestamp()}.csv`);
@@ -25,7 +26,7 @@ const eventRows = [];
 for (let index = 0; index < count; index += 1) {
   const seed = `${baseSeed}-${String(index + 1).padStart(4, "0")}`;
   const rng = createRng(seed);
-  const setup = randomSetup(seed, rng);
+  const setup = randomSetup(seed, rng, fixedBirthYear);
   const state = createInitialState(setup, data, { rng, aggregateRegistry });
   const result = runLife(state, rng, maxAge);
   const runIndex = index + 1;
@@ -55,8 +56,10 @@ function runLife(state, rng, maxAge) {
   };
 }
 
-function randomSetup(seed, rng) {
-  const birthYear = 1900 + Math.floor(rng() * 121);
+function randomSetup(seed, rng, birthYearOverride = null) {
+  const [minBirthYear, maxBirthYear] = data.birthYearRange;
+  const birthYear = birthYearOverride
+    ?? minBirthYear + Math.floor(rng() * (maxBirthYear - minBirthYear + 1));
   const province = data.resolveHistoricalProvince(
     pick(data.getProvinceOptionsForYear(birthYear).map(([code]) => code), rng),
     birthYear,
@@ -327,6 +330,16 @@ function readNumberArg(source, key, fallback) {
   const value = Number(source[key] ?? fallback);
   if (!Number.isFinite(value) || value <= 0) throw new Error(`--${key} must be a positive number`);
   return Math.floor(value);
+}
+
+function readBirthYearArg(value) {
+  if (value === undefined) return null;
+  const birthYear = Number(value);
+  const [minBirthYear, maxBirthYear] = data.birthYearRange;
+  if (!Number.isInteger(birthYear) || birthYear < minBirthYear || birthYear > maxBirthYear) {
+    throw new Error(`--birth-year must be an integer from ${minBirthYear} to ${maxBirthYear}`);
+  }
+  return birthYear;
 }
 
 function makeOutputFiles(summaryFile) {

@@ -294,6 +294,8 @@ dd { margin: 0; font-weight: 850; }
   bottom: 14px;
   display: flex;
   justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   padding: 18px 0 0;
 }
 .advance-bar button { min-width: 180px; box-shadow: 0 16px 40px rgba(38, 72, 63, 0.18); }

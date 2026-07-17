@@ -8,7 +8,7 @@ export const historyPre1949Events = [
       "male"
     ],
     "yearRange": [
-      1900,
+      1840,
       1948
     ],
     "ageRange": [
@@ -138,7 +138,7 @@ export const historyPre1949Events = [
       "female"
     ],
     "yearRange": [
-      1900,
+      1840,
       1948
     ],
     "ageRange": [
@@ -264,68 +264,71 @@ export const historyPre1949Events = [
     ]
   },
   {
-    "id": "era_late_qing_old_school",
-    "title": "私塾晨读",
+    "id": "era_late_qing_learning_path",
+    "title": "识字这件事",
     "category": "school",
     "yearRange": [
-      1900,
+      1840,
       1911
     ],
     "ageRange": [
       6,
-      15
+      8
     ],
-    "birthFamilyClasses": [
-      "scholar_gentry",
-      "landlord",
-      "merchant",
-      "comprador_merchant",
-      "smallholder"
-    ],
+    "priority": 80,
     "maxOccurrences": 1,
-    "baseWeight": 34,
-    "weightModifiers": [
+    "baseWeight": 100,
+    "text": "你到了该识字或学着做事的年纪。对那时的大多数孩子来说，书本、家务和活计不是平等摆在面前的三条路。",
+    "outcomes": [
       {
-        "path": "birth.gender",
-        "eq": "male",
-        "multiply": 1.6
+        "id": "private_school",
+        "text": "进私塾读书",
+        "resultText": "天还没亮，你已经坐在长凳上背书。先生的戒尺落在桌面，字句和规矩一起进入身体。",
+        "baseWeight": 1,
+        "weightModifiers": [
+          { "path": "attrs.family", "gte": 5, "multiply": 3 },
+          { "path": "attrs.intelligence", "gte": 6, "multiply": 1.8 },
+          { "path": "birth.gender", "eq": "male", "multiply": 1.6 },
+          { "path": "birth.familyClass", "in": ["scholar_gentry", "landlord", "merchant", "comprador_merchant"], "multiply": 2 }
+        ],
+        "effects": [
+          { "path": "education.level", "set": "primary" },
+          { "path": "education.score", "add": 9 },
+          { "path": "attrs.mental", "add": -1 },
+          { "addTrait": "exam_aptitude" },
+          { "addTag": "student" },
+          { "addTag": "old_learning" }
+        ]
       },
       {
-        "path": "birth.gender",
-        "eq": "female",
-        "multiply": 0.45
-      }
-    ],
-    "text": [
-      {
-        "conditions": {
-          "all": [
-            {
-              "path": "birth.gender",
-              "eq": "female"
-            }
-          ]
-        },
-        "text": "天还没亮，你在家中跟着识字的大人读书。能摸到书页已经不易，先生的戒尺和正式的学堂仍离你很远。"
+        "id": "home_literacy",
+        "text": "在家认几个字",
+        "resultText": "你跟着家中识字的人认账本、家书和祖先牌位上的字。没有正式入学，字却一点点留了下来。",
+        "baseWeight": 3,
+        "weightModifiers": [
+          { "path": "attrs.family", "gte": 3, "multiply": 1.5 },
+          { "path": "birth.gender", "eq": "female", "multiply": 1.4 }
+        ],
+        "effects": [
+          { "path": "education.score", "add": 4 },
+          { "addTag": "basic_literacy" }
+        ]
       },
       {
-        "text": "天还没亮，你已经坐在长凳上背书。先生的戒尺落在桌面，像旧时代还不肯退场的回声。"
-      }
-    ],
-    "effects": [
-      {
-        "path": "education.score",
-        "add": 7
-      },
-      {
-        "path": "attrs.mental",
-        "add": -1
-      },
-      {
-        "addTrait": "exam_aptitude"
-      },
-      {
-        "addTag": "old_learning"
+        "id": "early_household_work",
+        "text": "先学着干活",
+        "resultText": "你没有进学。下田、看铺、带弟妹或给师傅递东西，才是每天真正要交的功课。",
+        "baseWeight": 5,
+        "weightModifiers": [
+          { "path": "attrs.family", "lte": 3, "multiply": 1.8 },
+          { "path": "birth.hukou", "eq": "rural", "multiply": 1.3 }
+        ],
+        "effects": [
+          { "path": "education.score", "add": -3 },
+          { "path": "resources.wealth", "add": 2 },
+          { "addTrait": "practical_skill" },
+          { "addTag": "early_household_work" }
+        ]
       }
     ]
   },
@@ -512,7 +515,7 @@ export const historyPre1949Events = [
     "title": "下南洋",
     "category": "migration",
     "yearRange": [
-      1900,
+      1840,
       1941
     ],
     "ageRange": [
@@ -1247,7 +1250,7 @@ export const historyPre1949Events = [
     "title": "学徒挨训",
     "category": "career",
     "yearRange": [
-      1900,
+      1840,
       1948
     ],
     "ageRange": [
@@ -1290,7 +1293,7 @@ export const historyPre1949Events = [
     "title": "码头扛包",
     "category": "career",
     "yearRange": [
-      1900,
+      1840,
       1948
     ],
     "ageRange": [

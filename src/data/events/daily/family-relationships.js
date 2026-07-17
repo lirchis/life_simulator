@@ -195,6 +195,10 @@ export const dailyFamilyRelationshipsEvents = [
     "id": "daily_memory_with_old_photo",
     "title": "翻到旧照片",
     "category": "family",
+    "yearRange": [
+      1900,
+      2035
+    ],
     "ageRange": [
       35,
       95
@@ -216,6 +220,10 @@ export const dailyFamilyRelationshipsEvents = [
     "id": "daily_city_stairwell_neighbors",
     "title": "楼道里的邻居",
     "category": "relationship",
+    "yearRange": [
+      1950,
+      2035
+    ],
     "ageRange": [
       5,
       18
@@ -273,6 +281,10 @@ export const dailyFamilyRelationshipsEvents = [
     "id": "daily_first_love_bicycle",
     "title": "自行车后座",
     "category": "relationship",
+    "yearRange": [
+      1920,
+      2035
+    ],
     "ageRange": [
       15,
       24
@@ -372,7 +384,7 @@ export const dailyFamilyRelationshipsEvents = [
       45
     ],
     "baseWeight": 30,
-    "text": "你和朋友坐在深夜面摊边，聊工作、钱和不敢说出口的害怕。汤很烫，话也是真话。",
+    "text": "你和朋友坐在夜里的面摊边，聊活计、钱和不敢说出口的害怕。汤很烫，话也是真话。",
     "effects": [
       {
         "path": "relationships.friendship",
@@ -408,7 +420,7 @@ export const dailyFamilyRelationshipsEvents = [
             }
           ]
         },
-        "text": "父母开始频繁去医院。很多照料默认落到你身上，你突然意识到，山也会慢慢变矮，还会需要人扶。"
+        "text": "父母开始频繁看病抓药。很多照料默认落到你身上，你突然意识到，山也会慢慢变矮，还会需要人扶。"
       },
       {
         "conditions": {
@@ -419,10 +431,10 @@ export const dailyFamilyRelationshipsEvents = [
             }
           ]
         },
-        "text": "父母开始频繁去医院。你突然意识到，他们不是一直站在你身后的山，而你也被默认该撑起下一段路。"
+        "text": "父母开始频繁看病抓药。你突然意识到，他们不是一直站在你身后的山，而你也被默认该撑起下一段路。"
       },
       {
-        "text": "父母开始频繁去医院。你突然意识到，他们不是一直站在你身后的山，山也会慢慢变矮。"
+        "text": "父母开始频繁看病抓药。你突然意识到，他们不是一直站在你身后的山，山也会慢慢变矮。"
       }
     ],
     "effects": [
@@ -541,6 +553,10 @@ export const dailyFamilyRelationshipsEvents = [
     "id": "daily_child_education_pressure",
     "title": "孩子的补习班",
     "category": "family",
+    "yearRange": [
+      1990,
+      2035
+    ],
     "ageRange": [
       32,
       55
@@ -710,7 +726,7 @@ export const dailyFamilyRelationshipsEvents = [
       70
     ],
     "baseWeight": 24,
-    "text": "家里有人去看病，药费和检查单摊在桌上。那天你发现，身体一疼，钱也会跟着疼。",
+    "text": "家里有人去看病，药包和欠下的账摊在桌上。那天你发现，身体一疼，钱也会跟着疼。",
     "effects": [
       {
         "path": "resources.wealth",
@@ -797,7 +813,7 @@ export const dailyFamilyRelationshipsEvents = [
         "text": "你常被叫去照看更小的孩子。大人夸你懂事，懂事两个字有时像一件提前穿上的旧衣服。"
       },
       {
-        "text": "你帮忙照看更小的孩子。哭声、奶瓶、作业和催促挤在一起，你比同龄人更早知道照顾是什么。"
+        "text": "你帮忙照看更小的孩子。哭声、喂饭和催促挤在一起，你比同龄人更早知道照顾是什么。"
       }
     ],
     "effects": [
@@ -893,7 +909,7 @@ export const dailyFamilyRelationshipsEvents = [
       90
     ],
     "baseWeight": 18,
-    "text": "附近有人家办丧事，楼道或村路忽然安静下来。你第一次或又一次意识到，每个熟面孔都会有告别的一天。",
+    "text": "附近有人家办丧事，巷道或村路忽然安静下来。你第一次或又一次意识到，每个熟面孔都会有告别的一天。",
     "effects": [
       {
         "path": "resources.happiness",

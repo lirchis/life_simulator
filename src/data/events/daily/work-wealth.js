@@ -68,7 +68,7 @@ export const dailyWorkWealthEvents = [
       ]
     },
     "baseWeight": 28,
-    "text": "你去了一趟更大的城里。车站、商店、招牌和人群挤在一起，让你忽然知道外面的日子还有很多种样子。",
+    "text": "你去了一趟更大的城里。渡口、店铺、招牌和人群挤在一起，让你忽然知道外面的日子还有很多种样子。",
     "effects": [
       {
         "path": "resources.freedom",
@@ -112,6 +112,21 @@ export const dailyWorkWealthEvents = [
       {
         "conditions": {
           "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            }
+          ]
+        },
+        "text": "你为东家或家里多赶了一阵活。天色早就暗了，手上的活计还没到能停的时候。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
+            },
             {
               "path": "meta.currentYear",
               "lte": 1985
@@ -178,14 +193,14 @@ export const dailyWorkWealthEvents = [
   },
   {
     "id": "daily_market_bargain",
-    "title": "菜市场讲价",
+    "title": "市集讲价",
     "category": "wealth",
     "ageRange": [
       18,
       85
     ],
     "baseWeight": 24,
-    "text": "你在菜市场讲了半天价。省下的钱不多，但那一刻你觉得自己从生活手里掰回了一点主动权。",
+    "text": "你在市集上讲了半天价。省下的钱不多，但那一刻你觉得自己从生活手里掰回了一点主动权。",
     "effects": [
       {
         "path": "resources.wealth",
@@ -201,6 +216,10 @@ export const dailyWorkWealthEvents = [
     "id": "daily_lottery_small_win",
     "title": "小奖",
     "category": "wealth",
+    "yearRange": [
+      1987,
+      2035
+    ],
     "ageRange": [
       18,
       80

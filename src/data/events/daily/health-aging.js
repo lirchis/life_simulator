@@ -65,7 +65,7 @@ export const dailyHealthAgingEvents = [
   },
   {
     "id": "daily_minor_work_injury",
-    "title": "工伤小疤",
+    "title": "做活留下的疤",
     "category": "health",
     "ageRange": [
       18,
@@ -87,7 +87,7 @@ export const dailyHealthAgingEvents = [
         }
       ]
     },
-    "text": "你在工作里受了点伤，留下一个小疤。它不严重，只是提醒你身体不是免费的。",
+    "text": "你在做活时受了点伤，留下一个小疤。它不严重，只是提醒你身体不是免费的。",
     "effects": [
       {
         "path": "resources.health",
@@ -103,6 +103,10 @@ export const dailyHealthAgingEvents = [
     "id": "daily_midlife_checkup_warning",
     "title": "体检红字",
     "category": "health",
+    "yearRange": [
+      1980,
+      2035
+    ],
     "ageRange": [
       35,
       60
@@ -146,6 +150,10 @@ export const dailyHealthAgingEvents = [
     "id": "daily_square_dance_evening",
     "title": "广场舞的晚上",
     "category": "health",
+    "yearRange": [
+      2000,
+      2035
+    ],
     "ageRange": [
       55,
       80
@@ -204,6 +212,10 @@ export const dailyHealthAgingEvents = [
     "id": "daily_grandchild_video_call",
     "title": "和孙辈视频",
     "category": "family",
+    "yearRange": [
+      2000,
+      2035
+    ],
     "ageRange": [
       58,
       90
@@ -279,7 +291,7 @@ export const dailyHealthAgingEvents = [
         "multiply": 1.5
       }
     ],
-    "text": "你从医院拎回一袋子药，盒子上写满陌生词。身体像一台旧机器，开始需要定期上油和检修。",
+    "text": "你从看病的地方带回一包药。身体像一件用了多年的器物，开始需要格外照料。",
     "effects": [
       {
         "path": "resources.wealth",

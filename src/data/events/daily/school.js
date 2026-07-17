@@ -512,4 +512,4 @@ export const dailySchoolEvents = [
       }
     ]
   }
-];
+].map((event) => ({ yearRange: event.yearRange ?? [1912, 2035], ...event }));

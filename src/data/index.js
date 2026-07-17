@@ -1,5 +1,6 @@
 import { aggregates } from "./aggregates.js";
-import { events } from "./events.js";
+import { birthYearRange } from "./config.js?v=birth-1840-story-1";
+import { events } from "./events.js?v=birth-1840-story-1";
 import {
   cityTierEras,
   familyClassEras,
@@ -17,13 +18,14 @@ import {
   hasHukouChoiceForYear,
   hukouEras,
   resolveHistoricalProvince,
-} from "./history.js";
+} from "./history.js?v=birth-1840-story-1";
 import { familyClasses, cityTiers, genderTypes, hukouTypes, provinces } from "./regions.js";
-import { tagLabels } from "./tagLabels.js";
-import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js";
+import { tagLabels } from "./tagLabels.js?v=birth-1840-story-1";
+import { getTalentBudgetForYear, getTalentCost, getTalentEraName, getTalentsForYear, talentBudgetEras, talents } from "./talents.js?v=birth-1840-story-1";
 
 export const data = {
   aggregates,
+  birthYearRange,
   events,
   familyClasses,
   familyClassEras,

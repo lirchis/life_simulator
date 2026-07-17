@@ -387,6 +387,10 @@ export const coreLifecycleEvents = [
     "id": "life_primary_school_first_day",
     "title": "入学",
     "category": "school",
+    "yearRange": [
+      1912,
+      2035
+    ],
     "ageRange": [
       6,
       7
@@ -534,6 +538,10 @@ export const coreLifecycleEvents = [
     "id": "life_exam_goes_well",
     "title": "考得不错",
     "category": "school",
+    "yearRange": [
+      1912,
+      2035
+    ],
     "ageRange": [
       9,
       18
@@ -561,6 +569,10 @@ export const coreLifecycleEvents = [
             {
               "path": "birth.gender",
               "eq": "female"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "meta.currentYear",
@@ -666,6 +678,10 @@ export const coreLifecycleEvents = [
             {
               "path": "birth.gender",
               "eq": "male"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "birth.hukou",
@@ -857,8 +873,23 @@ export const coreLifecycleEvents = [
         "conditions": {
           "all": [
             {
+              "path": "meta.currentYear",
+              "lte": 1911
+            }
+          ]
+        },
+        "text": "你离开熟悉的地方，沿水路或驿道去往更大的城。行囊很轻，路却很长，城门外的喧声像另一种人生在招手。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
               "path": "birth.gender",
               "eq": "female"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "meta.currentYear",
@@ -874,6 +905,10 @@ export const coreLifecycleEvents = [
             {
               "path": "birth.gender",
               "eq": "male"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "birth.hukou",
@@ -1126,6 +1161,10 @@ export const coreLifecycleEvents = [
     "id": "life_startup_friend_invite",
     "title": "创业邀约",
     "category": "career",
+    "yearRange": [
+      1992,
+      2035
+    ],
     "tags": [
       "startup"
     ],
@@ -1196,8 +1235,42 @@ export const coreLifecycleEvents = [
         "conditions": {
           "all": [
             {
+              "path": "meta.currentYear",
+              "lte": 1911
+            },
+            {
               "path": "birth.gender",
               "eq": "female"
+            }
+          ]
+        },
+        "text": "媒人和两家的长辈把婚事谈定了。聘礼、嫁妆和往后的本分被一项项说清，你坐在一旁，自己的声音很轻。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1911
+            },
+            {
+              "path": "birth.gender",
+              "eq": "male"
+            }
+          ]
+        },
+        "text": "媒人和两家的长辈把婚事谈定了。聘礼、门户和传宗接代被反复掂量，成亲更像两个家庭把日子接在一起。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "birth.gender",
+              "eq": "female"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "meta.currentYear",
@@ -1213,6 +1286,10 @@ export const coreLifecycleEvents = [
             {
               "path": "birth.gender",
               "eq": "male"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1912
             },
             {
               "path": "meta.currentYear",
@@ -1258,8 +1335,23 @@ export const coreLifecycleEvents = [
         "conditions": {
           "all": [
             {
+              "path": "meta.currentYear",
+              "lte": 1948
+            }
+          ]
+        },
+        "text": "生计、老人、孩子和家里的活一起压过来。你把能挣的、能省的都重新算了一遍，然后照常起身去做事。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
               "path": "birth.gender",
               "eq": "female"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
             },
             {
               "path": "relationships.children",
@@ -1275,6 +1367,10 @@ export const coreLifecycleEvents = [
             {
               "path": "birth.gender",
               "eq": "male"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
             },
             {
               "path": "relationships.children",
@@ -1305,7 +1401,7 @@ export const coreLifecycleEvents = [
   },
   {
     "id": "life_retirement_day",
-    "title": "退休",
+    "title": "歇下重活",
     "category": "career",
     "ageRange": [
       58,
@@ -1322,7 +1418,22 @@ export const coreLifecycleEvents = [
         }
       ]
     },
-    "text": "你退休了。闹钟终于不再像命令，但身体已经记住了多年早醒。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            }
+          ]
+        },
+        "text": "你渐渐歇下最重的活，把手里的事交给晚辈。没有正式的退休日子，只是某天起，大家不再让你扛最沉的那一头。"
+      },
+      {
+        "text": "你退休了。闹钟终于不再像命令，但身体已经记住了多年早醒。"
+      }
+    ],
     "effects": [
       {
         "path": "career.status",

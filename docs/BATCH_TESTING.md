@@ -20,6 +20,9 @@ reports/batch-simulations-YYYYMMDD-HHMMSS.events.csv
 
 ```bash
 npm run batch -- --count 300 --seed REVIEW --batch-id REVIEW-001 --max-age 100 --out reports/review.csv
+
+# 只测试 1840 年出生的人生
+npm run batch -- --count 100 --birth-year 1840 --seed QING-ERA --out reports/qing-era.csv
 ```
 
 | 参数 | 默认值 | 说明 |
@@ -28,6 +31,7 @@ npm run batch -- --count 300 --seed REVIEW --batch-id REVIEW-001 --max-age 100 -
 | `--seed` | `BATCH` | 批次基础 seed；每局会派生为 `BATCH-0001`、`BATCH-0002` |
 | `--batch-id` | `seed + 时间戳` | 本次批量测试 id，用于关联三张表 |
 | `--max-age` | `100` | 单局最大推进年龄，未死亡则停止 |
+| `--birth-year` | 随机 | 固定出生年份，用于定向检查某个年代；支持 `1840-2020` |
 | `--out` | 自动时间戳文件 | CSV 输出路径 |
 
 三张表的关联键：
