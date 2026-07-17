@@ -28,7 +28,7 @@ export const historyReformEraEvents = [
       ]
     },
     "text": "你开始面对第一份工作。单位还很重要，市场也开始冒头，时代像一扇半开的卷闸门。",
-    "choices": [
+    "outcomes": [
       {
         "id": "state_unit",
         "text": "进国企或事业单位，先求稳",
@@ -430,7 +430,7 @@ export const historyReformEraEvents = [
         "text": "有人劝你下海。岸上稳，海里乱，但浪头上也许真有金光。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "jump_into_market",
         "text": "辞掉稳定，去市场里搏",
@@ -951,7 +951,7 @@ export const historyReformEraEvents = [
         "text": "你站在窗口前打听个体户执照。章盖下去的时候，稳定和风险像两枚硬币一起落进口袋。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "open_small_stall",
         "text": "试着摆个小摊",

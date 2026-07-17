@@ -1,8 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, extname, resolve } from "node:path";
 import { createAggregateRegistry } from "../src/engine/aggregates.js";
-import { advanceYear, resolveChoice } from "../src/engine/advanceYear.js";
-import { matchConditions } from "../src/engine/conditions.js";
+import { advanceYear } from "../src/engine/advanceYear.js";
 import { createRng, pick } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
 import { data } from "../src/data/index.js";
@@ -45,19 +44,13 @@ console.log(`Wrote ${yearRows.length} yearly detail rows to ${outputFiles.years}
 console.log(`Wrote ${eventRows.length} event detail rows to ${outputFiles.events}`);
 
 function runLife(state, rng, maxAge) {
-  let choiceCount = 0;
   let safety = 0;
   while (state.meta.isAlive && state.meta.age < maxAge && safety < maxAge + 5) {
-    const result = advanceYear(state, data, { rng, aggregateRegistry });
-    if (result.choiceEvent) {
-      const choice = chooseChoice(result.choiceEvent, state, rng);
-      resolveChoice(result.choiceEvent, choice.id, state, { rng, aggregateRegistry });
-      choiceCount += 1;
-    }
+    advanceYear(state, data, { rng, aggregateRegistry });
     safety += 1;
   }
   return {
-    choiceCount,
+    outcomeCount: state.history.filter((log) => log.outcomeId).length,
     reachedMaxAge: state.meta.isAlive && state.meta.age >= maxAge,
   };
 }
@@ -146,11 +139,6 @@ function selectedTalentCost(ids, birthYear) {
   }, 0);
 }
 
-function chooseChoice(event, state, rng) {
-  const choices = event.choices.filter((choice) => matchConditions(choice.conditions, state, { rng, aggregateRegistry }));
-  return pick(choices.length ? choices : event.choices, rng);
-}
-
 function toSummaryCsvRow(index, runId, setup, state, result) {
   const categoryCounts = countBy(state.history, (log) => log.category ?? "unknown");
   const eventIds = state.history.map((log) => log.eventId);
@@ -191,7 +179,7 @@ function toSummaryCsvRow(index, runId, setup, state, result) {
     career_status: state.career.status,
     career_income: state.career.income,
     event_count: state.history.length,
-    choice_count: result.choiceCount,
+    outcome_count: result.outcomeCount,
     yearly_change_count: state.yearlyChanges.length,
     first_event: eventIds[0] ?? "",
     last_event: eventIds[eventIds.length - 1] ?? "",
@@ -247,7 +235,7 @@ function toYearCsvRows(index, runId, setup, state) {
       event_texts: logs.map((log) => log.text).join("|"),
       event_effects: logs.flatMap((log) => log.effectsSummary ?? []).join("|"),
       natural_effects: changes.flatMap((change) => change.effectsSummary ?? []).join("|"),
-      choice_ids: logs.filter((log) => log.choiceId).map((log) => `${log.eventId}:${log.choiceId}`).join("|"),
+      outcome_ids: logs.filter((log) => log.outcomeId).map((log) => `${log.eventId}:${log.outcomeId}`).join("|"),
       traits: snapshot.traits.join("|"),
       tags: snapshot.tags.join("|"),
     };
@@ -275,7 +263,7 @@ function toEventCsvRows(index, runId, setup, state) {
     title: log.title,
     category: log.category,
     priority: log.priority ?? 0,
-    choice_id: log.choiceId ?? "",
+    outcome_id: log.outcomeId ?? "",
     final_text: log.text,
     final_result_text: log.resultText ?? "",
     effects_summary: (log.effectsSummary ?? []).join("|"),

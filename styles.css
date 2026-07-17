@@ -314,23 +314,6 @@ dd { margin: 0; font-weight: 850; }
 .stat i { height: 7px; border-radius: 999px; background: var(--soft); overflow: hidden; }
 .stat i b { display: block; height: 100%; background: var(--primary); }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(37, 35, 31, 0.38);
-}
-.modal {
-  width: min(560px, 100%);
-  border-radius: 8px;
-  padding: 20px;
-  background: var(--panel);
-}
-.choice-list { display: grid; gap: 10px; }
-.choice-list button { min-height: 48px; text-align: left; background: white; border: 1px solid var(--line); }
 .report { display: grid; gap: 14px; }
 .report-hero h1 { font-size: clamp(38px, 6vw, 72px); }
 .report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -410,6 +393,4 @@ dd { margin: 0; font-weight: 850; }
   .event p { font-size: 15px; }
   .advance-bar { bottom: 10px; padding-top: 10px; }
   .advance-bar button { width: min(220px, 78vw); min-width: 0; }
-  .modal-backdrop { align-items: end; }
-  .modal { max-height: 80vh; overflow: auto; }
 }

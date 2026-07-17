@@ -1,5 +1,5 @@
 import { createAggregateRegistry } from "./engine/aggregates.js";
-import { advanceYear, resolveChoice } from "./engine/advanceYear.js";
+import { advanceYear } from "./engine/advanceYear.js";
 import { createRng, pick, randomSeed } from "./engine/random.js";
 import { createInitialState } from "./engine/state.js";
 import { data } from "./data/index.js";
@@ -11,7 +11,6 @@ const labels = makeLabels(data);
 let setup = createDefaultSetup();
 let rng = createRng(setup.seed);
 let state = null;
-let pendingChoice = null;
 let screen = "home";
 
 const context = () => ({ aggregateRegistry, rng });
@@ -61,7 +60,6 @@ function render() {
   if (screen === "life") renderLife();
   if (screen === "report") renderReport();
   bindEvents();
-  if (pendingChoice) renderChoice();
 }
 
 function shell(content) {
@@ -349,27 +347,6 @@ function statRows(resources, keys) {
   `).join("");
 }
 
-function renderChoice() {
-  app.insertAdjacentHTML("beforeend", `
-    <div class="modal-backdrop">
-      <section class="modal">
-        <p class="eyebrow">关键选择</p>
-        <h2>${pendingChoice.title}</h2>
-        <p>${pendingChoice.displayText ?? pendingChoice.text}</p>
-        <div class="choice-list">
-          ${pendingChoice.choices.map((choice) => `<button data-choice="${choice.id}">${choice.text}</button>`).join("")}
-        </div>
-      </section>
-    </div>
-  `);
-  document.querySelectorAll("[data-choice]").forEach((button) => button.addEventListener("click", () => {
-    resolveChoice(pendingChoice, button.dataset.choice, state, context());
-    pendingChoice = null;
-    render();
-    scrollToBottom();
-  }));
-}
-
 function renderReport() {
   const summary = buildReport();
   shell(`
@@ -388,7 +365,7 @@ function renderReport() {
       </section>
       <section class="panel report-timeline">
         <h2>关键时间线</h2>
-        ${state.history.filter((log) => log.priority || log.choiceId || log.death || log.age % 10 === 0).slice(-16).map(eventCard).join("")}
+        ${state.history.filter((log) => log.priority || log.outcomeId || log.death || log.age % 10 === 0).slice(-16).map(eventCard).join("")}
       </section>
     </main>
   `);
@@ -443,7 +420,7 @@ function handleGlobalTap(event) {
 }
 
 function canAdvanceLife() {
-  return screen === "life" && state?.meta.isAlive && !pendingChoice;
+  return screen === "life" && state?.meta.isAlive;
 }
 
 function isTypingTarget(target) {
@@ -451,7 +428,7 @@ function isTypingTarget(target) {
 }
 
 function isInteractiveTarget(target) {
-  return Boolean(target?.closest?.("button, input, textarea, select, a, [data-choice], .modal, .modal-backdrop"));
+  return Boolean(target?.closest?.("button, input, textarea, select, a"));
 }
 
 function isCoarsePointer() {
@@ -490,10 +467,9 @@ function handleAction(action) {
 
 function advanceLife() {
   if (!canAdvanceLife()) return;
-  const result = advanceYear(state, data, context());
-  pendingChoice = result.choiceEvent;
+  advanceYear(state, data, context());
   render();
-  if (!pendingChoice) scrollToBottom();
+  scrollToBottom();
 }
 
 function startLife(options = {}) {
@@ -502,10 +478,8 @@ function startLife(options = {}) {
   if (readSeedInput) setup.seed = document.querySelector("#setupSeed")?.value.trim() || setup.seed;
   rng = createRng(setup.seed);
   state = createInitialState(setup, data, context());
-  pendingChoice = null;
   screen = "life";
-  const result = advanceYear(state, data, context());
-  pendingChoice = result.choiceEvent;
+  advanceYear(state, data, context());
 }
 
 function randomizeSetup() {

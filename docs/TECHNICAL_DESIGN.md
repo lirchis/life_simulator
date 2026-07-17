@@ -21,8 +21,8 @@
   -> 筛选候选事件
   -> 计算事件权重
   -> 加权随机抽取事件
-  -> 展示事件文本或选择
-  -> 应用事件效果
+  -> 自动抽取事件结果
+  -> 展示事件文本并应用效果
   -> 更新特质、标签、计数器、历史和后续事件
   -> 判断死亡或结局
 ```
@@ -314,7 +314,8 @@ type LifeLogEntry = {
   eventId: string;
   title: string;
   text: string;
-  choiceId?: string;
+  outcomeId?: string;
+  resultText?: string;
   effectsSummary?: string[];
   snapshot?: Partial<PlayerState>;
 };
@@ -418,7 +419,7 @@ type LifeEvent = {
   mutuallyExclusiveWith?: string[];
   text: string | TextVariant[];
   effects?: Effect[];
-  choices?: EventChoice[];
+  outcomes?: EventOutcome[];
   followUps?: FollowUp[];
   ending?: EndingConfig;
 };
@@ -1072,26 +1073,28 @@ type TimedModifierTarget =
 }
 ```
 
-## 10. 选择事件
+## 10. 自动结果事件
 
-选择事件是普通事件的扩展。事件本身负责展示选择，玩家选择后应用对应效果。
+自动结果事件是普通事件的扩展。事件可以配置多个可能结果，但不会向玩家展示选项。引擎在事件发生时，根据结果条件、权重和本局 seed 自动抽取一个结果并立即应用效果。
 
 ```ts
-type EventChoice = {
+type EventOutcome = {
   id: string;
-  text: string;
+  resultText: string;
   conditions?: ConditionGroup;
+  baseWeight?: number;
   weightModifiers?: WeightModifier[];
   effects: Effect[];
-  resultText?: string;
 };
 ```
+
+核心交互约束：完成开局后，`advanceYear` 必须在一次调用中完成事件选择、结果选择、效果应用和快照写入。引擎不得返回等待玩家处理的 pending choice 状态，UI 也不得渲染选择弹窗。
 
 示例：
 
 ```json
 {
-  "id": "first_job_choice",
+  "id": "first_job_outcome",
   "title": "第一份工作",
   "category": "career",
   "stage": ["young_adult"],
@@ -1101,11 +1104,11 @@ type EventChoice = {
   },
   "baseWeight": 80,
   "priority": 10,
-  "text": "毕业后，你拿到了几份方向不同的 offer。",
-  "choices": [
+  "text": "毕业后，你走到了第一份工作的门口。",
+  "outcomes": [
     {
       "id": "stable_company",
-      "text": "去大公司，先求稳定",
+      "resultText": "你进入大公司，先换来了一份稳定。",
       "effects": [
         { "path": "career.status", "set": "employed" },
         { "path": "career.field", "set": "corporate" },
@@ -1115,7 +1118,7 @@ type EventChoice = {
     },
     {
       "id": "startup",
-      "text": "加入创业公司，赌一把",
+      "resultText": "你进入创业公司，机会和加班一起到来。",
       "effects": [
         { "path": "career.status", "set": "employed" },
         { "path": "career.field", "set": "startup" },

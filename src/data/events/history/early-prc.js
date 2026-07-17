@@ -54,7 +54,7 @@ export const historyEarlyPrcEvents = [
         "text": "你到了该参加工作的年纪。那时不是投简历，而是分配、招工、介绍信和单位名册。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "production_team",
         "text": "留在生产队挣工分",
@@ -833,7 +833,7 @@ export const historyEarlyPrcEvents = [
         "text": "消息传来，高考恢复。有人翻出旧课本，有人夜里点灯，你忽然看见命运开了一条细缝。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "study_again",
         "text": "拼命复习，抓住这条缝",
@@ -928,7 +928,7 @@ export const historyEarlyPrcEvents = [
         "text": "有人低声谈起边境那边的灯。你知道这不是旅行，是把一条命压进黑水和草丛。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "attempt_crossing",
         "text": "冒险一试",

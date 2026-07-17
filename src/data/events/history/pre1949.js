@@ -31,7 +31,7 @@ export const historyPre1949Events = [
       ]
     },
     "text": "你到了该谋生的年纪。那时没有“找工作”的说法，更多是托人、拜师、下地，或者跟着亲戚去城里讨一口饭。",
-    "choices": [
+    "outcomes": [
       {
         "id": "farm_work",
         "text": "留在田里，先帮家里扛活",
@@ -161,7 +161,7 @@ export const historyPre1949Events = [
       ]
     },
     "text": "你到了该帮家里分担的年纪。那时许多女孩的“工作”不写在账本上，却从天亮做到天黑。",
-    "choices": [
+    "outcomes": [
       {
         "id": "household_care",
         "text": "留在家里，照看弟妹和家务",

@@ -848,7 +848,7 @@ export const dailyFamilyRelationshipsEvents = [
     ],
     "baseWeight": 20,
     "text": "亲戚开口借钱，话说得客气，难处却是真的。你在情分和账本之间停了很久。",
-    "choices": [
+    "outcomes": [
       {
         "id": "lend_some",
         "text": "多少借一点",

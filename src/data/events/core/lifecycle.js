@@ -683,7 +683,7 @@ export const coreLifecycleEvents = [
         "text": "高考到了。校门口挤满家长、汗水和沉默的期待，你站在人生第一个巨大岔路口前。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "steady",
         "text": "稳住，正常发挥",
@@ -1024,7 +1024,7 @@ export const coreLifecycleEvents = [
         "text": "你拿到了几份方向不同的工作机会。成年人世界的第一张门票，背面写着价格。"
       }
     ],
-    "choices": [
+    "outcomes": [
       {
         "id": "stable_company",
         "text": "去大公司，先求稳定",

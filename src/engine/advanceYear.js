@@ -7,7 +7,7 @@ import { matchConditions } from "./conditions.js";
 import { applyNaturalChanges } from "./naturalChanges.js";
 
 export function advanceYear(state, data, context) {
-  if (!state.meta.isAlive) return { logs: [], choiceEvent: null, ended: true };
+  if (!state.meta.isAlive) return { logs: [], ended: true };
 
   state.meta.age += 1;
   state.meta.currentYear = state.birth.year + state.meta.age;
@@ -25,12 +25,13 @@ export function advanceYear(state, data, context) {
 
   for (const event of selected) {
     if (!state.meta.isAlive) break;
-    if (event.choices?.length) return { logs, choiceEvent: prepareChoiceEvent(event, state, context), ended: false };
-    logs.push(applyEvent(event, null, state, context));
+    const displayText = selectText(event.text, state, context);
+    const outcome = selectOutcome(event, state, context);
+    logs.push(applyEvent(event, outcome, state, context, displayText));
   }
 
   writeSnapshot(state);
-  return { logs, choiceEvent: null, ended: !state.meta.isAlive };
+  return { logs, ended: !state.meta.isAlive };
 }
 
 function recordYearlyChange(before, state) {
@@ -44,17 +45,10 @@ function recordYearlyChange(before, state) {
   });
 }
 
-export function resolveChoice(event, choiceId, state, context) {
-  const choice = event.choices.find((item) => item.id === choiceId);
-  const log = applyEvent(event, choice, state, context);
-  writeSnapshot(state);
-  return log;
-}
-
-export function applyEvent(event, choice, state, context) {
+export function applyEvent(event, outcome, state, context, displayText = selectText(event.text, state, context)) {
   const before = clone(state);
   applyEffects(event.effects ?? [], state, event);
-  if (choice) applyEffects(choice.effects ?? [], state, event);
+  if (outcome) applyEffects(outcome.effects ?? [], state, event);
   recordOccurrence(event, state);
   if (event.cooldown) state.cooldowns[event.id] = event.cooldown;
 
@@ -63,11 +57,11 @@ export function applyEvent(event, choice, state, context) {
     year: state.meta.currentYear,
     eventId: event.id,
     title: event.title,
-    text: event.displayText ?? selectText(event.text, state, context),
+    text: displayText,
     category: event.category,
     priority: event.priority ?? 0,
-    choiceId: choice?.id,
-    resultText: choice?.resultText ?? "",
+    outcomeId: outcome?.id,
+    resultText: outcome?.resultText ?? "",
     effectsSummary: makeEffectSummary(before, state),
     death: !state.meta.isAlive,
   };
@@ -75,11 +69,20 @@ export function applyEvent(event, choice, state, context) {
   return log;
 }
 
-function prepareChoiceEvent(event, state, context) {
-  return {
-    ...event,
-    displayText: selectText(event.text, state, context),
-  };
+function selectOutcome(event, state, context) {
+  if (!event.outcomes?.length) return null;
+  const eligible = event.outcomes.filter((outcome) => matchConditions(outcome.conditions, state, context));
+  return weightedPick(eligible, (outcome) => calculateOutcomeWeight(outcome, state, context), context.rng);
+}
+
+function calculateOutcomeWeight(outcome, state, context) {
+  let weight = outcome.baseWeight ?? 1;
+  for (const modifier of outcome.weightModifiers ?? []) {
+    if (!matchConditions({ all: [modifier] }, state, context)) continue;
+    if (modifier.add) weight += modifier.add;
+    if (modifier.multiply) weight *= modifier.multiply;
+  }
+  return weight;
 }
 
 function selectEvents(candidates, state, context) {
