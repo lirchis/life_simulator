@@ -1,7 +1,8 @@
 import { calculateEnvironment } from "./environment.js";
-import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=continuity-1";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=narrative-1";
 import { attachHistoricalLife } from "./historicalLives.js?v=continuity-1";
 import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { createNarrativeState, normalizeNarrativeState } from "./narrative.js?v=narrative-1";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
@@ -97,6 +98,7 @@ export function createInitialState(setup, data, context) {
       primaryActivity: "dependent",
       transitions: [],
     },
+    narrative: createNarrativeState(),
     talents: [...setup.talents],
     openingTalents: [...setup.talents],
     traits: [],
@@ -125,6 +127,7 @@ export function createInitialState(setup, data, context) {
 
   normalizeState(state);
   normalizeLifeCourse(state);
+  normalizeNarrativeState(state);
   attachHistoricalLife(state, data.historicalLives, context);
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   return state;

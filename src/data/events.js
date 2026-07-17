@@ -1,6 +1,7 @@
 import { coreLifecycleEvents } from "./events/core/lifecycle.js?v=continuity-1";
 import { earlyMortalityEvents } from "./events/core/early-mortality.js?v=continuity-1";
 import { adultMortalityEvents } from "./events/core/adult-mortality.js?v=continuity-1";
+import { narrativeArcEvents } from "./events/core/narrative-arcs.js?v=narrative-1";
 import { historyPre1949Events } from "./events/history/pre1949.js?v=continuity-1";
 import { historyLateQingEvents } from "./events/history/late-qing.js?v=continuity-1";
 import { expansionPre1949Events } from "./events/history/expansion-pre1949.js?v=continuity-1";
@@ -23,6 +24,7 @@ export const events = [
   ...coreLifecycleEvents,
   ...earlyMortalityEvents,
   ...adultMortalityEvents,
+  ...narrativeArcEvents,
   ...historyLateQingEvents,
   ...historyPre1949Events,
   ...expansionPre1949Events,

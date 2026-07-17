@@ -52,6 +52,9 @@ function review(batch, output) {
   addFinding(output, "warning", "COPY_MONOCULTURE", `高频事件只有单一或被单一文案支配的表达 ${frequency.copyMonoculture.length} 个`, frequency.copyMonoculture);
   addFinding(output, "warning", "REPEATED_IN_LIFE", `同一人生重复事件 ${frequency.repeated_event_excess} 次（排除平常年后 ${frequency.repeated_nonquiet_event_excess} 次）、重复可见文案 ${frequency.repeated_visible_copy_excess} 次`, frequency.repeatSamples);
 
+  const narrative = reviewNarrativeStructure(batch);
+  addFinding(output, "warning", "OVERLY_DAILY_LIFE", `结构性事件不足、连续纹理年过长或成年生活长期没有叙事推进 ${narrative.problemLives.length} 局`, narrative.problemLives);
+
   const subgroups = reviewSubgroups(batch);
   addFinding(output, "warning", "SUBGROUP_CONTENT_HOLE", `分群中平常年占比过高或内容多样性过低 ${subgroups.holes.length} 个`, subgroups.holes);
 
@@ -80,9 +83,84 @@ function review(batch, output) {
       observed_anachronisms: anachronism.length,
     },
     frequency,
+    narrative,
     subgroups,
     mortality,
   };
+}
+
+function reviewNarrativeStructure(batch) {
+  const structuralTiers = new Set(["turning_point", "consequence", "historical_pressure"]);
+  const ordinaryEvents = batch.events.filter((row) => row.chronicle_id === "");
+  const tierCounts = countBy(ordinaryEvents, (row) => row.narrative_tier || "unknown");
+  const structuralCount = ordinaryEvents.filter((row) => structuralTiers.has(row.narrative_tier)).length;
+  const textureCount = ordinaryEvents.filter((row) => row.narrative_tier === "texture").length;
+  const byRun = groupByMap(ordinaryEvents, (row) => row.run_id);
+  const lives = [];
+  const problemLives = [];
+
+  for (const [runId, unsorted] of byRun) {
+    const rows = [...unsorted].sort((left, right) => num(left.event_order) - num(right.event_order));
+    const adultRows = rows.filter((row) => num(row.age) >= 13 && row.death !== "yes");
+    const structural = rows.filter((row) => structuralTiers.has(row.narrative_tier));
+    const texture = rows.filter((row) => row.narrative_tier === "texture");
+    const maxTextureStreak = longestStreak(rows, (row) => row.narrative_tier === "texture");
+    const adultTextureStreak = longestStreak(adultRows, (row) => row.narrative_tier === "texture");
+    const adultStructuralRate = ratio(adultRows.filter((row) => structuralTiers.has(row.narrative_tier)).length, adultRows.length);
+    const stat = {
+      run_id: runId,
+      cohort: rows[0]?.cohort ?? "",
+      event_count: rows.length,
+      structural_count: structural.length,
+      structural_rate: ratio(structural.length, rows.length),
+      texture_rate: ratio(texture.length, rows.length),
+      adult_structural_rate: adultStructuralRate,
+      max_texture_streak: maxTextureStreak,
+      adult_max_texture_streak: adultTextureStreak,
+    };
+    lives.push(stat);
+    const reasons = [];
+    if (rows.length >= 25 && stat.structural_rate < 0.22) reasons.push(`结构事件仅${percent(stat.structural_rate)}`);
+    if (adultRows.length >= 12 && adultStructuralRate < 0.2) reasons.push(`成年后结构事件仅${percent(adultStructuralRate)}`);
+    if (maxTextureStreak > 5) reasons.push(`最长连续纹理${maxTextureStreak}年`);
+    if (reasons.length) problemLives.push(`${runId} ${stat.cohort}: ${reasons.join("，")}`);
+  }
+
+  const cohortDistribution = {};
+  for (const [cohort, rows] of groupByMap(lives, (row) => row.cohort)) {
+    cohortDistribution[cohort] = {
+      runs: rows.length,
+      mean_structural_rate: average(rows.map((row) => row.structural_rate)),
+      mean_adult_structural_rate: average(rows.map((row) => row.adult_structural_rate)),
+      lives_with_texture_streak_over_5: rows.filter((row) => row.max_texture_streak > 5).length,
+    };
+  }
+
+  return {
+    tier_counts: tierCounts,
+    structural_event_count: structuralCount,
+    structural_event_rate: ratio(structuralCount, ordinaryEvents.length),
+    texture_event_count: textureCount,
+    texture_event_rate: ratio(textureCount, ordinaryEvents.length),
+    turning_point_rate: ratio(tierCounts.turning_point ?? 0, ordinaryEvents.length),
+    consequence_rate: ratio(tierCounts.consequence ?? 0, ordinaryEvents.length),
+    historical_pressure_rate: ratio(tierCounts.historical_pressure ?? 0, ordinaryEvents.length),
+    mean_max_texture_streak: average(lives.map((row) => row.max_texture_streak)),
+    lives_with_texture_streak_over_5: lives.filter((row) => row.max_texture_streak > 5).length,
+    lives_with_texture_streak_over_5_rate: ratio(lives.filter((row) => row.max_texture_streak > 5).length, lives.length),
+    cohort_distribution: cohortDistribution,
+    problemLives,
+  };
+}
+
+function longestStreak(rows, predicate) {
+  let current = 0;
+  let maximum = 0;
+  for (const row of rows) {
+    current = predicate(row) ? current + 1 : 0;
+    maximum = Math.max(maximum, current);
+  }
+  return maximum;
 }
 
 function reviewIntegrity(batch) {
@@ -500,6 +578,8 @@ function evaluateGates(metrics, allFindings) {
     max_repeated_visible_copy_rate: numericArg(args["max-repeat-copy-rate"], 0.03),
     max_top_10_event_share: numericArg(args["max-top10-share"], 0.45),
     max_quiet_year_rate: numericArg(args["max-quiet-rate"], 0.35),
+    max_texture_event_rate: numericArg(args["max-texture-rate"], 0.72),
+    min_structural_event_rate: numericArg(args["min-structural-rate"], 0.25),
     max_age_cap_rate: numericArg(args["max-age-cap-rate"], 0.02),
     min_event_definition_coverage_rate: numericArg(args["min-event-coverage"], 0.45),
   };
@@ -508,6 +588,8 @@ function evaluateGates(metrics, allFindings) {
     gate("repeated_visible_copy_rate", metrics.frequency.repeated_visible_copy_rate <= thresholds.max_repeated_visible_copy_rate, `${percent(metrics.frequency.repeated_visible_copy_rate)} <= ${percent(thresholds.max_repeated_visible_copy_rate)}`),
     gate("top_10_event_share", metrics.frequency.top_10_event_share <= thresholds.max_top_10_event_share, `${percent(metrics.frequency.top_10_event_share)} <= ${percent(thresholds.max_top_10_event_share)}`),
     gate("quiet_year_rate", metrics.frequency.quiet_year_rate <= thresholds.max_quiet_year_rate, `${percent(metrics.frequency.quiet_year_rate)} <= ${percent(thresholds.max_quiet_year_rate)}`),
+    gate("texture_event_rate", metrics.narrative.texture_event_rate <= thresholds.max_texture_event_rate, `${percent(metrics.narrative.texture_event_rate)} <= ${percent(thresholds.max_texture_event_rate)}`),
+    gate("structural_event_rate", metrics.narrative.structural_event_rate >= thresholds.min_structural_event_rate, `${percent(metrics.narrative.structural_event_rate)} >= ${percent(thresholds.min_structural_event_rate)}`),
     gate("age_cap_rate", ratio(metrics.mortality.capped, metrics.counts.runs) <= thresholds.max_age_cap_rate, `${percent(ratio(metrics.mortality.capped, metrics.counts.runs))} <= ${percent(thresholds.max_age_cap_rate)}`),
     gate("event_definition_coverage_rate", metrics.frequency.event_definition_coverage_rate >= thresholds.min_event_definition_coverage_rate, `${percent(metrics.frequency.event_definition_coverage_rate)} >= ${percent(thresholds.min_event_definition_coverage_rate)}`),
   ];
@@ -530,6 +612,8 @@ function formatReport(result) {
     "## 核心指标",
     "",
     `- 平常年占比：${percent(metrics.frequency.quiet_year_rate)}`,
+    `- 结构性事件：${percent(metrics.narrative.structural_event_rate)}（转折 ${percent(metrics.narrative.turning_point_rate)} / 后果 ${percent(metrics.narrative.consequence_rate)} / 历史压力 ${percent(metrics.narrative.historical_pressure_rate)}）`,
+    `- 日常纹理：${percent(metrics.narrative.texture_event_rate)}；最长纹理超过5年的生命 ${metrics.narrative.lives_with_texture_streak_over_5} 局`,
     `- 同局重复事件：${metrics.frequency.repeated_event_excess}（${percent(metrics.frequency.repeated_event_rate)}）；排除平常年后 ${metrics.frequency.repeated_nonquiet_event_excess}`,
     `- 同局重复可见文案：${metrics.frequency.repeated_visible_copy_excess}（${percent(metrics.frequency.repeated_visible_copy_rate)}）`,
     `- 头部10事件占比：${percent(metrics.frequency.top_10_event_share)}；HHI ${metrics.frequency.event_hhi.toFixed(4)}`,
@@ -568,12 +652,15 @@ function loadBatch(inputFiles) {
       "run_id", "case_id", "cohort", "region_group", "settlement", "class_tier", "attribute_tier",
       "birth_year", "gender", "birth_province", "birth_city_tier", "hukou", "family_class",
       "final_age", "alive", "reached_age_cap", "event_count", "repeated_visible_copy_excess",
+      "structural_event_count", "texture_event_count", "max_texture_streak", "longest_structural_gap",
     ])),
     years: parseCsv(readFileSync(inputFiles.years, "utf8"), new Set([
       "run_id", "year_id", "birth_year", "chronicle_id", "age", "year", "event_count", "event_ids",
       "education_status", "education_current_level", "education_completed_level", "education_mode",
       "education_concurrent_career", "career_status", "career_jobs_held", "primary_activity",
       "life_course_transition_count", "alive_after_year", "tags",
+      "narrative_last_tier", "narrative_last_domain", "narrative_years_since_structural",
+      "narrative_texture_streak", "narrative_structural_count", "narrative_active_threads",
     ])),
     events: parseCsv(readFileSync(inputFiles.events, "utf8"), new Set([
       "run_id", "event_row_id", "year_id", "event_order", "cohort", "region_group", "settlement",
@@ -585,6 +672,9 @@ function loadBatch(inputFiles) {
       "career_status_before", "career_field_before", "career_status_after", "career_field_after",
       "career_jobs_held_after", "primary_activity_after",
       "event_id", "title", "category", "final_text", "final_result_text", "death",
+      "narrative_tier", "narrative_domain", "narrative_texture_streak_before",
+      "narrative_texture_streak_after", "narrative_years_since_structural_before",
+      "narrative_years_since_structural_after", "narrative_active_threads_after",
     ])),
     manifest: JSON.parse(readFileSync(inputFiles.manifest, "utf8")),
   };

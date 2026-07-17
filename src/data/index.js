@@ -1,6 +1,6 @@
 import { aggregates } from "./aggregates.js";
 import { birthYearRange } from "./config.js?v=continuity-1";
-import { events } from "./events.js?v=continuity-1";
+import { events } from "./events.js?v=narrative-1";
 import {
   cityTierEras,
   familyClassEras,

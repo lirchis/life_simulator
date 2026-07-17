@@ -7,6 +7,7 @@ For the full authoring workflow, see `docs/EVENT_AUTHORING_SOP.md`.
 Add events under this directory by era or everyday-life theme:
 
 - `core/lifecycle.js`: birth, school entry, first job framework, marriage, retirement, death.
+- `core/narrative-arcs.js`: cross-year structural chains with an opening turn, stateful consequences, and a partial resolution.
 - `history/pre1949.js`: late Qing, Republic era, Red Army, Anti-Japanese War, Civil War, Nanyang migration.
 - `history/early-prc.js`: 1949-1977, land reform, collectivization, famine, Cultural Revolution, sent-down youth, planned work.
 - `history/reform-era.js`: 1978-1999, restored gaokao, reform opening, getihu, xiahai, layoffs, early migration.

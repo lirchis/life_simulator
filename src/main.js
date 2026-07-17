@@ -1,8 +1,8 @@
 import { createAggregateRegistry } from "./engine/aggregates.js";
-import { advanceYear } from "./engine/advanceYear.js?v=continuity-1";
+import { advanceYear } from "./engine/advanceYear.js?v=narrative-1";
 import { createRng, pick, randomSeed } from "./engine/random.js";
-import { createInitialState } from "./engine/state.js?v=continuity-1";
-import { data } from "./data/index.js?v=continuity-1";
+import { createInitialState } from "./engine/state.js?v=narrative-1";
+import { data } from "./data/index.js?v=narrative-1";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);

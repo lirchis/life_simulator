@@ -290,6 +290,7 @@ function baseColumns(runId, runIndex, matrixCase, setup) {
 
 function toSummaryRow(runId, runIndex, matrixCase, setup, state, maxAge) {
   const eventCounts = countBy(state.history, (log) => log.eventId);
+  const tierCounts = countBy(state.history, (log) => log.narrativeTier ?? "unknown");
   const textCounts = countBy(state.history, (log) => normalizeText(`${log.text}\n${log.resultText ?? ""}`));
   return {
     ...baseColumns(runId, runIndex, matrixCase, setup),
@@ -319,6 +320,10 @@ function toSummaryRow(runId, runIndex, matrixCase, setup, state, maxAge) {
     repeated_event_excess: excessCount(eventCounts),
     repeated_visible_copy_excess: excessCount(textCounts),
     quiet_year_count: eventCounts.life_quiet_year ?? 0,
+    structural_event_count: (tierCounts.turning_point ?? 0) + (tierCounts.consequence ?? 0) + (tierCounts.historical_pressure ?? 0),
+    texture_event_count: tierCounts.texture ?? 0,
+    max_texture_streak: maximumTextureStreak(state.history),
+    longest_structural_gap: longestStructuralGap(state.history),
     final_health: state.resources.health,
     final_wealth: state.resources.wealth,
     final_happiness: state.resources.happiness,
@@ -390,6 +395,12 @@ function toYearRows(runId, runIndex, matrixCase, setup, state) {
       primary_activity: snapshot.lifeCourse.primaryActivity,
       life_course_transition_count: snapshot.lifeCourse.transitions.length,
       last_life_course_transition: formatLifeCourseTransition(snapshot.lifeCourse.transitions.at(-1)),
+      narrative_last_tier: snapshot.narrative.lastTier,
+      narrative_last_domain: snapshot.narrative.lastDomain,
+      narrative_years_since_structural: snapshot.narrative.yearsSinceStructural,
+      narrative_texture_streak: snapshot.narrative.textureStreak,
+      narrative_structural_count: snapshot.narrative.structuralCount,
+      narrative_active_threads: Object.keys(snapshot.narrative.activeThreads ?? {}).sort().join("|"),
       event_count: logs.length,
       event_ids: logs.map((log) => log.eventId).join("|"),
       event_titles: logs.map((log) => log.title).join("|"),
@@ -448,6 +459,13 @@ function toEventRows(runId, runIndex, matrixCase, setup, state) {
       title: log.title,
       category: log.category,
       priority: log.priority ?? 0,
+      narrative_tier: log.narrativeTier ?? "unknown",
+      narrative_domain: log.narrativeDomain ?? "",
+      narrative_texture_streak_before: log.narrativeBefore?.textureStreak ?? 0,
+      narrative_texture_streak_after: log.narrativeAfter?.textureStreak ?? 0,
+      narrative_years_since_structural_before: log.narrativeBefore?.yearsSinceStructural ?? 0,
+      narrative_years_since_structural_after: log.narrativeAfter?.yearsSinceStructural ?? 0,
+      narrative_active_threads_after: (log.narrativeAfter?.activeThreadDomains ?? []).join("|"),
       outcome_id: log.outcomeId ?? "",
       final_text: log.text,
       final_result_text: log.resultText ?? "",
@@ -470,9 +488,33 @@ function formatLifeCourseTransition(transition) {
   return `${transition.year}/${transition.age}/${transition.domain}/${from}->${to}/${transition.source}`;
 }
 
+function maximumTextureStreak(history) {
+  let current = 0;
+  let maximum = 0;
+  for (const log of history) {
+    current = log.narrativeTier === "texture" ? current + 1 : 0;
+    maximum = Math.max(maximum, current);
+  }
+  return maximum;
+}
+
+function longestStructuralGap(history) {
+  const ordinary = history.filter((log) => log.narrativeTier !== "chronicle");
+  if (!ordinary.length) return 0;
+  let lastStructuralYear = ordinary[0].year;
+  let maximum = 0;
+  for (const log of ordinary) {
+    if (["turning_point", "consequence", "historical_pressure"].includes(log.narrativeTier)) {
+      maximum = Math.max(maximum, log.year - lastStructuralYear - 1);
+      lastStructuralYear = log.year;
+    }
+  }
+  return Math.max(maximum, ordinary.at(-1).year - lastStructuralYear);
+}
+
 function makeManifest() {
   return {
-    schema_version: 1,
+    schema_version: 2,
     generator: "scripts/stratified_batch.js",
     deterministic_note: "同一代码版本、参数和 seed 会生成相同的开局矩阵与可见人生；generated_at 不写入结果以便逐字比较。",
     parameters: {

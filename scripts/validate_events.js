@@ -4,6 +4,7 @@ import { advanceYear, applyEvent } from "../src/engine/advanceYear.js";
 import { createRng } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
 import { educationRank, hasActiveCareer, matchLifeCourse } from "../src/engine/lifeCourse.js";
+import { getNarrativeDomain, getNarrativeTier, isStructuralTier, narrativeTiers } from "../src/engine/narrative.js";
 
 const errors = [];
 const eventIds = new Set();
@@ -40,6 +41,13 @@ for (const event of data.events) {
   if (!event.id) errors.push("发现缺少 id 的事件");
   if (eventIds.has(event.id)) errors.push(`重复事件 id：${event.id}`);
   eventIds.add(event.id);
+
+  const narrativeTier = getNarrativeTier(event);
+  if (!narrativeTiers.includes(narrativeTier)) errors.push(`${event.id} 的叙事层级无效：${narrativeTier}`);
+  if (!getNarrativeDomain(event)) errors.push(`${event.id} 缺少叙事领域`);
+  if (event.narrativeThread?.close && !isStructuralTier(narrativeTier)) {
+    errors.push(`${event.id} 试图用非结构性事件关闭叙事线索`);
+  }
 
   if (Object.hasOwn(event, "choices")) {
     errors.push(`${event.id} 使用了 choices；人生推进中不允许玩家选择，请改用自动 outcomes`);
@@ -171,6 +179,16 @@ function validateLifeCourseSnapshot(state, seed) {
       break;
     }
   }
+  const ordinaryHistory = state.history.filter((log) => log.narrativeTier !== "chronicle");
+  const structuralCount = ordinaryHistory.filter((log) => isStructuralTier(log.narrativeTier)).length;
+  if (state.narrative.structuralCount !== structuralCount) {
+    errors.push(`${prefix} 叙事结构计数 ${state.narrative.structuralCount} 与日志 ${structuralCount} 不一致`);
+  }
+  let expectedTextureStreak = 0;
+  for (let index = ordinaryHistory.length - 1; index >= 0 && ordinaryHistory[index].narrativeTier === "texture"; index -= 1) expectedTextureStreak += 1;
+  if (state.narrative.textureStreak !== expectedTextureStreak) {
+    errors.push(`${prefix} 连续纹理年 ${state.narrative.textureStreak} 与日志 ${expectedTextureStreak} 不一致`);
+  }
 }
 
 function validateReportedContradiction() {
@@ -267,6 +285,7 @@ function validateFixedPlayback(life) {
     education: state.education,
     career: state.career,
     lifeCourse: state.lifeCourse,
+    narrative: state.narrative,
     traits: state.traits,
     tags: state.tags,
     deathReason: state.meta.deathReason,

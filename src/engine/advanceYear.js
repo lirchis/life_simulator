@@ -2,12 +2,21 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=continuity-1";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=narrative-1";
 import { matchConditions } from "./conditions.js";
 import { applyNaturalChanges } from "./naturalChanges.js";
 import { getHistoricalLife } from "./historicalLives.js?v=continuity-1";
 import { composeQuietYearText } from "./quietYearText.js?v=continuity-1";
 import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import {
+  beginNarrativeYear,
+  getNarrativeDomain,
+  getNarrativeTier,
+  narrativePool,
+  narrativeSnapshot,
+  narrativeWeightMultiplier,
+  recordNarrativeEvent,
+} from "./narrative.js?v=narrative-1";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], ended: true };
@@ -22,6 +31,7 @@ export function advanceYear(state, data, context) {
   const beforeNatural = clone(state);
   applyNaturalChanges(state);
   recordYearlyChange(beforeNatural, state);
+  beginNarrativeYear(state);
 
   const candidates = uniqueEvents([...baseCandidates(state, data.events, context), ...scheduledCandidates(state, data.events, context)]);
   const selected = selectEvents(candidates, state, context);
@@ -57,6 +67,7 @@ function advanceChronicleYear(state, data, context) {
     category: entry.category,
     text: entry.text,
     effects: entry.effects ?? [],
+    narrativeTier: "chronicle",
     priority: 100,
     maxOccurrences: 1,
   };
@@ -82,6 +93,7 @@ export function applyEvent(event, outcome, state, context, displayText = selectT
   if (outcome) applyEffects(outcome.effects ?? [], state, event);
   applyEventLifeCourse(event, outcome, before, state);
   recordOccurrence(event, state);
+  recordNarrativeEvent(event, state);
   if (event.cooldown) state.cooldowns[event.id] = event.cooldown;
 
   const log = {
@@ -92,11 +104,15 @@ export function applyEvent(event, outcome, state, context, displayText = selectT
     text: displayText,
     category: event.category,
     priority: event.priority ?? 0,
+    narrativeTier: getNarrativeTier(event),
+    narrativeDomain: getNarrativeDomain(event),
     outcomeId: outcome?.id,
     resultText: outcome?.resultText ?? "",
     effectsSummary: makeEffectSummary(before, state),
     continuityBefore: lifeCourseSnapshot(before),
     continuityAfter: lifeCourseSnapshot(state),
+    narrativeBefore: narrativeSnapshot(before),
+    narrativeAfter: narrativeSnapshot(state),
     death: !state.meta.isAlive,
   };
   state.history.push(log);
@@ -151,7 +167,8 @@ function selectEvents(candidates, state, context) {
 
   while (selected.length < count) {
     if (selected.some(changesLocation)) break;
-    const pool = candidates.filter((event) => !event.priority && !selected.some((item) => item.id === event.id));
+    const eligible = candidates.filter((event) => !event.priority && !selected.some((item) => item.id === event.id));
+    const pool = narrativePool(eligible, state);
     const picked = weightedPick(pool, (event) => calculateWeight(event, state, context), context.rng);
     if (!picked) break;
     selected.push(picked);
@@ -230,6 +247,7 @@ function calculateWeight(event, state, context) {
     if (modifier.multiply) weight *= modifier.multiply;
   }
   weight = applyRepeatPenalty(event, weight, state);
+  weight *= narrativeWeightMultiplier(event, state);
   for (const scheduled of state.scheduledEvents) {
     if (scheduled.eventId !== event.id) continue;
     if (scheduled.earliestYear > state.meta.currentYear || scheduled.latestYear < state.meta.currentYear) continue;

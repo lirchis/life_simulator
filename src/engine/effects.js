@@ -1,5 +1,6 @@
 import { clamp, clone, getPath, setPath } from "./path.js";
 import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { normalizeNarrativeState } from "./narrative.js?v=narrative-1";
 
 export function applyEffects(effects = [], state, sourceEvent) {
   for (const effect of effects) {
@@ -82,6 +83,7 @@ export function writeSnapshot(state) {
     education: clone(state.education),
     career: clone(state.career),
     lifeCourse: clone(state.lifeCourse),
+    narrative: clone(state.narrative),
     traits: [...state.traits],
     tags: [...state.tags],
   });
@@ -97,6 +99,7 @@ export function normalizeState(state) {
   state.education.score = clamp(Math.round(state.education.score), 0, 100);
   state.career.level = clamp(Math.round(state.career.level), 0, 100);
   state.career.income = clamp(Math.round(state.career.income), 0, 100);
+  normalizeNarrativeState(state);
 }
 
 function collectDiffs(summary, before, after, labels) {
