@@ -36,13 +36,16 @@ http://localhost:4175
 - 按时代、城乡、年龄与人物状态组合书写的平常年景
 - 转折、历史压力、跨年后果与日常纹理分层的叙事选择器
 - 债务、照护、职业、迁居、关系、疾病与高龄阶段的跨年人生主线
+- 2036—2120 年虚构未来史：以制度、冲突和集体记忆串联时代，而非只罗列未来日用品
 - 死亡和人生报告
 
 隐藏人物库的结构、写作规范与后续选题见 [`docs/HISTORICAL_LIFE_LIBRARY.md`](docs/HISTORICAL_LIFE_LIBRARY.md)。
 
 批量内容评测使用 `npm run evaluate`；完整的生成、检查、评测、优化闭环见 [`docs/CONTENT_EVALUATION.md`](docs/CONTENT_EVALUATION.md)。
 
-覆盖出生世代、性别、城乡、家庭资源、地区与属性的 1056 局分层矩阵，以及年龄/身份/地点/频率自动审查，见 [`docs/BATCH_TESTING.md`](docs/BATCH_TESTING.md) 与 [`docs/STRATIFIED_CONTENT_REVIEW.md`](docs/STRATIFIED_CONTENT_REVIEW.md)。
+覆盖出生世代、性别、城乡、家庭资源、地区与属性的 1188 局分层矩阵，以及年龄/身份/地点/频率/未来年代覆盖自动审查，见 [`docs/BATCH_TESTING.md`](docs/BATCH_TESTING.md) 与 [`docs/STRATIFIED_CONTENT_REVIEW.md`](docs/STRATIFIED_CONTENT_REVIEW.md)。
+
+虚构未来史的年代结构、写作边界与事件链见 [`docs/SPECULATIVE_FUTURE_HISTORY.md`](docs/SPECULATIVE_FUTURE_HISTORY.md)。
 
 教育与职业采用可回放的人生状态轨迹：入学、毕业、辍学、首次就业、离职和退休均记录来源事件；无桥接的全日制/在职冲突会阻断内容发布。
 

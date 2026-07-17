@@ -11,6 +11,7 @@ import { historyReformEraEvents } from "./events/history/reform-era.js?v=continu
 import { historyContemporaryEvents } from "./events/history/contemporary.js?v=continuity-1";
 import { historyFutureEvents } from "./events/history/future.js?v=continuity-1";
 import { historyExpansionFuture2036Events } from "./events/history/expansion-future-2036.js?v=continuity-1";
+import { speculativeHistoryEvents } from "./events/history/speculative-history.js?v=future-history-1";
 import { historyExpansionPost1949Events } from "./events/history/expansion-post1949.js?v=continuity-1";
 import { dailyChildhoodEvents } from "./events/daily/childhood.js?v=continuity-1";
 import { dailySchoolEvents } from "./events/daily/school.js?v=continuity-1";
@@ -34,6 +35,7 @@ export const events = [
   ...historyContemporaryEvents,
   ...historyFutureEvents,
   ...historyExpansionFuture2036Events,
+  ...speculativeHistoryEvents,
   ...historyExpansionPost1949Events,
   ...dailyChildhoodEvents,
   ...dailySchoolEvents,

@@ -2,7 +2,7 @@ import { createAggregateRegistry } from "./engine/aggregates.js";
 import { advanceYear } from "./engine/advanceYear.js?v=narrative-1";
 import { createRng, pick, randomSeed } from "./engine/random.js";
 import { createInitialState } from "./engine/state.js?v=narrative-1";
-import { data } from "./data/index.js?v=narrative-1";
+import { data } from "./data/index.js?v=future-history-1";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
@@ -822,6 +822,7 @@ function categoryLabel(category) {
     wealth: "财富",
     migration: "迁移",
     war: "战乱",
+    society: "时代",
     random: "日常",
     ending: "结局",
   }[category] ?? category;

@@ -55,6 +55,9 @@ function review(batch, output) {
   const narrative = reviewNarrativeStructure(batch);
   addFinding(output, "warning", "OVERLY_DAILY_LIFE", `结构性事件不足、连续纹理年过长或成年生活长期没有叙事推进 ${narrative.problemLives.length} 局`, narrative.problemLives);
 
+  const futureHistory = reviewFutureHistory(batch);
+  addFinding(output, "warning", "FUTURE_HISTORY_HOLE", `2036年后的某个未来阶段仍缺少时代事件 ${futureHistory.holes.length} 段`, futureHistory.holes);
+
   const subgroups = reviewSubgroups(batch);
   addFinding(output, "warning", "SUBGROUP_CONTENT_HOLE", `分群中平常年占比过高或内容多样性过低 ${subgroups.holes.length} 个`, subgroups.holes);
 
@@ -84,8 +87,73 @@ function review(batch, output) {
     },
     frequency,
     narrative,
+    future_history: futureHistory,
     subgroups,
     mortality,
+  };
+}
+
+function reviewFutureHistory(batch) {
+  const definitions = data.events.filter((event) => event.id.startsWith("spec_"));
+  const futureRows = batch.events.filter((row) => row.chronicle_id === "" && num(row.year) >= 2036 && num(row.year) <= 2120);
+  const speculativeRows = futureRows.filter((row) => row.event_id.startsWith("spec_"));
+  const observedIds = new Set(speculativeRows.map((row) => row.event_id));
+  const windows = [
+    [2036, 2049],
+    [2050, 2064],
+    [2065, 2079],
+    [2080, 2094],
+    [2095, 2109],
+    [2110, 2120],
+  ];
+  const eras = {};
+  const holes = [];
+  for (const [start, end] of windows) {
+    const rows = futureRows.filter((row) => inRange(num(row.year), [start, end]));
+    const historical = rows.filter((row) => row.event_id.startsWith("spec_"));
+    const uniqueEvents = new Set(historical.map((row) => row.event_id));
+    const stats = {
+      person_years: rows.length,
+      historical_events: historical.length,
+      historical_event_rate: ratio(historical.length, rows.length),
+      unique_historical_events: uniqueEvents.size,
+    };
+    eras[`${start}-${end}`] = stats;
+    if (rows.length >= 20 && (stats.historical_event_rate < 0.06 || stats.unique_historical_events < 2)) {
+      holes.push(`${start}-${end}: ${rows.length}个人年，未来历史${percent(stats.historical_event_rate)}，仅${stats.unique_historical_events}种事件`);
+    }
+  }
+  const summaryByRun = new Map(batch.summary.map((row) => [row.run_id, row]));
+  const subgroupDistribution = {};
+  for (const dimension of ["cohort", "settlement", "class_tier", "region_group"]) {
+    subgroupDistribution[dimension] = {};
+    const groups = groupByMap(futureRows, (row) => summaryByRun.get(row.run_id)?.[dimension] ?? "unknown");
+    for (const [key, rows] of groups) {
+      const historical = rows.filter((row) => row.event_id.startsWith("spec_"));
+      const stats = {
+        person_years: rows.length,
+        historical_events: historical.length,
+        historical_event_rate: ratio(historical.length, rows.length),
+        unique_historical_events: new Set(historical.map((row) => row.event_id)).size,
+      };
+      subgroupDistribution[dimension][key] = stats;
+      if (rows.length >= 100 && stats.historical_event_rate < 0.03) {
+        holes.push(`${dimension}=${key}: ${rows.length}个未来个人年，未来历史仅${percent(stats.historical_event_rate)}`);
+      }
+    }
+  }
+  return {
+    start_year: 2036,
+    end_year: 2120,
+    person_years: futureRows.length,
+    historical_events: speculativeRows.length,
+    historical_event_rate: ratio(speculativeRows.length, futureRows.length),
+    definitions: definitions.length,
+    observed_definitions: observedIds.size,
+    definition_coverage_rate: ratio(observedIds.size, definitions.length),
+    era_distribution: eras,
+    subgroup_distribution: subgroupDistribution,
+    holes,
   };
 }
 
@@ -582,7 +650,10 @@ function evaluateGates(metrics, allFindings) {
     min_structural_event_rate: numericArg(args["min-structural-rate"], 0.25),
     max_age_cap_rate: numericArg(args["max-age-cap-rate"], 0.02),
     min_event_definition_coverage_rate: numericArg(args["min-event-coverage"], 0.45),
+    min_future_history_rate: numericArg(args["min-future-history-rate"], 0.08),
+    min_future_history_coverage_rate: numericArg(args["min-future-history-coverage"], 0.45),
   };
+  const hasFutureSample = metrics.future_history.person_years >= 200;
   const checks = [
     gate("no_error_findings", !allFindings.some((item) => item.severity === "error"), allFindings.filter((item) => item.severity === "error").map((item) => item.code).join(", ") || "ok"),
     gate("repeated_visible_copy_rate", metrics.frequency.repeated_visible_copy_rate <= thresholds.max_repeated_visible_copy_rate, `${percent(metrics.frequency.repeated_visible_copy_rate)} <= ${percent(thresholds.max_repeated_visible_copy_rate)}`),
@@ -592,6 +663,8 @@ function evaluateGates(metrics, allFindings) {
     gate("structural_event_rate", metrics.narrative.structural_event_rate >= thresholds.min_structural_event_rate, `${percent(metrics.narrative.structural_event_rate)} >= ${percent(thresholds.min_structural_event_rate)}`),
     gate("age_cap_rate", ratio(metrics.mortality.capped, metrics.counts.runs) <= thresholds.max_age_cap_rate, `${percent(ratio(metrics.mortality.capped, metrics.counts.runs))} <= ${percent(thresholds.max_age_cap_rate)}`),
     gate("event_definition_coverage_rate", metrics.frequency.event_definition_coverage_rate >= thresholds.min_event_definition_coverage_rate, `${percent(metrics.frequency.event_definition_coverage_rate)} >= ${percent(thresholds.min_event_definition_coverage_rate)}`),
+    gate("future_history_rate", !hasFutureSample || metrics.future_history.historical_event_rate >= thresholds.min_future_history_rate, hasFutureSample ? `${percent(metrics.future_history.historical_event_rate)} >= ${percent(thresholds.min_future_history_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
+    gate("future_history_definition_coverage", !hasFutureSample || metrics.future_history.definition_coverage_rate >= thresholds.min_future_history_coverage_rate, hasFutureSample ? `${percent(metrics.future_history.definition_coverage_rate)} >= ${percent(thresholds.min_future_history_coverage_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
   ];
   return { passed: checks.every((item) => item.passed), thresholds, checks };
 }
@@ -614,6 +687,7 @@ function formatReport(result) {
     `- 平常年占比：${percent(metrics.frequency.quiet_year_rate)}`,
     `- 结构性事件：${percent(metrics.narrative.structural_event_rate)}（转折 ${percent(metrics.narrative.turning_point_rate)} / 后果 ${percent(metrics.narrative.consequence_rate)} / 历史压力 ${percent(metrics.narrative.historical_pressure_rate)}）`,
     `- 日常纹理：${percent(metrics.narrative.texture_event_rate)}；最长纹理超过5年的生命 ${metrics.narrative.lives_with_texture_streak_over_5} 局`,
+    `- 未来历史（2036—2120）：${metrics.future_history.historical_events}/${metrics.future_history.person_years}个人年（${percent(metrics.future_history.historical_event_rate)}）；事件定义覆盖 ${metrics.future_history.observed_definitions}/${metrics.future_history.definitions}（${percent(metrics.future_history.definition_coverage_rate)}）`,
     `- 同局重复事件：${metrics.frequency.repeated_event_excess}（${percent(metrics.frequency.repeated_event_rate)}）；排除平常年后 ${metrics.frequency.repeated_nonquiet_event_excess}`,
     `- 同局重复可见文案：${metrics.frequency.repeated_visible_copy_excess}（${percent(metrics.frequency.repeated_visible_copy_rate)}）`,
     `- 头部10事件占比：${percent(metrics.frequency.top_10_event_share)}；HHI ${metrics.frequency.event_hhi.toFixed(4)}`,

@@ -13,6 +13,8 @@ Add events under this directory by era or everyday-life theme:
 - `history/reform-era.js`: 1978-1999, restored gaokao, reform opening, getihu, xiahai, layoffs, early migration.
 - `history/contemporary.js`: 2000-2020, WTO, SARS, Olympics, mobile internet, platform work, housing pressure.
 - `history/future.js`: 2021+ near-future events such as AI-era work changes.
+- `history/expansion-future-2036.js`: low-stakes future texture and ordinary adaptation.
+- `history/speculative-history.js`: fictional 2036-2120 historical processes with opening pressure, consequences, and partial resolution.
 - `daily/childhood.js`: low-stakes childhood texture events.
 - `daily/school.js`: recurring school and learning texture events.
 - `daily/family-relationships.js`: family, friendship, romance, marriage, children, neighborhood.

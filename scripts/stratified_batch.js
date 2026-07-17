@@ -20,6 +20,7 @@ const COHORTS = [
   { id: "born_1970", label: "改革前夕一代", birthYear: 1970 },
   { id: "born_1990", label: "市场化一代", birthYear: 1990 },
   { id: "born_2010", label: "移动互联网一代", birthYear: 2010 },
+  { id: "born_2020", label: "未来成年一代", birthYear: 2020 },
 ];
 
 const REPRESENTATIVE_REGIONS = [
