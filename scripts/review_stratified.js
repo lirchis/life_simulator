@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, resolve } from "node:path";
 import { createAggregateRegistry } from "../src/engine/aggregates.js";
 import { data } from "../src/data/index.js";
+import { educationRank } from "../src/engine/lifeCourse.js";
 
 const args = parseArgs(process.argv.slice(2));
 const sampleLimit = positiveInteger(args.samples, 12, "--samples");
@@ -39,6 +40,7 @@ function review(batch, output) {
   addFinding(output, "warning", "AGE_SEMANTIC_RISK", `文案语义与人物年龄疑似不合常理 ${consistency.age.length} 处`, consistency.age);
   addFinding(output, "warning", "INFANT_ADULT_PERSPECTIVE", `0—3岁文案把成年人的认知或自传式记忆写进幼儿当下 ${consistency.infantPerspective.length} 处`, consistency.infantPerspective);
   addFinding(output, "warning", "STATE_NARRATIVE_CONFLICT", `事件叙述与当年结束后的婚姻、子女、教育或职业状态矛盾 ${consistency.state.length} 处`, consistency.state);
+  addFinding(output, "error", "LIFE_COURSE_CONFLICT", `逐年教育、就业与主要身份状态发生无解释冲突 ${consistency.lifeCourse.length} 处`, consistency.lifeCourse);
   addFinding(output, "warning", "PLACE_TEXTURE_RISK", `地点纹理与触发所在地疑似冲突 ${consistency.place.length} 处`, consistency.place);
   addFinding(output, "warning", "CLASS_TEXTURE_RISK", `家庭资源层级与文案生活纹理疑似冲突 ${consistency.classTexture.length} 处`, consistency.classTexture);
 
@@ -72,6 +74,7 @@ function review(batch, output) {
       age_semantic_risks: consistency.age.length,
       infant_adult_perspective_risks: consistency.infantPerspective.length,
       state_narrative_conflicts: consistency.state.length,
+      life_course_conflicts: consistency.lifeCourse.length,
       place_texture_risks: consistency.place.length,
       class_texture_risks: consistency.classTexture.length,
       observed_anachronisms: anachronism.length,
@@ -130,6 +133,7 @@ function reviewConsistency(batch) {
   const state = [];
   const place = [];
   const classTexture = [];
+  const lifeCourse = [];
 
   for (const row of batch.events) {
     const event = definitions.get(row.event_id);
@@ -170,6 +174,9 @@ function reviewConsistency(batch) {
     if (/你(?:办了)?退休|你办了退养|你开始领退休金/.test(copy) && ["employed", "self_employed", "gig_worker"].includes(row.career_status_after)) {
       state.push(`${prefix}: 叙述退休但 career_status=${row.career_status_after}`);
     }
+    if (["第一份工作", "早早谋生"].includes(row.title) && num(row.career_jobs_held_after) !== 1) {
+      lifeCourse.push(`${prefix}: 首次谋生后 jobs_held=${row.career_jobs_held_after}`);
+    }
 
     for (const rule of PLACE_RULES) {
       if (!rule.pattern.test(copy) || rule.provinces.includes(row.trigger_province)) continue;
@@ -192,6 +199,7 @@ function reviewConsistency(batch) {
       classTexture.push(`${prefix}: 高资源开局出现赤贫叙述“${excerpt(copy)}”`);
     }
   }
+  reviewLifeCourseRows(batch, definitions, lifeCourse);
   return {
     direct,
     gender,
@@ -200,7 +208,67 @@ function reviewConsistency(batch) {
     state: unique(state),
     place: unique(place),
     classTexture: unique(classTexture),
+    lifeCourse: unique(lifeCourse),
   };
+}
+
+function reviewLifeCourseRows(batch, definitions, output) {
+  const activeCareer = new Set(["employed", "self_employed", "gig_worker", "family_labor", "entrepreneur"]);
+  for (const row of batch.years) {
+    if (row.chronicle_id) continue;
+    const prefix = `${row.year_id} ${row.year}年/${row.age}岁`;
+    const tags = new Set(splitList(row.tags));
+    if (row.education_status === "enrolled") {
+      if (["", "none"].includes(row.education_current_level)) output.push(`${prefix}: 在读但 current_level=${row.education_current_level || "空"}`);
+      if (["", "none"].includes(row.education_mode)) output.push(`${prefix}: 在读但 mode=${row.education_mode || "空"}`);
+      if (!tags.has("student")) output.push(`${prefix}: 在读但 student 标签缺失`);
+    } else if (tags.has("student")) {
+      output.push(`${prefix}: education_status=${row.education_status} 仍保留 student 标签`);
+    }
+    if (row.education_status === "enrolled" && row.education_mode === "full_time"
+      && activeCareer.has(row.career_status) && row.education_concurrent_career !== "yes") {
+      output.push(`${prefix}: 无兼任声明却同时为全日制学生和 ${row.career_status}`);
+    }
+    if (activeCareer.has(row.career_status) && num(row.career_jobs_held) < 1) {
+      output.push(`${prefix}: career_status=${row.career_status} 但 jobs_held=${row.career_jobs_held}`);
+    }
+    const expectedActivity = row.alive_after_year === "no"
+      ? "deceased"
+      : row.education_status === "enrolled" && row.education_mode === "full_time"
+      ? "student"
+      : activeCareer.has(row.career_status)
+        ? row.career_status
+        : row.career_status === "retired"
+          ? "retired"
+          : ["unemployed", "laid_off"].includes(row.career_status)
+            ? "unemployed"
+            : num(row.age) < 6 ? "dependent" : "non_employed";
+    if (row.primary_activity !== expectedActivity) output.push(`${prefix}: primary_activity=${row.primary_activity}，应为 ${expectedActivity}`);
+  }
+
+  for (const [runId, rows] of groupByMap(batch.years.filter((row) => !row.chronicle_id), (row) => row.run_id)) {
+    const ordered = [...rows].sort((left, right) => num(left.age) - num(right.age));
+    let completedRank = 0;
+    let transitionCount = 0;
+    for (const row of ordered) {
+      const rank = educationRank(row.education_completed_level);
+      if (rank < completedRank) output.push(`${runId}:${row.year} 已完成教育层级从 ${completedRank} 倒退到 ${row.education_completed_level}`);
+      if (num(row.life_course_transition_count) < transitionCount) output.push(`${runId}:${row.year} 状态转移计数发生倒退`);
+      completedRank = Math.max(completedRank, rank);
+      transitionCount = Math.max(transitionCount, num(row.life_course_transition_count));
+    }
+  }
+
+  for (const row of batch.events) {
+    if (row.chronicle_id) continue;
+    const event = definitions.get(row.event_id);
+    const transition = event?.continuity?.education;
+    if (transition?.action !== "enroll" || transition.mode !== "full_time" || transition.allowWhileEmployed) continue;
+    if (activeCareer.has(row.career_status_before) && activeCareer.has(row.career_status_after)
+      && row.education_concurrent_career_after !== "yes") {
+      output.push(`${row.event_row_id}: ${row.event_id} 在 ${row.career_status_before} 状态下无桥接进入全日制教育`);
+    }
+  }
 }
 
 function directConflicts(event, row) {
@@ -502,13 +570,20 @@ function loadBatch(inputFiles) {
       "final_age", "alive", "reached_age_cap", "event_count", "repeated_visible_copy_excess",
     ])),
     years: parseCsv(readFileSync(inputFiles.years, "utf8"), new Set([
-      "run_id", "year_id", "birth_year", "age", "year", "event_count", "event_ids",
+      "run_id", "year_id", "birth_year", "chronicle_id", "age", "year", "event_count", "event_ids",
+      "education_status", "education_current_level", "education_completed_level", "education_mode",
+      "education_concurrent_career", "career_status", "career_jobs_held", "primary_activity",
+      "life_course_transition_count", "alive_after_year", "tags",
     ])),
     events: parseCsv(readFileSync(inputFiles.events, "utf8"), new Set([
       "run_id", "event_row_id", "year_id", "event_order", "cohort", "region_group", "settlement",
       "class_tier", "attribute_tier", "birth_year", "gender", "birth_province", "birth_city_tier",
       "hukou", "family_class", "age", "year", "trigger_province", "trigger_city_tier",
-      "partner_status_after", "children_after", "education_level_after", "career_status_after",
+      "chronicle_id", "partner_status_after", "children_after", "education_level_after",
+      "education_status_before", "education_status_after", "education_current_level_after",
+      "education_completed_level_after", "education_mode_after", "education_concurrent_career_after",
+      "career_status_before", "career_field_before", "career_status_after", "career_field_after",
+      "career_jobs_held_after", "primary_activity_after",
       "event_id", "title", "category", "final_text", "final_result_text", "death",
     ])),
     manifest: JSON.parse(readFileSync(inputFiles.manifest, "utf8")),

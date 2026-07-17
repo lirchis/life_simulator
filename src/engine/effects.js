@@ -1,4 +1,5 @@
 import { clamp, clone, getPath, setPath } from "./path.js";
+import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
 
 export function applyEffects(effects = [], state, sourceEvent) {
   for (const effect of effects) {
@@ -23,6 +24,7 @@ export function applyEffects(effects = [], state, sourceEvent) {
     if (effect.triggerEnding) state.meta.endingId = effect.triggerEnding;
   }
   normalizeState(state);
+  normalizeLifeCourse(state);
 }
 
 function cloneSetValue(value) {
@@ -79,6 +81,7 @@ export function writeSnapshot(state) {
     relationships: clone(state.relationships),
     education: clone(state.education),
     career: clone(state.career),
+    lifeCourse: clone(state.lifeCourse),
     traits: [...state.traits],
     tags: [...state.tags],
   });

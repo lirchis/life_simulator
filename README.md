@@ -42,6 +42,8 @@ http://localhost:4175
 
 覆盖出生世代、性别、城乡、家庭资源、地区与属性的 1056 局分层矩阵，以及年龄/身份/地点/频率自动审查，见 [`docs/BATCH_TESTING.md`](docs/BATCH_TESTING.md) 与 [`docs/STRATIFIED_CONTENT_REVIEW.md`](docs/STRATIFIED_CONTENT_REVIEW.md)。
 
+教育与职业采用可回放的人生状态轨迹：入学、毕业、辍学、首次就业、离职和退休均记录来源事件；无桥接的全日制/在职冲突会阻断内容发布。
+
 面向 50,000 条正式事件和 200 部以上固定年谱的分阶段生产、统计口径与准入门禁见 [`docs/CONTENT_SCALE_ROADMAP.md`](docs/CONTENT_SCALE_ROADMAP.md)。
 
 近代至当代早年死亡风险的资料依据、保守模拟概率和评测口径见 [`docs/MORTALITY_CALIBRATION.md`](docs/MORTALITY_CALIBRATION.md)。

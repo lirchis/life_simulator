@@ -249,18 +249,45 @@ type RelationshipState = {
 };
 
 type EducationState = {
-  level: "none" | "primary" | "middle" | "high_school" | "college" | "master" | "phd";
+  level: string; // 兼容旧事件：当前进入过的最高学段
   score: number;
   major?: string;
+  status: "not_started" | "enrolled" | "completed" | "interrupted";
+  currentLevel: "none" | "primary" | "middle" | "high" | "vocational" | "college" | string;
+  completedLevel: "none" | "primary" | "middle" | "high" | "vocational" | "college" | string;
+  track: "none" | "general" | "classical" | "vocational" | "technical" | "academic" | string;
+  mode: "none" | "full_time" | "part_time";
+  startedYear: number | null;
+  expectedEndYear: number | null;
+  endedYear: number | null;
+  interruptions: number;
+  concurrentCareer: boolean; // 只有事件明确声明兼任时才允许全日制与在职并存
 };
 
 type CareerState = {
-  status: "none" | "student" | "employed" | "self_employed" | "entrepreneur" | "unemployed" | "retired";
+  status: "none" | "employed" | "self_employed" | "gig_worker" | "family_labor" | "unemployed" | "laid_off" | "retired";
   field?: string;
   level: number;
   income: number;
+  startedYear: number | null;
+  statusSinceYear: number | null;
+  jobsHeld: number;
+};
+
+type LifeCourseState = {
+  primaryActivity: "dependent" | "student" | "employed" | "self_employed" | "gig_worker" | "family_labor" | "unemployed" | "retired" | "non_employed" | "deceased";
+  transitions: Array<{
+    year: number;
+    age: number;
+    domain: "education" | "career";
+    from: object;
+    to: object;
+    source: string; // 触发转移的事件或自然学段推进
+  }>;
 };
 ```
+
+`education.level` 不再单独承担“当前是否在读”的含义。事件要判断课堂身份，应检查 `education.status` 与 `education.currentLevel`；要判断既往学历，应检查 `education.completedLevel`。首次就业还必须检查 `career.jobsHeld === 0`，不能仅凭当前处于待业状态再次触发“第一份工作”。
 
 ### 3.8 标签、计数器和历史
 

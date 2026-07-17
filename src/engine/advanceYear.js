@@ -2,11 +2,12 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=library-qa-1";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=continuity-1";
 import { matchConditions } from "./conditions.js";
 import { applyNaturalChanges } from "./naturalChanges.js";
-import { getHistoricalLife } from "./historicalLives.js?v=library-qa-1";
-import { composeQuietYearText } from "./quietYearText.js?v=library-qa-1";
+import { getHistoricalLife } from "./historicalLives.js?v=continuity-1";
+import { composeQuietYearText } from "./quietYearText.js?v=continuity-1";
+import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=continuity-1";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], ended: true };
@@ -28,6 +29,7 @@ export function advanceYear(state, data, context) {
 
   for (const event of selected) {
     if (!state.meta.isAlive) break;
+    if (!matchConditions(event.conditions, state, context) || !matchLifeCourse(event, state)) continue;
     const displayText = selectText(event.text, state, context, event.id);
     const outcome = selectOutcome(event, state, context);
     logs.push(applyEvent(event, outcome, state, context, displayText));
@@ -78,6 +80,7 @@ export function applyEvent(event, outcome, state, context, displayText = selectT
   const before = clone(state);
   applyEffects(event.effects ?? [], state, event);
   if (outcome) applyEffects(outcome.effects ?? [], state, event);
+  applyEventLifeCourse(event, outcome, before, state);
   recordOccurrence(event, state);
   if (event.cooldown) state.cooldowns[event.id] = event.cooldown;
 
@@ -92,10 +95,30 @@ export function applyEvent(event, outcome, state, context, displayText = selectT
     outcomeId: outcome?.id,
     resultText: outcome?.resultText ?? "",
     effectsSummary: makeEffectSummary(before, state),
+    continuityBefore: lifeCourseSnapshot(before),
+    continuityAfter: lifeCourseSnapshot(state),
     death: !state.meta.isAlive,
   };
   state.history.push(log);
   return log;
+}
+
+function lifeCourseSnapshot(state) {
+  return {
+    education: {
+      status: state.education.status,
+      currentLevel: state.education.currentLevel,
+      completedLevel: state.education.completedLevel,
+      mode: state.education.mode,
+      concurrentCareer: state.education.concurrentCareer,
+    },
+    career: {
+      status: state.career.status,
+      field: state.career.field,
+      jobsHeld: state.career.jobsHeld,
+    },
+    primaryActivity: state.lifeCourse.primaryActivity,
+  };
 }
 
 function selectOutcome(event, state, context) {
@@ -145,6 +168,7 @@ function baseCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchLifeCourse(event, state))
     .filter((event) => matchLifetimeProbability(event, state))
     .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));
@@ -160,6 +184,7 @@ function scheduledCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchLifeCourse(event, state))
     .filter((event) => matchLifetimeProbability(event, state))
     .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));

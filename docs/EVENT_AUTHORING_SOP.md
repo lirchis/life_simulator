@@ -153,6 +153,29 @@
 - 同一事件不要同时改太多无关字段。
 - 有长期意义的结果优先加 tag，而不是一次性大幅加数值。
 
+### 8.1 教育与职业连续性
+
+正式入学、转学、毕业或中断不能只改 `education.level` 或加一个 `student` 标签，必须声明 `continuity.education`：
+
+```js
+continuity: {
+  education: {
+    action: "enroll",
+    level: "vocational",
+    track: "vocational",
+    mode: "full_time",
+    durationYears: 3,
+    allowTransfer: true,
+  },
+},
+```
+
+- 全日制入学默认与在职状态互斥。确有史实或文案说明的带职学习，才可使用 `allowWhileEmployed: true`。
+- 已就业人物返校必须由离职、停薪学习、转为非全日制等桥接事件解释，不能让普通“新学期”直接覆盖职业状态。
+- 从求学转入谋生且文案已经解释离校时，使用 `continuity.educationOnCareerStart: "completed"` 或 `"interrupted"`。
+- “第一份工作”必须同时检查 `career.jobsHeld === 0`；`career.status === "unemployed"` 只能说明现在没有工作，不能证明从未工作。
+- 引擎会记录每次教育/职业转移的年份、年龄与来源事件；分层批测把无解释的全日制/在职重叠列为阻断错误。
+
 ## 9. 自动结果设计
 
 人生推进阶段禁止使用 `choices`，也禁止新增任何需要玩家点击选项才能继续的交互。事件存在多种可能走向时使用 `outcomes`，由引擎自动决定。

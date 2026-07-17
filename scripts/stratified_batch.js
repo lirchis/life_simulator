@@ -324,7 +324,11 @@ function toSummaryRow(runId, runIndex, matrixCase, setup, state, maxAge) {
     final_happiness: state.resources.happiness,
     final_achievement: state.resources.achievement,
     final_education_level: state.education.level,
+    final_education_status: state.education.status,
+    final_completed_education_level: state.education.completedLevel,
     final_career_status: state.career.status,
+    final_primary_activity: state.lifeCourse.primaryActivity,
+    life_course_transition_count: state.lifeCourse.transitions.length,
   };
 }
 
@@ -336,6 +340,7 @@ function toYearRows(runId, runIndex, matrixCase, setup, state) {
       ...baseColumns(runId, runIndex, matrixCase, setup),
       year_id: `${runId}-year-${String(snapshot.age).padStart(3, "0")}`,
       birth_year: state.birth.year,
+      chronicle_id: state.chronicle?.id ?? "",
       gender: state.birth.gender,
       birth_province: state.birth.province,
       birth_city_tier: state.birth.cityTier,
@@ -367,10 +372,24 @@ function toYearRows(runId, runIndex, matrixCase, setup, state) {
       children: snapshot.relationships.children,
       education_level: snapshot.education.level,
       education_score: snapshot.education.score,
+      education_status: snapshot.education.status,
+      education_current_level: snapshot.education.currentLevel,
+      education_completed_level: snapshot.education.completedLevel,
+      education_track: snapshot.education.track,
+      education_mode: snapshot.education.mode,
+      education_started_year: snapshot.education.startedYear,
+      education_expected_end_year: snapshot.education.expectedEndYear,
+      education_concurrent_career: snapshot.education.concurrentCareer ? "yes" : "no",
       career_status: snapshot.career.status,
       career_field: snapshot.career.field,
       career_level: snapshot.career.level,
       career_income: snapshot.career.income,
+      career_started_year: snapshot.career.startedYear,
+      career_status_since_year: snapshot.career.statusSinceYear,
+      career_jobs_held: snapshot.career.jobsHeld,
+      primary_activity: snapshot.lifeCourse.primaryActivity,
+      life_course_transition_count: snapshot.lifeCourse.transitions.length,
+      last_life_course_transition: formatLifeCourseTransition(snapshot.lifeCourse.transitions.at(-1)),
       event_count: logs.length,
       event_ids: logs.map((log) => log.eventId).join("|"),
       event_titles: logs.map((log) => log.title).join("|"),
@@ -386,12 +405,15 @@ function toEventRows(runId, runIndex, matrixCase, setup, state) {
   return state.history.map((log, index) => {
     const after = snapshots.get(log.age);
     const before = snapshots.get(log.age - 1);
+    const continuityBefore = log.continuityBefore;
+    const continuityAfter = log.continuityAfter;
     return {
       ...baseColumns(runId, runIndex, matrixCase, setup),
       event_row_id: `${runId}-event-${String(index + 1).padStart(4, "0")}`,
       year_id: `${runId}-year-${String(log.age).padStart(3, "0")}`,
       event_order: index + 1,
       birth_year: state.birth.year,
+      chronicle_id: state.chronicle?.id ?? "",
       gender: state.birth.gender,
       birth_province: state.birth.province,
       birth_city_tier: state.birth.cityTier,
@@ -410,8 +432,18 @@ function toEventRows(runId, runIndex, matrixCase, setup, state) {
       children_after: after?.relationships.children ?? state.relationships.children,
       education_level_after: after?.education.level ?? state.education.level,
       education_score_after: after?.education.score ?? state.education.score,
-      career_status_after: after?.career.status ?? state.career.status,
-      career_field_after: after?.career.field ?? state.career.field,
+      education_status_before: continuityBefore?.education.status ?? before?.education.status ?? "not_started",
+      education_status_after: continuityAfter?.education.status ?? after?.education.status ?? state.education.status,
+      education_current_level_after: continuityAfter?.education.currentLevel ?? after?.education.currentLevel ?? state.education.currentLevel,
+      education_completed_level_after: continuityAfter?.education.completedLevel ?? after?.education.completedLevel ?? state.education.completedLevel,
+      education_mode_after: continuityAfter?.education.mode ?? after?.education.mode ?? state.education.mode,
+      education_concurrent_career_after: (continuityAfter?.education.concurrentCareer ?? after?.education.concurrentCareer ?? state.education.concurrentCareer) ? "yes" : "no",
+      career_status_before: continuityBefore?.career.status ?? before?.career.status ?? "none",
+      career_field_before: continuityBefore?.career.field ?? before?.career.field ?? "",
+      career_status_after: continuityAfter?.career.status ?? after?.career.status ?? state.career.status,
+      career_field_after: continuityAfter?.career.field ?? after?.career.field ?? state.career.field,
+      career_jobs_held_after: continuityAfter?.career.jobsHeld ?? after?.career.jobsHeld ?? state.career.jobsHeld,
+      primary_activity_after: continuityAfter?.primaryActivity ?? after?.lifeCourse.primaryActivity ?? state.lifeCourse.primaryActivity,
       event_id: log.eventId,
       title: log.title,
       category: log.category,
@@ -425,6 +457,17 @@ function toEventRows(runId, runIndex, matrixCase, setup, state) {
       death: log.death ? "yes" : "no",
     };
   });
+}
+
+function formatLifeCourseTransition(transition) {
+  if (!transition) return "";
+  const from = transition.domain === "education"
+    ? `${transition.from.status}:${transition.from.level}`
+    : `${transition.from.status}:${transition.from.field}`;
+  const to = transition.domain === "education"
+    ? `${transition.to.status}:${transition.to.level}`
+    : `${transition.to.status}:${transition.to.field}`;
+  return `${transition.year}/${transition.age}/${transition.domain}/${from}->${to}/${transition.source}`;
 }
 
 function makeManifest() {

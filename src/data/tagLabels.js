@@ -9,6 +9,7 @@ export const tagLabels = {
   cadre_family: "干部家庭",
   college: "大学经历",
   corporate_worker: "公司职员",
+  vocational_expansion_student: "职业院校学生",
   craft_family: "手工业家庭",
   chronic_weakness: "久病体弱",
   cross_region_memory: "远方口音",

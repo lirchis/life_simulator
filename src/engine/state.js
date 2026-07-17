@@ -1,6 +1,7 @@
 import { calculateEnvironment } from "./environment.js";
-import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=library-qa-1";
-import { attachHistoricalLife } from "./historicalLives.js?v=library-qa-1";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=continuity-1";
+import { attachHistoricalLife } from "./historicalLives.js?v=continuity-1";
+import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
@@ -72,12 +73,29 @@ export function createInitialState(setup, data, context) {
       level: "none",
       score: 10 + setup.attrs.intelligence * 4,
       major: "",
+      status: "not_started",
+      currentLevel: "none",
+      completedLevel: "none",
+      track: "none",
+      mode: "none",
+      startedYear: null,
+      expectedEndYear: null,
+      endedYear: null,
+      interruptions: 0,
+      concurrentCareer: false,
     },
     career: {
       status: "none",
       field: "",
       level: 0,
       income: 0,
+      startedYear: null,
+      statusSinceYear: null,
+      jobsHeld: 0,
+    },
+    lifeCourse: {
+      primaryActivity: "dependent",
+      transitions: [],
     },
     talents: [...setup.talents],
     openingTalents: [...setup.talents],
@@ -106,6 +124,7 @@ export function createInitialState(setup, data, context) {
   }
 
   normalizeState(state);
+  normalizeLifeCourse(state);
   attachHistoricalLife(state, data.historicalLives, context);
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   return state;

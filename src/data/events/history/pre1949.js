@@ -4,6 +4,9 @@ export const historyPre1949Events = [
     "id": "era_pre1949_first_livelihood_male",
     "title": "早早谋生",
     "category": "career",
+    "continuity": {
+      "educationOnCareerStart": "interrupted"
+    },
     "genders": [
       "male"
     ],
@@ -19,6 +22,12 @@ export const historyPre1949Events = [
     "maxOccurrences": 1,
     "baseWeight": 85,
     "conditions": {
+      "all": [
+        {
+          "path": "career.jobsHeld",
+          "eq": 0
+        }
+      ],
       "none": [
         {
           "path": "career.status",
@@ -150,6 +159,9 @@ export const historyPre1949Events = [
     "id": "era_pre1949_first_livelihood_female",
     "title": "早早谋生",
     "category": "career",
+    "continuity": {
+      "educationOnCareerStart": "interrupted"
+    },
     "genders": [
       "female"
     ],
@@ -165,6 +177,12 @@ export const historyPre1949Events = [
     "maxOccurrences": 1,
     "baseWeight": 85,
     "conditions": {
+      "all": [
+        {
+          "path": "career.jobsHeld",
+          "eq": 0
+        }
+      ],
       "none": [
         {
           "path": "career.status",
@@ -305,6 +323,15 @@ export const historyPre1949Events = [
       {
         "id": "private_school",
         "text": "进私塾读书",
+        "continuity": {
+          "education": {
+            "action": "enroll",
+            "level": "primary",
+            "track": "classical",
+            "mode": "full_time",
+            "durationYears": 6
+          }
+        },
         "resultText": "天还没亮，你已经坐在长凳上背书。先生的戒尺落在桌面，字句和规矩一起进入身体。",
         "baseWeight": 1,
         "weightModifiers": [

@@ -2,7 +2,7 @@
 export const historyReformEraEvents = [
   {
     "id": "era_reform_first_job_choice",
-    "title": "第一份工作",
+    "title": "毕业后的去向",
     "category": "career",
     "yearRange": [
       1978,
@@ -16,6 +16,12 @@ export const historyReformEraEvents = [
     "maxOccurrences": 1,
     "baseWeight": 95,
     "conditions": {
+      "all": [
+        {
+          "path": "career.jobsHeld",
+          "eq": 0
+        }
+      ],
       "none": [
         {
           "path": "career.status",
@@ -27,7 +33,7 @@ export const historyReformEraEvents = [
         }
       ]
     },
-    "text": "你开始面对第一份工作。单位还很重要，市场也开始冒头，时代像一扇半开的卷闸门。",
+    "text": "你开始面对离校后的去向。单位还很重要，市场也开始冒头，时代像一扇半开的卷闸门。",
     "outcomes": [
       {
         "id": "state_unit",
@@ -890,6 +896,17 @@ export const historyReformEraEvents = [
     "id": "era_college_expansion_notice",
     "title": "扩招之后",
     "category": "school",
+    "continuity": {
+      "education": {
+        "action": "enroll",
+        "level": "college",
+        "track": "academic",
+        "mode": "full_time",
+        "durationYears": 4,
+        "allowTransfer": true,
+        "completeCurrentOnEnroll": true
+      }
+    },
     "yearRange": [
       1999,
       2008

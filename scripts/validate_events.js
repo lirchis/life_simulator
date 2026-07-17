@@ -1,8 +1,9 @@
 import { data } from "../src/data/index.js";
 import { createAggregateRegistry } from "../src/engine/aggregates.js";
-import { advanceYear } from "../src/engine/advanceYear.js";
+import { advanceYear, applyEvent } from "../src/engine/advanceYear.js";
 import { createRng } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
+import { educationRank, hasActiveCareer, matchLifeCourse } from "../src/engine/lifeCourse.js";
 
 const errors = [];
 const eventIds = new Set();
@@ -49,6 +50,10 @@ for (const event of data.events) {
   if (event.lifetimeProbability !== undefined && !(event.lifetimeProbability >= 0 && event.lifetimeProbability <= 1)) {
     errors.push(`${event.id} 的 lifetimeProbability 必须在 [0, 1] 内`);
   }
+  validateContinuityDefinition(event, event, "event");
+  if (["第一份工作", "早早谋生"].includes(event.title) && !hasCondition(event.conditions, (condition) => condition.path === "career.jobsHeld" && condition.eq === 0)) {
+    errors.push(`${event.id} 是首次谋生事件，但没有要求 career.jobsHeld === 0`);
+  }
 
   if (!event.outcomes) continue;
   if (!Array.isArray(event.outcomes) || event.outcomes.length < 2) {
@@ -62,10 +67,13 @@ for (const event of data.events) {
     if (outcomeIds.has(outcome.id)) errors.push(`${event.id} 存在重复结果 id：${outcome.id}`);
     outcomeIds.add(outcome.id);
     if (!outcome.resultText) errors.push(`${event.id}:${outcome.id} 缺少 resultText`);
+    validateContinuityDefinition(event, outcome, outcome.id);
   }
 }
 
 validateHistoricalLives();
+validateOrdinaryContinuity();
+validateReportedContradiction();
 
 if (errors.length) {
   console.error(errors.join("\n"));
@@ -84,6 +92,111 @@ function validateEraCoverage(label, eras, getRange) {
     expectedYear = Math.max(expectedYear, endYear + 1);
   }
   if (expectedYear <= maxBirthYear) errors.push(`${label}缺少 ${expectedYear}-${maxBirthYear} 年配置`);
+}
+
+function validateContinuityDefinition(event, owner, scope) {
+  const transition = owner.continuity?.education ?? (scope === "event" ? null : event.continuity?.education);
+  const levelEffect = (owner.effects ?? []).find((effect) => effect.path === "education.level" && Object.hasOwn(effect, "set"));
+  if (levelEffect && !transition) errors.push(`${event.id}:${scope} 修改 education.level 但没有声明 continuity.education`);
+  if (!transition) return;
+  if (!["enroll", "complete", "interrupt"].includes(transition.action)) {
+    errors.push(`${event.id}:${scope} 的教育转移 action 无效：${transition.action}`);
+  }
+  if (transition.action === "enroll") {
+    if (!transition.level) errors.push(`${event.id}:${scope} 的入学转移缺少 level`);
+    if (!['full_time', 'part_time'].includes(transition.mode)) errors.push(`${event.id}:${scope} 的入学转移 mode 无效：${transition.mode}`);
+    if (levelEffect && levelEffect.set !== transition.level) {
+      errors.push(`${event.id}:${scope} 的 education.level=${levelEffect.set} 与连续性 level=${transition.level} 不一致`);
+    }
+  }
+}
+
+function hasCondition(group, predicate) {
+  if (!group) return false;
+  return ["all", "any", "none"].some((key) => (group[key] ?? []).some((condition) => predicate(condition)));
+}
+
+function validateOrdinaryContinuity() {
+  const cohorts = [1840, 1900, 1950, 1990, 2010];
+  for (const birthYear of cohorts) {
+    for (const gender of ["female", "male"]) {
+      for (const cityTier of ["village", "city"]) {
+        const seed = `continuity-${birthYear}-${gender}-${cityTier}`;
+        const rng = createRng(seed);
+        const aggregateRegistry = createAggregateRegistry(data.aggregates);
+        const hukou = data.getEffectiveHukou(birthYear, cityTier, cityTier === "village" ? "rural" : "urban");
+        const familyClass = data.getFamilyClassOptionsForContext(birthYear, cityTier, hukou)[0][0];
+        const state = createInitialState({
+          seed,
+          birthYear,
+          gender,
+          province: "jiangsu",
+          provinceHistoryCode: "jiangsu",
+          cityTier,
+          hukou,
+          familyClass,
+          attrs: { physique: 4, intelligence: 5, charm: 3, family: data.familyClassMeta[familyClass]?.score ?? 3, luck: 3, mental: 5 },
+          talents: [],
+        }, { ...data, historicalLives: [] }, { rng, aggregateRegistry });
+
+        while (state.meta.isAlive && state.meta.age < 85) {
+          advanceYear(state, { ...data, historicalLives: [] }, { rng, aggregateRegistry });
+          validateLifeCourseSnapshot(state, seed);
+        }
+      }
+    }
+  }
+}
+
+function validateLifeCourseSnapshot(state, seed) {
+  const prefix = `${seed}:${state.meta.currentYear}/${state.meta.age}岁`;
+  if (state.education.status === "enrolled") {
+    if (state.education.currentLevel === "none") errors.push(`${prefix} 在读但 currentLevel=none`);
+    if (state.education.mode === "none") errors.push(`${prefix} 在读但 mode=none`);
+    if (!state.tags.includes("student")) errors.push(`${prefix} 在读但缺少 student 标签`);
+  } else if (state.tags.includes("student")) {
+    errors.push(`${prefix} 非在读状态仍保留 student 标签`);
+  }
+  if (state.education.status === "enrolled" && state.education.mode === "full_time" && hasActiveCareer(state) && !state.education.concurrentCareer) {
+    errors.push(`${prefix} 同时为全日制学生与在职状态，且没有声明兼任关系`);
+  }
+  if (hasActiveCareer(state) && state.career.jobsHeld < 1) errors.push(`${prefix} 已就业但 jobsHeld=${state.career.jobsHeld}`);
+  if (state.lifeCourse.transitions.some((item, index, rows) => index > 0 && item.year < rows[index - 1].year)) {
+    errors.push(`${prefix} 人生状态转移年份发生倒序`);
+  }
+  const educationTransitions = state.lifeCourse.transitions.filter((item) => item.domain === "education");
+  for (let index = 1; index < educationTransitions.length; index += 1) {
+    if (educationRank(educationTransitions[index].to.completedLevel) < educationRank(educationTransitions[index - 1].to.completedLevel)) {
+      errors.push(`${prefix} 已完成教育层级发生倒退`);
+      break;
+    }
+  }
+}
+
+function validateReportedContradiction() {
+  const seed = "DPITXF";
+  const rng = createRng(seed);
+  const aggregateRegistry = createAggregateRegistry(data.aggregates);
+  const state = createInitialState({
+    seed,
+    birthYear: 1998,
+    gender: "male",
+    province: "jiangsu",
+    provinceHistoryCode: "jiangsu",
+    cityTier: "city",
+    hukou: "urban",
+    familyClass: "teacher_doctor",
+    attrs: { physique: 3, intelligence: 5, charm: 3, family: 6, luck: 3, mental: 4 },
+    talents: [],
+  }, { ...data, historicalLives: [] }, { rng, aggregateRegistry });
+  state.meta.age = 21;
+  state.meta.currentYear = 2019;
+  const job = data.events.find((event) => event.id === "life_first_job_choice");
+  applyEvent(job, job.outcomes.find((outcome) => outcome.id === "stable_company"), state, { rng, aggregateRegistry });
+  state.meta.age = 23;
+  state.meta.currentYear = 2021;
+  const vocational = data.events.find((event) => event.id === "era_vocational_college_expansion");
+  if (matchLifeCourse(vocational, state)) errors.push("回归失败：公司职员仍可无解释进入全日制职业院校");
 }
 
 function validateHistoricalLives() {
@@ -153,6 +266,7 @@ function validateFixedPlayback(life) {
     relationships: state.relationships,
     education: state.education,
     career: state.career,
+    lifeCourse: state.lifeCourse,
     traits: state.traits,
     tags: state.tags,
     deathReason: state.meta.deathReason,

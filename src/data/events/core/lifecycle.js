@@ -560,6 +560,15 @@ export const coreLifecycleEvents = [
       6,
       7
     ],
+    "continuity": {
+      "education": {
+        "action": "enroll",
+        "level": "primary",
+        "track": "general",
+        "mode": "full_time",
+        "durationYears": 6
+      }
+    },
     "priority": 80,
     "maxOccurrences": 1,
     "baseWeight": 100,
@@ -936,6 +945,17 @@ export const coreLifecycleEvents = [
       18,
       23
     ],
+    "continuity": {
+      "education": {
+        "action": "enroll",
+        "level": "college",
+        "track": "academic",
+        "mode": "full_time",
+        "durationYears": 4,
+        "allowTransfer": true,
+        "completeCurrentOnEnroll": true
+      }
+    },
     "maxOccurrences": 1,
     "baseWeight": 75,
     "conditions": {
@@ -943,6 +963,12 @@ export const coreLifecycleEvents = [
         {
           "path": "education.score",
           "gte": 45
+        },
+        {
+          "eventOccurredWithin": {
+            "eventId": "life_gaokao_crossroads",
+            "years": 2
+          }
         }
       ]
     },
@@ -1304,6 +1330,12 @@ export const coreLifecycleEvents = [
     "maxOccurrences": 1,
     "baseWeight": 100,
     "conditions": {
+      "all": [
+        {
+          "path": "career.jobsHeld",
+          "eq": 0
+        }
+      ],
       "none": [
         {
           "path": "career.status",

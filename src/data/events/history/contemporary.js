@@ -462,7 +462,7 @@ export const historyContemporaryEvents = [
       {
         "conditions": {
           "all": [
-            { "path": "birth.hukou", "eq": "rural" }
+            { "path": "location.currentCityTier", "in": ["village", "town", "county"] }
           ]
         },
         "text": "你把家乡的干货和土产拍照挂到网上，白天收拾货，晚上学着回消息。快递车第一次频繁开进村里，田地没有变小，通向买家的路却忽然多了。"
@@ -1474,6 +1474,16 @@ export const historyContemporaryEvents = [
     id: "era_vocational_college_expansion",
     title: "实训室里的新学期",
     category: "school",
+    continuity: {
+      education: {
+        action: "enroll",
+        level: "vocational",
+        track: "vocational",
+        mode: "full_time",
+        durationYears: 3,
+        allowTransfer: true,
+      },
+    },
     yearRange: [2019, 2025],
     ageRange: [16, 23],
     conditions: { all: [{ path: "education.score", lte: 65 }] },
@@ -1481,6 +1491,7 @@ export const historyContemporaryEvents = [
     baseWeight: 24,
     text: "职业院校扩招，你在实训室里第一次摸到真正要上岗使用的设备。亲戚还爱追问‘算不算大学’，你拧紧手里的零件，觉得会做事也是一种回答。",
     effects: [
+      { path: "education.level", set: "vocational" },
       { path: "education.score", add: 7 },
       { path: "career.level", add: 5 },
       { path: "resources.achievement", add: 4 },

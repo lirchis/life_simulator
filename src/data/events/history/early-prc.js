@@ -32,8 +32,8 @@ export const historyEarlyPrcEvents = [
         "conditions": {
           "all": [
             {
-              "path": "birth.hukou",
-              "eq": "rural"
+              "path": "location.currentCityTier",
+              "in": ["village", "town", "county"]
             }
           ]
         },
@@ -1638,6 +1638,18 @@ export const historyEarlyPrcEvents = [
     "id": "era_worker_peasant_soldier_college_recommendation",
     "title": "推荐上大学",
     "category": "school",
+    "continuity": {
+      "education": {
+        "action": "enroll",
+        "level": "college",
+        "track": "academic",
+        "mode": "full_time",
+        "durationYears": 3,
+        "allowWhileEmployed": true,
+        "allowTransfer": true,
+        "completeCurrentOnEnroll": true
+      }
+    },
     "yearRange": [
       1970,
       1976
