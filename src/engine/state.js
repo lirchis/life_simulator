@@ -1,5 +1,6 @@
 import { calculateEnvironment } from "./environment.js";
-import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=deep-literature-2";
+import { attachHistoricalLife } from "./historicalLives.js?v=deep-literature-2";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
@@ -79,6 +80,7 @@ export function createInitialState(setup, data, context) {
       income: 0,
     },
     talents: [...setup.talents],
+    openingTalents: [...setup.talents],
     traits: [],
     tags: [],
     counters: {},
@@ -104,6 +106,7 @@ export function createInitialState(setup, data, context) {
   }
 
   normalizeState(state);
+  attachHistoricalLife(state, data.historicalLives, context);
   state.environment = calculateEnvironment(state, context.aggregateRegistry);
   return state;
 }

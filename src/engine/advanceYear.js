@@ -2,12 +2,15 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=deep-literature-2";
 import { matchConditions } from "./conditions.js";
 import { applyNaturalChanges } from "./naturalChanges.js";
+import { getHistoricalLife } from "./historicalLives.js?v=deep-literature-2";
+import { composeQuietYearText } from "./quietYearText.js?v=deep-literature-2";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], ended: true };
+  if (state.chronicle?.id) return advanceChronicleYear(state, data, context);
 
   state.meta.age += 1;
   state.meta.currentYear = state.birth.year + state.meta.age;
@@ -25,13 +28,39 @@ export function advanceYear(state, data, context) {
 
   for (const event of selected) {
     if (!state.meta.isAlive) break;
-    const displayText = selectText(event.text, state, context);
+    const displayText = selectText(event.text, state, context, event.id);
     const outcome = selectOutcome(event, state, context);
     logs.push(applyEvent(event, outcome, state, context, displayText));
   }
 
   writeSnapshot(state);
   return { logs, ended: !state.meta.isAlive };
+}
+
+function advanceChronicleYear(state, data, context) {
+  const life = getHistoricalLife(data.historicalLives, state.chronicle.id);
+  if (!life) throw new Error(`Missing historical life: ${state.chronicle.id}`);
+
+  state.meta.age += 1;
+  state.meta.currentYear = state.birth.year + state.meta.age;
+  state.meta.stage = getLifeStage(state.meta.age);
+  state.environment = calculateEnvironment(state, context.aggregateRegistry);
+
+  const entry = life.timeline.find((item) => item.year === state.meta.currentYear);
+  if (!entry) throw new Error(`Historical life ${life.id} has no entry for ${state.meta.currentYear}`);
+
+  const event = {
+    id: `${life.id}:${entry.year}`,
+    title: entry.title,
+    category: entry.category,
+    text: entry.text,
+    effects: entry.effects ?? [],
+    priority: 100,
+    maxOccurrences: 1,
+  };
+  const log = applyEvent(event, null, state, context, entry.text);
+  writeSnapshot(state);
+  return { logs: [log], ended: !state.meta.isAlive };
 }
 
 function recordYearlyChange(before, state) {
@@ -45,7 +74,7 @@ function recordYearlyChange(before, state) {
   });
 }
 
-export function applyEvent(event, outcome, state, context, displayText = selectText(event.text, state, context)) {
+export function applyEvent(event, outcome, state, context, displayText = selectText(event.text, state, context, event.id)) {
   const before = clone(state);
   applyEffects(event.effects ?? [], state, event);
   if (outcome) applyEffects(outcome.effects ?? [], state, event);
@@ -98,6 +127,7 @@ function selectEvents(candidates, state, context) {
   }
 
   while (selected.length < count) {
+    if (selected.some(changesLocation)) break;
     const pool = candidates.filter((event) => !event.priority && !selected.some((item) => item.id === event.id));
     const picked = weightedPick(pool, (event) => calculateWeight(event, state, context), context.rng);
     if (!picked) break;
@@ -115,6 +145,7 @@ function baseCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));
 }
 
@@ -128,7 +159,19 @@ function scheduledCandidates(state, events, context) {
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))
+    .filter((event) => matchTriggerProbability(event, state, context))
     .filter((event) => matchOccurrenceRules(event, state));
+}
+
+function matchTriggerProbability(event, state, context) {
+  if (event.triggerProbability === undefined) return true;
+  let probability = event.triggerProbability;
+  for (const modifier of event.probabilityModifiers ?? []) {
+    if (!matchConditions({ all: [modifier] }, state, context)) continue;
+    if (modifier.add) probability += modifier.add;
+    if (modifier.multiply) probability *= modifier.multiply;
+  }
+  return context.rng() < Math.min(1, Math.max(0, probability));
 }
 
 function calculateWeight(event, state, context) {
@@ -143,6 +186,7 @@ function calculateWeight(event, state, context) {
     if (modifier.add) weight += modifier.add;
     if (modifier.multiply) weight *= modifier.multiply;
   }
+  weight = applyRepeatPenalty(event, weight, state);
   for (const scheduled of state.scheduledEvents) {
     if (scheduled.eventId !== event.id) continue;
     if (scheduled.earliestYear > state.meta.currentYear || scheduled.latestYear < state.meta.currentYear) continue;
@@ -151,6 +195,23 @@ function calculateWeight(event, state, context) {
     if (scheduled.weightMultiplier) weight *= scheduled.weightMultiplier;
   }
   return weight;
+}
+
+function applyRepeatPenalty(event, weight, state) {
+  const occurred = state.occurredEvents[event.id];
+  if (!occurred?.count) return weight;
+
+  const defaultMultiplier = event.id === "life_quiet_year"
+    ? 0.28
+    : event.id.startsWith("daily_")
+      ? 0.42
+      : 0.55;
+  const multiplier = event.repeatWeightMultiplier ?? defaultMultiplier;
+  let adjusted = weight * Math.pow(multiplier, Math.min(occurred.count, 6));
+  const yearsSinceLast = state.meta.currentYear - occurred.lastYear;
+  if (yearsSinceLast <= 1) adjusted *= 0.08;
+  else if (yearsSinceLast <= 3) adjusted *= 0.35;
+  return adjusted;
 }
 
 function matchesTimedModifier(event, modifier, state) {
@@ -217,9 +278,15 @@ function matchDependencies(event, state) {
 }
 
 function matchOccurrenceRules(event, state) {
-  if (event.maxOccurrences && (state.occurredEvents[event.id]?.count ?? 0) >= event.maxOccurrences) return false;
+  const maxOccurrences = event.maxOccurrences ?? (event.id.startsWith("daily_") ? 1 : null);
+  if (maxOccurrences && (state.occurredEvents[event.id]?.count ?? 0) >= maxOccurrences) return false;
   if (event.cooldown && state.cooldowns[event.id] > 0) return false;
   return true;
+}
+
+function changesLocation(event) {
+  const effects = [...(event.effects ?? []), ...(event.outcomes ?? []).flatMap((outcome) => outcome.effects ?? [])];
+  return effects.some((effect) => effect.path?.startsWith("location.") && Object.hasOwn(effect, "set"));
 }
 
 function recordOccurrence(event, state) {
@@ -248,11 +315,21 @@ function uniqueEvents(events) {
   return [...new Map(events.map((event) => [event.id, event])).values()];
 }
 
-function selectText(text, state, context) {
+function selectText(text, state, context, eventId = "") {
+  if (eventId === "life_quiet_year") return composeQuietYearText(state, context.rng);
   if (typeof text === "string") return text;
   const conditional = text.filter((item) => typeof item !== "string" && item.conditions && matchConditions(item.conditions, state, context));
   const fallback = text.filter((item) => typeof item === "string" || !item.conditions);
-  const pool = conditional.length ? conditional : fallback.length ? fallback : text;
+  let pool = conditional.length ? conditional : fallback.length ? fallback : text;
+  if (eventId) {
+    const used = new Set(state.history.filter((log) => log.eventId === eventId).map((log) => log.text));
+    const unused = pool.filter((variant) => !used.has(variantText(variant)));
+    if (unused.length) pool = unused;
+  }
   const item = weightedPick(pool, (variant) => typeof variant === "string" ? 1 : variant.weight ?? 1, context.rng) ?? pool[0];
-  return item.text ?? String(item);
+  return variantText(item);
+}
+
+function variantText(variant) {
+  return typeof variant === "string" ? variant : variant.text ?? String(variant);
 }

@@ -677,6 +677,7 @@ export const historyReformEraEvents = [
       18,
       60
     ],
+    "maxOccurrences": 1,
     "baseWeight": 30,
     "conditions": {
       "any": [
@@ -723,6 +724,7 @@ export const historyReformEraEvents = [
       12,
       28
     ],
+    "maxOccurrences": 1,
     "currentRegions": {
       "cityTiers": [
         "town",
@@ -889,6 +891,7 @@ export const historyReformEraEvents = [
       14,
       65
     ],
+    "maxOccurrences": 1,
     "conditions": {
       "any": [
         {
@@ -927,6 +930,7 @@ export const historyReformEraEvents = [
       18,
       55
     ],
+    "maxOccurrences": 1,
     "conditions": {
       "none": [
         {
@@ -1236,6 +1240,995 @@ export const historyReformEraEvents = [
       {
         "addTag": "reemployment_market_memory"
       }
+    ]
+  },
+  {
+    id: "era_reform_field_contract_thumbprint",
+    title: "田埂上的手印",
+    category: "family",
+    yearRange: [1979, 1985],
+    ageRange: [18, 70],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    priority: 48,
+    baseWeight: 38,
+    text: "队里把田块、产量和责任写到纸上，各家在煤油灯下按手印。你分到的不只是几垄地：收成好坏终于会沿着同一条田埂，直接走进自家的饭锅。",
+    effects: [
+      { path: "resources.freedom", add: 7 },
+      { path: "resources.wealth", add: 5 },
+      { path: "relationships.family", add: 3 },
+      { addTag: "household_contract_witness" },
+      { addTag: "peasant_household" }
+    ]
+  },
+  {
+    id: "era_reform_fertilizer_queue",
+    title: "排队等化肥",
+    category: "wealth",
+    yearRange: [1981, 1989],
+    ageRange: [18, 68],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 27,
+    text: "供销社说化肥快到了，你天不亮便扛着蛇皮袋去排队。队伍从沉默排到打趣，庄稼还没长，消息先长了三茬；轮到你时，肩膀和耐心都已称过斤两。",
+    effects: [
+      { path: "resources.health", add: -2 },
+      { path: "resources.wealth", add: 4 },
+      { path: "relationships.friendship", add: 2 },
+      { addTag: "rural_supply_queue_memory" }
+    ]
+  },
+  {
+    id: "era_reform_woman_pig_account",
+    title: "猪圈也是账本",
+    category: "family",
+    genders: ["female"],
+    yearRange: [1982, 1994],
+    ageRange: [18, 58],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 25,
+    text: "你把灶边的剩食拌进猪食，又在墙上记下饲料和集市价。家里称这是顺手做的副业，可孩子的书本、过年的新布和一笔应急钱，都从你的猪圈里慢慢拱了出来。",
+    effects: [
+      { path: "resources.wealth", add: 8 },
+      { path: "resources.health", add: -3 },
+      { path: "resources.achievement", add: 3 },
+      { addTag: "rural_woman_household_economy" },
+      { addTrait: "market_sense" }
+    ]
+  },
+  {
+    id: "era_reform_township_factory_whistle",
+    title: "乡镇厂的汽笛",
+    category: "career",
+    yearRange: [1984, 1996],
+    ageRange: [18, 45],
+    currentRegions: { hukou: ["rural"], cityTiers: ["town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 34,
+    conditions: {
+      none: [
+        { path: "career.status", eq: "self_employed" },
+        { path: "career.field", eq: "state_unit" }
+      ]
+    },
+    text: "镇边新厂招人，你从锄头旁走到车床前。工牌把农民和工人暂时别在同一件上衣上：白天赶订单，农忙仍得回田，两个钟点表一起支配你的腰。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "township_enterprise" },
+      { path: "career.income", add: 11 },
+      { path: "resources.wealth", add: 9 },
+      { path: "resources.health", add: -3 },
+      { addTag: "township_enterprise_worker" }
+    ]
+  },
+  {
+    id: "era_reform_township_woman_accountant",
+    title: "算盘旁的女会计",
+    category: "career",
+    genders: ["female"],
+    yearRange: [1986, 1998],
+    ageRange: [20, 48],
+    currentRegions: { cityTiers: ["town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "township_enterprise" },
+        { hasTag: "township_enterprise_family" },
+        { path: "education.score", gte: 35 }
+      ]
+    },
+    text: "厂里把工资册交给你，几个师傅先问女人能不能管账。月底你把错一分钱的账重新拨平，算盘珠响得又脆又稳；后来他们不再问，只在领钱时排得格外整齐。",
+    effects: [
+      { path: "career.field", set: "township_accounting" },
+      { path: "career.level", add: 6 },
+      { path: "resources.achievement", add: 7 },
+      { path: "resources.reputation", add: 4 },
+      { addTag: "township_woman_accountant" }
+    ]
+  },
+  {
+    id: "era_reform_township_export_sample",
+    title: "一只寄走的样品",
+    category: "career",
+    yearRange: [1988, 1999],
+    ageRange: [20, 58],
+    currentRegions: {
+      provinces: ["jiangsu", "zhejiang", "fujian", "shandong", "guangdong"],
+      cityTiers: ["town", "county", "city"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "township_enterprise" },
+        { path: "career.field", eq: "factory" },
+        { hasTag: "township_enterprise_worker" }
+      ]
+    },
+    text: "外地客商带走一只样品，要求针脚、尺寸和交期全照单执行。你们第一次明白，远处的订单不会体谅停电、农忙或机器闹脾气；市场把世界拉近，也把误差压得更窄。",
+    effects: [
+      { path: "career.income", add: 7 },
+      { path: "resources.wealth", add: 7 },
+      { path: "resources.happiness", add: -2 },
+      { path: "resources.achievement", add: 5 },
+      { addTag: "township_order_discipline" }
+    ]
+  },
+  {
+    id: "era_reform_village_motor_pump",
+    title: "电泵第一次转起来",
+    category: "wealth",
+    yearRange: [1983, 1993],
+    ageRange: [15, 70],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    text: "村里的电泵第一次把水送上高田，电线抖着，围观的人比秧苗还密。你少挑了几十担水，却也开始担心电费、零件和下一次停电；省下来的力气，从来不是凭空来的。",
+    effects: [
+      { path: "resources.health", add: 4 },
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "rural_mechanization_memory" }
+    ]
+  },
+  {
+    id: "era_reform_unit_bonus_envelope",
+    title: "奖金装进信封",
+    category: "career",
+    yearRange: [1984, 1992],
+    ageRange: [20, 60],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "state_unit" },
+        { path: "career.field", eq: "factory" },
+        { hasTag: "state_worker_family" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    text: "单位开始按产量和表现发奖金，信封厚薄不再完全一样。你在食堂听见新的比较，也看见老师傅把不满咽进汤里；多劳多得像一阵新风，先吹动了每个人的目光。",
+    effects: [
+      { path: "career.income", add: 5 },
+      { path: "resources.wealth", add: 6 },
+      { path: "relationships.friendship", add: -2 },
+      { addTag: "unit_bonus_memory" }
+    ]
+  },
+  {
+    id: "era_reform_unit_housing_scoreboard",
+    title: "分房计分表",
+    category: "family",
+    yearRange: [1979, 1994],
+    ageRange: [25, 58],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "state_unit" },
+        { hasTag: "state_worker_family" },
+        { hasTag: "worker_family" },
+        { hasTag: "danwei_memory" }
+      ]
+    },
+    text: "分房名单贴出来，工龄、职称、人口和困难程度都换成了分数。你们搬进一间带水泥地的新屋，厨房要共用，墙薄得连邻居咳嗽都像在发表意见，但钥匙仍被全家传着看。",
+    effects: [
+      { path: "resources.wealth", add: 9 },
+      { path: "relationships.family", add: 7 },
+      { path: "resources.freedom", add: -2 },
+      { addTag: "unit_housing_memory" }
+    ]
+  },
+  {
+    id: "era_reform_factory_lunchbox",
+    title: "铝饭盒排成一列",
+    category: "career",
+    yearRange: [1978, 1991],
+    ageRange: [18, 60],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { path: "career.field", eq: "state_unit" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    text: "午休铃响，铝饭盒在蒸笼边排成一列。谁家炒了肉不用揭盖也瞒不住，大家笑着交换咸菜和厂里的消息；流水线把人分在不同工位，饭桌又把一天重新拼起来。",
+    effects: [
+      { path: "relationships.friendship", add: 6 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "factory_canteen_memory" }
+    ]
+  },
+  {
+    id: "era_reform_factory_stopwatch",
+    title: "秒表来到车间",
+    category: "career",
+    yearRange: [1986, 1997],
+    ageRange: [20, 58],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 21,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { path: "career.field", eq: "state_unit" },
+        { hasTag: "factory_worker" },
+        { hasTag: "township_enterprise_worker" }
+      ]
+    },
+    text: "车间开始核工时、算损耗，班组长拿着秒表在机器旁站了一天。过去凭经验留下的喘息被一格格量出来，你的工资可能多一点，胳膊却先知道了效率是什么意思。",
+    effects: [
+      { path: "career.income", add: 4 },
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.health", add: -4 },
+      { path: "resources.happiness", add: -3 },
+      { addTag: "factory_efficiency_pressure" }
+    ]
+  },
+  {
+    id: "era_reform_northeast_wage_arrears",
+    title: "工资表停在墙上",
+    category: "career",
+    yearRange: [1995, 2002],
+    ageRange: [30, 58],
+    currentRegions: {
+      provinces: ["liaoning", "jilin", "heilongjiang"],
+      cityTiers: ["town", "county", "city", "tier2"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 27,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { path: "career.field", eq: "state_unit" },
+        { hasTag: "factory_worker" },
+        { hasTag: "state_worker_family" }
+      ]
+    },
+    text: "工资表照旧贴着，钱却一月月没到账。冬天先从暖气片的凉意里进屋，你们把买煤、看病和孩子学费重新排序；一个厂的困难，最后都要在各家的饭桌上逐项削减。",
+    effects: [
+      { path: "career.income", add: -10 },
+      { path: "resources.wealth", add: -11 },
+      { path: "resources.happiness", add: -7 },
+      { path: "relationships.family", add: -2 },
+      { addTag: "wage_arrears_memory" }
+    ]
+  },
+  {
+    id: "era_reform_northeast_heating_after_layoff",
+    title: "暖气费的冬天",
+    category: "family",
+    yearRange: [1996, 2005],
+    ageRange: [35, 62],
+    currentRegions: { provinces: ["liaoning", "jilin", "heilongjiang"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "laid_off" },
+        { hasTag: "laid_off_shadow" },
+        { hasTag: "laid_off_worker_family" },
+        { hasTag: "wage_arrears_memory" }
+      ]
+    },
+    text: "离开单位后，你才发现暖气费、医药费和孩子托管费都曾藏在那只饭碗后面。窗缝结霜，全家挤在一间屋里睡；所谓转型不是一个词，而是每张票据忽然认得你的姓名。",
+    effects: [
+      { path: "resources.wealth", add: -9 },
+      { path: "resources.health", add: -4 },
+      { path: "relationships.family", add: 4 },
+      { addTag: "post_unit_welfare_gap" }
+    ]
+  },
+  {
+    id: "era_reform_layoff_night_market_stall",
+    title: "夜市重新开张",
+    category: "career",
+    yearRange: [1996, 2005],
+    ageRange: [32, 58],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 30,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "laid_off" },
+        { hasTag: "laid_off_shadow" },
+        { hasTag: "reemployment_market_memory" }
+      ]
+    },
+    text: "你借来一辆三轮车，在夜市卖袜子、熟食或修理小件。头几天碰见旧同事还有些尴尬，后来忙得顾不上脸面；尊严没有丢，只是脱下工装，站到了风口里。",
+    effects: [
+      { path: "career.status", set: "self_employed" },
+      { path: "career.field", set: "small_business" },
+      { path: "career.income", add: 8 },
+      { path: "resources.wealth", add: 6 },
+      { path: "resources.freedom", add: 4 },
+      { addTag: "laid_off_self_employment" }
+    ]
+  },
+  {
+    id: "era_reform_getihu_purchase_train",
+    title: "坐夜车去进货",
+    category: "wealth",
+    yearRange: [1983, 1995],
+    ageRange: [20, 55],
+    maxOccurrences: 1,
+    baseWeight: 28,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "self_employed" },
+        { path: "career.field", eq: "small_business" },
+        { hasTag: "getihu_path" },
+        { hasTag: "getihu_family" }
+      ]
+    },
+    text: "你把现金缝进内衣夹层，坐夜车去外地进货。车站、招待所和批发市场连成一条不睡觉的路；货还没卖出去，胆量、眼力和防偷的本事已经先交了学费。",
+    effects: [
+      { path: "resources.wealth", add: 9 },
+      { path: "resources.health", add: -4 },
+      { path: "resources.freedom", add: 4 },
+      { addTrait: "market_sense" },
+      { addTag: "wholesale_purchase_route" }
+    ]
+  },
+  {
+    id: "era_reform_counter_bargaining",
+    title: "柜台前的还价",
+    category: "wealth",
+    yearRange: [1982, 1999],
+    ageRange: [18, 60],
+    maxOccurrences: 1,
+    baseWeight: 25,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "self_employed" },
+        { path: "career.field", eq: "small_business" },
+        { hasTag: "getihu_path" },
+        { hasTag: "laid_off_self_employment" }
+      ]
+    },
+    text: "顾客把一毛钱的差价谈成了一场外交，你嘴硬说真没利润，手却已经去拿包装纸。一天结束，嗓子哑了，账本也厚了一页；买卖教人的第一课，是笑着守住很薄的边界。",
+    effects: [
+      { path: "resources.wealth", add: 5 },
+      { path: "relationships.friendship", add: 3 },
+      { path: "attrs.charm", add: 1 },
+      { addTag: "counter_bargaining_memory" }
+    ]
+  },
+  {
+    id: "era_reform_getihu_fee_ledger",
+    title: "账本夹着缴费单",
+    category: "wealth",
+    yearRange: [1987, 1999],
+    ageRange: [22, 60],
+    maxOccurrences: 1,
+    baseWeight: 23,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "self_employed" },
+        { path: "career.field", eq: "small_business" },
+        { hasTag: "getihu_path" },
+        { hasTag: "first_rich_family" }
+      ]
+    },
+    text: "你把税票、摊位费和进货欠条夹进同一本账。柜台外看着热闹，柜台后每一笔都有去处；直到算完最后一行，你才知道今天赚的是钱，还是只赚了继续开门的资格。",
+    effects: [
+      { path: "resources.wealth", add: -3 },
+      { path: "education.score", add: 2 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "small_business_ledger" }
+    ]
+  },
+  {
+    id: "era_reform_shop_landline",
+    title: "店里装了座机",
+    category: "career",
+    yearRange: [1993, 2001],
+    ageRange: [22, 60],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 18,
+    conditions: {
+      all: [
+        { path: "resources.wealth", gte: 38 },
+        {
+          any: [
+            { path: "career.status", eq: "self_employed" },
+            { path: "career.field", eq: "small_business" },
+            { hasTag: "getihu_path" }
+          ]
+        }
+      ]
+    },
+    text: "店里装上座机，号码被你认真印在纸袋上。铃一响，全屋亲戚都以为大生意来了，接起才发现是邻铺借秤，大家先乐了；可从此订单真能穿过几条街，直接找到你。",
+    effects: [
+      { path: "career.income", add: 5 },
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "shop_landline_memory" }
+    ]
+  },
+  {
+    id: "era_reform_wenzhou_family_workshop",
+    title: "楼下作坊，楼上睡觉",
+    category: "career",
+    yearRange: [1984, 1997],
+    ageRange: [18, 58],
+    currentRegions: { provinces: ["zhejiang"], cityTiers: ["town", "county", "city"] },
+    maxOccurrences: 1,
+    baseWeight: 25,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "self_employed" },
+        { hasTag: "getihu_family" },
+        { hasTag: "first_rich_family" },
+        { hasTrait: "business_mind" }
+      ]
+    },
+    text: "你家楼下摆机器，楼上铺床，亲戚按工序围着一双鞋或一个开关转。饭点就是交班，孩子在纸箱间写作业；家庭成了最便宜也最难下班的工厂。",
+    effects: [
+      { path: "career.status", set: "self_employed" },
+      { path: "career.field", set: "family_workshop" },
+      { path: "resources.wealth", add: 13 },
+      { path: "resources.health", add: -5 },
+      { path: "relationships.family", add: -2 },
+      { addTag: "family_workshop_path" }
+    ]
+  },
+  {
+    id: "era_reform_hainan_property_receipt",
+    title: "海南的一张收据",
+    category: "wealth",
+    yearRange: [1992, 1995],
+    ageRange: [24, 58],
+    currentRegions: { provinces: ["hainan", "guangdong"] },
+    maxOccurrences: 1,
+    baseWeight: 16,
+    conditions: {
+      any: [
+        { path: "resources.wealth", gte: 45 },
+        { hasTrait: "risk_taker" },
+        { hasTag: "went_into_business" },
+        { hasTag: "first_rich_family" }
+      ]
+    },
+    text: "朋友拿来一张海南项目的收据，地块在地图上比在现实里清楚。几个月里价格和酒桌上的胆气一起上涨，随后风向骤变；你终于明白，纸面财富跑得最快，回头时也最不等人。",
+    effects: [
+      { path: "resources.wealth", add: -9 },
+      { path: "resources.happiness", add: -5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "hainan_bubble_memory" }
+    ]
+  },
+  {
+    id: "era_reform_shenzhen_border_pass",
+    title: "关口检查边防证",
+    category: "migration",
+    yearRange: [1984, 1999],
+    ageRange: [17, 50],
+    currentRegions: { provinces: ["guangdong"], cityTiers: ["city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    conditions: {
+      any: [
+        { hasTag: "migrant_worker" },
+        { hasTag: "coastal_worked" },
+        { path: "location.migratedTimes", gte: 1 }
+      ]
+    },
+    text: "过关口时，你把边防证、暂住材料和车票叠在一起递出去。高楼就在不远处，进入这座新城却要先证明自己从哪里来；证件盖章以后，你才被允许继续追赶它的速度。",
+    effects: [
+      { path: "resources.freedom", add: -3 },
+      { path: "resources.achievement", add: 3 },
+      { addTag: "shenzhen_border_pass_memory" }
+    ]
+  },
+  {
+    id: "era_reform_labor_broker_departure",
+    title: "跟着老乡上车",
+    category: "migration",
+    yearRange: [1987, 1997],
+    ageRange: [17, 40],
+    currentRegions: {
+      provinces: ["sichuan", "chongqing", "hunan", "hubei", "jiangxi", "anhui", "henan", "guangxi", "guizhou"],
+      hukou: ["rural"],
+      cityTiers: ["village", "town", "county"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 31,
+    conditions: {
+      none: [
+        { hasTag: "migrant_worker" },
+        { hasTag: "coastal_worked" }
+      ]
+    },
+    text: "村里先出去的老乡带回招工消息，你把被褥塞进编织袋，跟着一串熟人和半熟人上车。父母不知道厂名怎么写，只反复记住了一个车站；你的第一份远方，从来信地址开始。",
+    effects: [
+      { path: "location.currentProvince", set: "guangdong" },
+      { path: "location.currentCityTier", set: "city" },
+      { path: "location.migratedTimes", add: 1 },
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "factory" },
+      { path: "resources.wealth", add: 8 },
+      { path: "relationships.family", add: -4 },
+      { addTag: "migrant_worker" },
+      { addTag: "coastal_worked" }
+    ]
+  },
+  {
+    id: "era_reform_pearl_river_night_shift",
+    title: "珠江边的夜班",
+    category: "career",
+    yearRange: [1988, 2002],
+    ageRange: [17, 42],
+    currentRegions: { provinces: ["guangdong"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 31,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "migrant_worker" },
+        { hasTag: "factory_sisterhood" },
+        { hasTag: "coastal_worked" }
+      ]
+    },
+    text: "夜班把窗外的霓虹和车间的白炽灯接在一起。打卡机比门卫更快认得你，流水线却不记得谁刚发烧、谁收到了家书；清晨走出厂门时，你的工资正在增长，影子却轻得发飘。",
+    effects: [
+      { path: "career.income", add: 8 },
+      { path: "resources.wealth", add: 8 },
+      { path: "resources.health", add: -7 },
+      { path: "resources.happiness", add: -3 },
+      { addTag: "pearl_river_night_shift" }
+    ]
+  },
+  {
+    id: "era_reform_construction_bunk",
+    title: "脚手架下的通铺",
+    category: "career",
+    genders: ["male"],
+    yearRange: [1988, 2003],
+    ageRange: [18, 48],
+    currentRegions: { cityTiers: ["city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 23,
+    conditions: {
+      any: [
+        { hasTag: "migrant_worker" },
+        { path: "career.field", eq: "manual_worker" },
+        { path: "career.field", eq: "construction" },
+        { hasTrait: "floating_population" }
+      ]
+    },
+    text: "你在脚手架上砌起别人将住进去的房子，晚上却和十几个人睡在工棚通铺。城市每天往高处长，你的住址跟着工地移动；只有安全帽内沿的汗渍，一层层留得很牢。",
+    effects: [
+      { path: "career.field", set: "construction" },
+      { path: "career.income", add: 7 },
+      { path: "resources.wealth", add: 6 },
+      { path: "resources.health", add: -6 },
+      { addTag: "construction_migrant" }
+    ]
+  },
+  {
+    id: "era_reform_domestic_worker_key",
+    title: "雇主家的钥匙",
+    category: "career",
+    genders: ["female"],
+    yearRange: [1988, 2003],
+    ageRange: [18, 50],
+    currentRegions: { cityTiers: ["city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    conditions: {
+      any: [
+        { hasTag: "migrant_worker" },
+        { path: "career.field", eq: "domestic_work" },
+        { hasTrait: "floating_population" },
+        { hasTag: "low_resource_family" }
+      ]
+    },
+    text: "雇主把家门钥匙交给你，却把抽屉和冰箱里的数量记得很清。你替另一户人家做饭、照顾老人和孩子，自己的家只能靠信和汇款维系；信任给了一半，劳动却要做得完整。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "domestic_work" },
+      { path: "career.income", add: 6 },
+      { path: "resources.wealth", add: 5 },
+      { path: "resources.happiness", add: -4 },
+      { addTag: "domestic_worker_memory" }
+    ]
+  },
+  {
+    id: "era_reform_post_office_remittance",
+    title: "邮局汇款单",
+    category: "family",
+    yearRange: [1988, 2007],
+    ageRange: [18, 58],
+    maxOccurrences: 1,
+    baseWeight: 29,
+    conditions: {
+      any: [
+        { hasTag: "migrant_worker" },
+        { hasTag: "coastal_worked" },
+        { hasTag: "construction_migrant" },
+        { path: "location.migratedTimes", gte: 1 }
+      ]
+    },
+    text: "发薪后你去邮局填汇款单，金额写得比家书工整。手续费让你心疼了一下，想到家里要买种子、药和课本，又把数字重描一遍；钱先替你回到了故乡。",
+    effects: [
+      { path: "resources.wealth", add: -3 },
+      { path: "relationships.family", add: 8 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "postal_remittance_memory" }
+    ]
+  },
+  {
+    id: "era_reform_uncontracted_injury",
+    title: "没有写下来的工伤",
+    category: "health",
+    yearRange: [1990, 2007],
+    ageRange: [18, 55],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    priority: 42,
+    baseWeight: 18,
+    conditions: {
+      any: [
+        { hasTag: "migrant_worker" },
+        { hasTag: "construction_migrant" },
+        { path: "career.field", eq: "factory" },
+        { path: "career.field", eq: "construction" }
+      ]
+    },
+    text: "机器或脚手架伤了你，老板先问能不能私下解决。没有正式合同，责任像地上的油一样被几双鞋来回踩散；你拿到一笔不够久养的补偿，也第一次知道身体会替制度缺口留疤。",
+    effects: [
+      { path: "resources.health", add: -13 },
+      { path: "resources.wealth", add: -7 },
+      { path: "resources.happiness", add: -7 },
+      { addTrait: "chronic_condition" },
+      { addTag: "uncontracted_injury_memory" }
+    ]
+  },
+  {
+    id: "era_reform_migrant_child_school_fee",
+    title: "借读费收据",
+    category: "family",
+    yearRange: [1994, 2007],
+    ageRange: [25, 48],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    conditions: {
+      all: [
+        { path: "relationships.children", gte: 1 },
+        {
+          any: [
+            { hasTag: "migrant_worker" },
+            { hasTag: "coastal_worked" },
+            { path: "location.migratedTimes", gte: 1 }
+          ]
+        }
+      ]
+    },
+    text: "你拿着户口材料去给孩子报名，窗口又开出一张借读费收据。孩子已经会说本地口音，你却仍被表格归在外面；你把几个月省下的钱交进去，只求课桌别再追问来处。",
+    effects: [
+      { path: "resources.wealth", add: -8 },
+      { path: "relationships.family", add: 5 },
+      { path: "resources.happiness", add: -3 },
+      { addTag: "migrant_child_schooling_memory" }
+    ]
+  },
+  {
+    id: "era_reform_gaokao_review_sheets",
+    title: "借来的复习资料",
+    category: "school",
+    yearRange: [1978, 1984],
+    ageRange: [17, 30],
+    maxOccurrences: 1,
+    priority: 44,
+    baseWeight: 32,
+    conditions: {
+      all: [
+        { path: "education.score", gte: 27 },
+        { path: "education.level", neq: "college" }
+      ]
+    },
+    text: "你从亲友手里借到一套缺页的复习资料，边角已经被几个人写满。白天干活，夜里在灯下重做题目；考试重新打开的门很窄，却让年龄、出身和耽误过的年月都来门前排队。",
+    effects: [
+      { path: "education.score", add: 10 },
+      { path: "resources.health", add: -3 },
+      { path: "resources.achievement", add: 6 },
+      { addTag: "early_reform_exam_candidate" }
+    ]
+  },
+  {
+    id: "era_reform_campus_meal_ticket",
+    title: "饭票夹在课本里",
+    category: "school",
+    yearRange: [1978, 1996],
+    ageRange: [18, 27],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 29,
+    conditions: {
+      any: [
+        { path: "education.level", eq: "college" },
+        { hasTag: "college" },
+        { hasTag: "worker_peasant_soldier_college" }
+      ]
+    },
+    text: "你把饭票夹在最厚的课本里，仍有一张被风吹进了水沟。食堂师傅看你捞得狼狈，笑着多添半勺菜；大学既讨论国家和世界，也认真教育你一张饭票有多具体。",
+    effects: [
+      { path: "education.score", add: 5 },
+      { path: "relationships.friendship", add: 5 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "campus_meal_ticket_memory" }
+    ]
+  },
+  {
+    id: "era_reform_english_cassette",
+    title: "倒带学英语",
+    category: "school",
+    yearRange: [1985, 1999],
+    ageRange: [12, 24],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    conditions: {
+      any: [
+        { hasTag: "student" },
+        { path: "education.level", neq: "none" },
+        { path: "education.score", gte: 30 }
+      ]
+    },
+    text: "你用录音机反复倒带学英语，一句问候被磁带拉得忽快忽慢。全家笑着记住了那句发音，只有你在课堂上仍会紧张；陌生语言第一次变成一项能决定升学和工作的本事。",
+    effects: [
+      { path: "education.score", add: 7 },
+      { path: "resources.achievement", add: 3 },
+      { path: "resources.happiness", add: -1 },
+      { addTag: "cassette_english_memory" }
+    ]
+  },
+  {
+    id: "era_reform_graduate_job_fair",
+    title: "毕业生供需见面会",
+    category: "career",
+    yearRange: [1993, 2002],
+    ageRange: [21, 30],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    conditions: {
+      any: [
+        { path: "education.level", eq: "college" },
+        { hasTag: "college" },
+        { hasTag: "college_expansion_generation" }
+      ]
+    },
+    text: "毕业分配不再替所有人安排去处，你拿着几份手写简历挤进供需见面会。单位挑学生，学生也打听工资和城市；所谓双向选择，在大厅里首先表现为两边都笑着努力显得不着急。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "professional" },
+      { path: "career.income", add: 9 },
+      { path: "resources.freedom", add: 5 },
+      { path: "resources.happiness", add: -2 },
+      { addTag: "market_job_assignment_generation" }
+    ]
+  },
+  {
+    id: "era_reform_rural_college_tuition",
+    title: "学费摊在饭桌上",
+    category: "family",
+    yearRange: [1994, 2007],
+    ageRange: [18, 25],
+    birthRegions: { hukou: ["rural"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    conditions: {
+      any: [
+        { path: "education.level", eq: "college" },
+        { hasTag: "college" },
+        { hasTag: "college_expansion_generation" }
+      ]
+    },
+    text: "录取通知书旁边附着学费和住宿费，父母把数字抄到旧账本上，开始盘算卖粮、借钱和少盖一间新房。你去上大学不是一个人的远行，而是全家把几年收成提前压在一张纸上。",
+    effects: [
+      { path: "resources.wealth", add: -10 },
+      { path: "relationships.family", add: 6 },
+      { path: "resources.achievement", add: 6 },
+      { path: "resources.happiness", add: -3 },
+      { addTag: "rural_college_financing" }
+    ]
+  },
+  {
+    id: "era_reform_working_mother_return",
+    title: "产假后的工位",
+    category: "career",
+    genders: ["female"],
+    yearRange: [1980, 1997],
+    ageRange: [22, 40],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 23,
+    conditions: {
+      all: [
+        { path: "relationships.children", gte: 1 },
+        {
+          any: [
+            { path: "career.status", eq: "employed" },
+            { path: "career.field", eq: "factory" },
+            { path: "career.field", eq: "state_unit" },
+            { hasTag: "township_enterprise_worker" }
+          ]
+        }
+      ]
+    },
+    text: "产假结束，你把孩子托给老人或单位托儿所，重新站回工位。工资证明你没有离开公共生活，夜里一次次起身又提醒你：同一份现代生活，在女人身上常要排两遍班。",
+    effects: [
+      { path: "career.level", add: 3 },
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.health", add: -5 },
+      { path: "relationships.family", add: 3 },
+      { addTag: "working_mother_double_shift" }
+    ]
+  },
+  {
+    id: "era_reform_birth_permit_folder",
+    title: "装满证明的纸袋",
+    category: "family",
+    genders: ["female"],
+    yearRange: [1982, 1999],
+    ageRange: [22, 40],
+    maxOccurrences: 1,
+    baseWeight: 20,
+    conditions: {
+      all: [
+        { path: "relationships.partnerStatus", in: ["partnered", "married"] },
+        { path: "relationships.children", lte: 1 }
+      ]
+    },
+    text: "你把婚姻、户口和检查证明装进一个纸袋，在几个窗口之间来回。长辈讨论香火，单位和村里核对指标，医生询问身体；关于生育的决定看似属于一家人，却有许多双手同时按在纸上。",
+    effects: [
+      { path: "resources.freedom", add: -6 },
+      { path: "resources.happiness", add: -4 },
+      { path: "relationships.family", add: -2 },
+      { addTag: "family_planning_paperwork_memory" }
+    ]
+  },
+  {
+    id: "era_reform_daughter_takes_counter",
+    title: "女儿站到柜台后",
+    category: "career",
+    genders: ["female"],
+    yearRange: [1985, 1999],
+    ageRange: [16, 38],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    conditions: {
+      any: [
+        { hasTag: "getihu_family" },
+        { path: "career.status", eq: "self_employed" },
+        { hasTag: "getihu_path" },
+        { hasTag: "family_workshop_path" }
+      ]
+    },
+    text: "家里原想让儿子学进货，却发现你记价、认人和催欠账都更稳。你正式站到柜台后，亲戚仍说只是帮家里；可钥匙、现金和明天开不开门，已经开始等你的主意。",
+    effects: [
+      { path: "career.status", set: "self_employed" },
+      { path: "career.field", set: "small_business" },
+      { path: "career.level", add: 7 },
+      { path: "resources.achievement", add: 7 },
+      { path: "resources.freedom", add: 5 },
+      { addTag: "woman_family_business_successor" }
+    ]
+  },
+  {
+    id: "era_reform_coastal_seafood_hands",
+    title: "冷库里的手",
+    category: "career",
+    genders: ["female"],
+    yearRange: [1986, 2003],
+    ageRange: [17, 48],
+    currentRegions: {
+      provinces: ["liaoning", "shandong", "jiangsu", "zhejiang", "fujian", "guangdong", "guangxi", "hainan"],
+      cityTiers: ["town", "county", "city"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "migrant_worker" },
+        { hasTag: "factory_sisterhood" },
+        { path: "career.status", eq: "unemployed" }
+      ]
+    },
+    text: "你在水产加工间分拣、剥壳、装箱，海货要赶鲜，手指却长期泡在冰水里。出口纸箱印着很远的地名，你只在下班后关心指节还能不能握紧筷子。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "seafood_processing" },
+      { path: "career.income", add: 6 },
+      { path: "resources.wealth", add: 5 },
+      { path: "resources.health", add: -7 },
+      { addTag: "coastal_seafood_worker" }
+    ]
+  },
+  {
+    id: "era_reform_xinjiang_cotton_season",
+    title: "棉花地里的季节工",
+    category: "career",
+    yearRange: [1990, 2007],
+    ageRange: [18, 58],
+    currentRegions: { provinces: ["xinjiang"], hukou: ["rural"], cityTiers: ["village", "town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    conditions: {
+      any: [
+        { path: "resources.wealth", lte: 45 },
+        { hasTag: "peasant_household" },
+        { hasTag: "migrant_worker" },
+        { path: "career.field", eq: "farm_work" }
+      ]
+    },
+    text: "采棉季一到，你跟着人群住进地头简棚，天亮弯腰，天黑过秤。雪白棉絮粘满衣襟，看着轻，一天的分量却全压在腰上；结算时，每一公斤才恢复成家用。",
+    effects: [
+      { path: "career.field", set: "seasonal_farm_labor" },
+      { path: "resources.wealth", add: 7 },
+      { path: "resources.health", add: -6 },
+      { path: "relationships.friendship", add: 3 },
+      { addTag: "cotton_season_worker" }
+    ]
+  },
+  {
+    id: "era_reform_northeast_border_bag",
+    title: "边境列车的提包",
+    category: "wealth",
+    yearRange: [1991, 1999],
+    ageRange: [25, 58],
+    currentRegions: { provinces: ["heilongjiang", "jilin", "liaoning"] },
+    maxOccurrences: 1,
+    baseWeight: 17,
+    conditions: {
+      any: [
+        { path: "career.status", eq: "laid_off" },
+        { path: "career.status", eq: "self_employed" },
+        { hasTag: "laid_off_shadow" },
+        { hasTrait: "market_sense" }
+      ]
+    },
+    text: "你拎着装满日用品和衣物的大提包赶边境列车，过道里每只包都比主人更有体积。大家拿绳结、暗号和玩笑守着货；过去靠机器吃饭的手，如今先学会护住一张薄薄的差价。",
+    effects: [
+      { path: "career.status", set: "self_employed" },
+      { path: "career.field", set: "cross_border_trade" },
+      { path: "resources.wealth", add: 9 },
+      { path: "resources.health", add: -4 },
+      { path: "resources.freedom", add: 4 },
+      { addTag: "northeast_border_trade" }
     ]
   }
 ];

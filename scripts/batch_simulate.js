@@ -14,6 +14,7 @@ const args = parseArgs(process.argv.slice(2));
 const count = readNumberArg(args, "count", DEFAULT_COUNT);
 const maxAge = readNumberArg(args, "max-age", DEFAULT_MAX_AGE);
 const fixedBirthYear = readBirthYearArg(args["birth-year"]);
+const historicalLifeId = readHistoricalLifeArg(args["historical-life"]);
 const baseSeed = args.seed ?? DEFAULT_BASE_SEED;
 const batchId = args["batch-id"] ?? `${baseSeed}-${timestamp()}`;
 const outFile = resolve(args.out ?? `reports/batch-simulations-${timestamp()}.csv`);
@@ -26,8 +27,10 @@ const eventRows = [];
 for (let index = 0; index < count; index += 1) {
   const seed = `${baseSeed}-${String(index + 1).padStart(4, "0")}`;
   const rng = createRng(seed);
-  const setup = randomSetup(seed, rng, fixedBirthYear);
-  const state = createInitialState(setup, data, { rng, aggregateRegistry });
+  const setup = historicalLifeId
+    ? historicalLifeSetup(seed, rng, historicalLifeId)
+    : randomSetup(seed, rng, fixedBirthYear);
+  const state = createInitialState(setup, data, { rng, aggregateRegistry, forceHistoricalLifeId: historicalLifeId });
   const result = runLife(state, rng, maxAge);
   const runIndex = index + 1;
   const runId = `${batchId}-run-${String(runIndex).padStart(4, "0")}`;
@@ -91,6 +94,46 @@ function randomSetup(seed, rng, birthYearOverride = null) {
   };
   setup.talents = chooseRandomValidTalents(setup, rng);
   return setup;
+}
+
+function historicalLifeSetup(seed, rng, id) {
+  const life = data.historicalLives.find((item) => item.id === id);
+  const trigger = life.trigger;
+  const birthYear = trigger.birthYearRange[0];
+  const province = trigger.provinces?.[0]
+    ?? data.resolveHistoricalProvince(trigger.provinceHistoryCodes?.[0], birthYear, rng).currentCode;
+  const provinceHistoryCode = trigger.provinceHistoryCodes?.[0] ?? province;
+  const cityTier = trigger.cityTiers?.[0] ?? "village";
+  const hukou = trigger.hukou?.[0] ?? data.getEffectiveHukou(birthYear, cityTier, "rural");
+  const familyClass = trigger.familyClasses?.[0]
+    ?? data.getFamilyClassOptionsForContext(birthYear, cityTier, hukou)[0][0];
+  const familyRange = data.getFamilyAttrRange({ birthYear, province, cityTier, familyClass });
+  const setup = {
+    seed,
+    birthYear,
+    gender: trigger.genders?.[0] ?? "female",
+    province,
+    provinceHistoryCode,
+    cityTier,
+    hukou,
+    familyClass,
+    attrs: randomAttrsMatchingTrigger(rng, familyRange, trigger.attrs),
+    talents: [],
+  };
+  setup.talents = chooseRandomValidTalents(setup, rng);
+  return setup;
+}
+
+function randomAttrsMatchingTrigger(rng, familyRange, requirements = {}) {
+  for (let attempt = 0; attempt < 10000; attempt += 1) {
+    const attrs = randomAttrs(rng, familyRange);
+    const matches = Object.entries(requirements).every(([key, limits]) => (
+      (limits.gte === undefined || attrs[key] >= limits.gte)
+      && (limits.lte === undefined || attrs[key] <= limits.lte)
+    ));
+    if (matches) return attrs;
+  }
+  throw new Error("Unable to generate attributes matching historical-life trigger");
 }
 
 function randomAttrs(rng, familyRange) {
@@ -165,6 +208,7 @@ function toSummaryCsvRow(index, runId, setup, state, result) {
     attr_luck: setup.attrs.luck,
     attr_mental: setup.attrs.mental,
     opening_talents: setup.talents.join("|"),
+    chronicle_id: state.chronicle?.id ?? "",
     final_age: state.meta.age,
     final_year: state.meta.currentYear,
     alive: state.meta.isAlive ? "yes" : "no",
@@ -340,6 +384,19 @@ function readBirthYearArg(value) {
     throw new Error(`--birth-year must be an integer from ${minBirthYear} to ${maxBirthYear}`);
   }
   return birthYear;
+}
+
+function readHistoricalLifeArg(value) {
+  if (value === undefined) return null;
+  const life = data.historicalLives.find((item) => item.id === value);
+  if (!life) {
+    const ids = data.historicalLives.map((item) => item.id).join(", ") || "none";
+    throw new Error(`--historical-life must be one of: ${ids}`);
+  }
+  if (!life.trigger?.birthYearRange || life.trigger.birthYearRange[0] !== life.trigger.birthYearRange[1]) {
+    throw new Error(`Historical life ${life.id} must define an exact birth year`);
+  }
+  return life.id;
 }
 
 function makeOutputFiles(summaryFile) {

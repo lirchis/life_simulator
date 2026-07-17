@@ -7,9 +7,6 @@ export function getLifeStage(age) {
   return "old_age";
 }
 
-export function getEventCount(age, rng) {
-  if (age <= 6) return 1;
-  if (age <= 18) return rng() < 0.65 ? 1 : 2;
-  if (age <= 59) return rng() < 0.5 ? 2 : 3;
-  return rng() < 0.75 ? 1 : 2;
+export function getEventCount() {
+  return 1;
 }

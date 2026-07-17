@@ -198,6 +198,81 @@ export const coreLifecycleEvents = [
           "all": [
             {
               "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "这一年，田里的活按节气排开，家里的事按长幼排开。没有哪一天足以写进县志，许多天合起来却又是一生。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "雨水多寡、谷价高低和一场小病，便足够决定这一年的颜色。你照常做活，也照常盼来年能宽一点。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "这一年没有传奇，只有柴垛变矮又重新堆高，旧衣补了又补。日子不响亮，却一寸也没有少过。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "urban"
+            }
+          ]
+        },
+        "text": "这一年，街面换了几回告示，铺门照旧早开晚关。大事从报纸上经过，小日子在账本里留下墨迹。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "urban"
+            }
+          ]
+        },
+        "text": "城里每天都有新消息，真正轮到你身上的仍是房钱、饭钱和熟人的一声招呼。年份就这样从门口走了过去。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
               "gte": 1958
             },
             {
@@ -210,7 +285,121 @@ export const coreLifecycleEvents = [
             }
           ]
         },
-        "text": "这一年没有大事。队里的钟声、工分本和灶台烟火照常轮转，你在集体生活的缝隙里慢慢长大。"
+        "text": "这一年没有大事。队里的钟声、工分本和灶台烟火照常轮转，你也在集体生活的缝隙里把日子过下去。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1958
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1977
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "春耕、夏收、秋分配和冬天的会，把一年划成几段。个人心事没有记分员，只好由你自己记着。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1958
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1977
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "这一年，公事和农事都排得很满。你在口号之外记住的，是谁借过一把锄头，谁悄悄多分了半碗热汤。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1977
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "urban"
+            }
+          ]
+        },
+        "text": "这一年随着上班钟、供应时间和院里的脚步声过去。许多东西按份额领取，烦恼却仍按各家情况分配。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1977
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "urban"
+            }
+          ]
+        },
+        "text": "单位、学校或街道替这一年安排了大半日程。剩下的一小半，你留给家人、睡眠和没来得及说出口的话。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1978
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1999
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "rural"
+            }
+          ]
+        },
+        "text": "这一年，村里有人外出，也有人翻修旧屋。远方的机会从信件和传闻里传来，你先把眼前的庄稼照料好。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1978
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1999
+            },
+            {
+              "path": "birth.hukou",
+              "eq": "urban"
+            }
+          ]
+        },
+        "text": "物价、工资和街上的招牌都在变化，你也学着重新估量安稳与机会。大多数日子没有答案，只有下一步。"
       },
       {
         "conditions": {
@@ -252,6 +441,18 @@ export const coreLifecycleEvents = [
       },
       {
         "text": "这一年没有被史书记住，也没有被亲戚反复提起。日子只是往前挪了一格。"
+      },
+      {
+        "text": "这一年没有明显的转折。你处理完一件又一件小事，回头看时，季节已经替你翻过了页。"
+      },
+      {
+        "text": "没有人替这一年取名。饭要按顿吃，路要一段段走，时间就在这些不值得讲述的动作里完成了工作。"
+      },
+      {
+        "text": "这一年大体平常。偶尔有好消息，也有几件扫兴的小事，彼此抵消以后，留下的是你又长了一岁。"
+      },
+      {
+        "text": "日历没有因为你停顿。你把手边的生活维持下去，也在无人注意的地方改变了一点点。"
       }
     ],
     "effects": [
@@ -269,6 +470,7 @@ export const coreLifecycleEvents = [
       1,
       12
     ],
+    "maxOccurrences": 1,
     "baseWeight": 28,
     "weightModifiers": [
       {
@@ -546,6 +748,7 @@ export const coreLifecycleEvents = [
       9,
       18
     ],
+    "maxOccurrences": 1,
     "baseWeight": 34,
     "weightModifiers": [
       {
@@ -851,8 +1054,17 @@ export const coreLifecycleEvents = [
       18,
       32
     ],
+    "currentRegions": {
+      "cityTiers": [
+        "village",
+        "town",
+        "county",
+        "city",
+        "tier2"
+      ]
+    },
     "maxOccurrences": 1,
-    "baseWeight": 32,
+    "baseWeight": 14,
     "weightModifiers": [
       {
         "path": "environment.jobOpportunity",
@@ -924,14 +1136,6 @@ export const coreLifecycleEvents = [
     ],
     "effects": [
       {
-        "path": "location.currentProvince",
-        "set": "shanghai"
-      },
-      {
-        "path": "location.currentCityTier",
-        "set": "tier1"
-      },
-      {
         "path": "location.migratedTimes",
         "add": 1
       },
@@ -941,6 +1145,119 @@ export const coreLifecycleEvents = [
       },
       {
         "addTag": "migrant"
+      }
+    ],
+    "outcomes": [
+      {
+        "id": "provincial_center",
+        "baseWeight": 8,
+        "resultText": "你先在本省较大的城市落脚。口音还熟，生活规矩已经换了一套。",
+        "effects": [
+          {
+            "path": "location.currentCityTier",
+            "set": "tier2"
+          }
+        ]
+      },
+      {
+        "id": "shanghai",
+        "baseWeight": 2,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1843
+            }
+          ]
+        },
+        "resultText": "你去了上海。码头、厂房与楼群随年代改变，昂贵和机会倒一直挨得很近。",
+        "effects": [
+          {
+            "path": "location.currentProvince",
+            "set": "shanghai"
+          },
+          {
+            "path": "location.currentProvinceHistoryCode",
+            "set": "shanghai"
+          },
+          {
+            "path": "location.currentCityTier",
+            "set": "tier1"
+          }
+        ]
+      },
+      {
+        "id": "beijing",
+        "baseWeight": 2,
+        "resultText": "你去了北京。城很大，规矩也多，你先学会问路，再学会少问几句。",
+        "effects": [
+          {
+            "path": "location.currentProvince",
+            "set": "beijing"
+          },
+          {
+            "path": "location.currentProvinceHistoryCode",
+            "set": "beijing"
+          },
+          {
+            "path": "location.currentCityTier",
+            "set": "tier1"
+          }
+        ]
+      },
+      {
+        "id": "wuhan",
+        "baseWeight": 2,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1949
+            }
+          ]
+        },
+        "resultText": "你在武汉三镇落脚。江水、轮渡和商埠把陌生人日日送来，也日日送走。",
+        "effects": [
+          {
+            "path": "location.currentProvince",
+            "set": "hubei"
+          },
+          {
+            "path": "location.currentProvinceHistoryCode",
+            "set": "hubei"
+          },
+          {
+            "path": "location.currentCityTier",
+            "set": "tier2"
+          }
+        ]
+      },
+      {
+        "id": "guangdong",
+        "baseWeight": 3,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1978
+            }
+          ]
+        },
+        "resultText": "你去了广东。车站人声很杂，厂门口的招工牌比亲戚的保证更直接。",
+        "effects": [
+          {
+            "path": "location.currentProvince",
+            "set": "guangdong"
+          },
+          {
+            "path": "location.currentProvinceHistoryCode",
+            "set": "guangdong"
+          },
+          {
+            "path": "location.currentCityTier",
+            "set": "tier1"
+          }
+        ]
       }
     ]
   },
@@ -961,6 +1278,7 @@ export const coreLifecycleEvents = [
       18,
       55
     ],
+    "maxOccurrences": 1,
     "baseWeight": 34,
     "conditions": {
       "all": [
@@ -1172,6 +1490,7 @@ export const coreLifecycleEvents = [
       22,
       38
     ],
+    "maxOccurrences": 1,
     "baseWeight": 12,
     "conditions": {
       "any": [
@@ -1329,6 +1648,7 @@ export const coreLifecycleEvents = [
       35,
       56
     ],
+    "maxOccurrences": 1,
     "baseWeight": 42,
     "text": [
       {
@@ -1460,22 +1780,49 @@ export const coreLifecycleEvents = [
       75,
       112
     ],
-    "baseWeight": 30,
-    "weightModifiers": [
+    "priority": 80,
+    "baseWeight": 100,
+    "triggerProbability": 0.045,
+    "probabilityModifiers": [
       {
-        "path": "resources.health",
-        "lte": 35,
-        "multiply": 4
-      },
-      {
-        "path": "attrs.physique",
-        "lte": 3,
+        "path": "meta.age",
+        "gte": 80,
         "multiply": 1.6
       },
       {
         "path": "meta.age",
+        "gte": 85,
+        "multiply": 1.5
+      },
+      {
+        "path": "meta.age",
         "gte": 90,
-        "multiply": 2
+        "multiply": 1.5
+      },
+      {
+        "path": "meta.age",
+        "gte": 100,
+        "multiply": 1.5
+      },
+      {
+        "path": "meta.age",
+        "gte": 112,
+        "multiply": 100
+      },
+      {
+        "path": "resources.health",
+        "lte": 35,
+        "multiply": 1.5
+      },
+      {
+        "path": "attrs.physique",
+        "lte": 3,
+        "multiply": 1.2
+      },
+      {
+        "path": "environment.healthcareAccess",
+        "lte": 3,
+        "multiply": 1.2
       }
     ],
     "text": "你走完了这一生。很多事没有答案，但它们都真实发生过，像一条河终于流进安静的地方。",

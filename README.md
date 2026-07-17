@@ -32,4 +32,10 @@ http://localhost:4175
 - 地区聚合
 - 无中途选择的连续推进
 - Seed 驱动的自动事件结果
+- 条件概率命中的隐藏人物年谱（命中后逐年完全固定）
+- 按时代、城乡、年龄与人物状态组合书写的平常年景
 - 死亡和人生报告
+
+隐藏人物库的结构、写作规范与后续选题见 [`docs/HISTORICAL_LIFE_LIBRARY.md`](docs/HISTORICAL_LIFE_LIBRARY.md)。
+
+批量内容评测使用 `npm run evaluate`；完整的生成、检查、评测、优化闭环见 [`docs/CONTENT_EVALUATION.md`](docs/CONTENT_EVALUATION.md)。

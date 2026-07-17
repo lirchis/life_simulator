@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 4175",
-    "check": "node --check src/main.js && node scripts/validate_events.js",
-    "batch": "node scripts/batch_simulate.js"
+    "check": "node --check src/main.js && node --check scripts/batch_simulate.js && node --check scripts/evaluate_content.js && node scripts/validate_events.js",
+    "batch": "node scripts/batch_simulate.js",
+    "evaluate": "node scripts/evaluate_content.js"
   }
 }

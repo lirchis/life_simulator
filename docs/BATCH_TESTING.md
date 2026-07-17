@@ -23,6 +23,9 @@ npm run batch -- --count 300 --seed REVIEW --batch-id REVIEW-001 --max-age 100 -
 
 # 只测试 1840 年出生的人生
 npm run batch -- --count 100 --birth-year 1840 --seed QING-ERA --out reports/qing-era.csv
+
+# 用中性 id 强制回放一部完全固定的逐年年谱；建议至少两个 seed
+npm run batch -- --count 2 --historical-life chronicle_hunan_1893_a --seed CHRONICLE-QA --out reports/chronicle-qa.csv
 ```
 
 | 参数 | 默认值 | 说明 |
@@ -32,6 +35,7 @@ npm run batch -- --count 100 --birth-year 1840 --seed QING-ERA --out reports/qin
 | `--batch-id` | `seed + 时间戳` | 本次批量测试 id，用于关联三张表 |
 | `--max-age` | `100` | 单局最大推进年龄，未死亡则停止 |
 | `--birth-year` | 随机 | 固定出生年份，用于定向检查某个年代；支持 `1840-2020` |
+| `--historical-life` | 无 | 强制回放指定固定年谱；开局条件自动匹配作品触发器，CSV 只记录中性 `chronicle_id` |
 | `--out` | 自动时间戳文件 | CSV 输出路径 |
 
 三张表的关联键：
@@ -53,6 +57,7 @@ npm run batch -- --count 100 --birth-year 1840 --seed QING-ERA --out reports/qin
 - 终局资源：健康、财富、幸福、成就、名声、自由。
 - 过程统计：事件数、自动结果数、自然流变次数、首个事件、最后事件、关键事件、事件分类计数。
 - 状态沉淀：最终特质、最终标签。
+- `chronicle_id`：固定年谱的中性内部 id；普通人生为空，不导出研究对象姓名。
 
 ### Years
 

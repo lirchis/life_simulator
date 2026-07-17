@@ -238,6 +238,14 @@ dd { margin: 0; font-weight: 850; }
 }
 .life-status strong { font-size: 28px; }
 .life-status span { color: var(--muted); flex: 1; }
+.life-status .seed-label {
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 .mobile-hud { display: none; }
 .timeline { display: grid; gap: 10px; margin-top: 12px; }
 .year-block {

@@ -191,7 +191,7 @@ export const dailyHealthAgingEvents = [
       60,
       90
     ],
-    "maxOccurrences": 2,
+    "maxOccurrences": 1,
     "baseWeight": 18,
     "text": "你参加了老友的葬礼。回家的路上很安静，很多年轻时吵过的事，忽然都不重要了。",
     "effects": [
@@ -319,7 +319,7 @@ export const dailyHealthAgingEvents = [
       90
     ],
     "baseWeight": 24,
-    "text": "你坐下来量血压，袖带慢慢收紧。数字跳出来的一刻，晚年像被压缩成了几行指标。",
+    "text": "你坐下来量血压，袖带慢慢收紧。数字跳出来的一刻，往后的健康像被压缩成了几行指标。",
     "effects": [
       {
         "path": "resources.health",

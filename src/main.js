@@ -1,8 +1,8 @@
 import { createAggregateRegistry } from "./engine/aggregates.js";
-import { advanceYear } from "./engine/advanceYear.js";
+import { advanceYear } from "./engine/advanceYear.js?v=deep-literature-2";
 import { createRng, pick, randomSeed } from "./engine/random.js";
-import { createInitialState } from "./engine/state.js";
-import { data } from "./data/index.js?v=birth-1840-story-1";
+import { createInitialState } from "./engine/state.js?v=deep-literature-2";
+import { data } from "./data/index.js?v=deep-literature-2";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
@@ -62,14 +62,18 @@ function render() {
   bindEvents();
 }
 
-function shell(content) {
+function shell(content, { gameplay = false } = {}) {
   app.innerHTML = `
     <header class="topbar">
-      <button class="brand" data-action="home"><span>命</span>人生模拟器</button>
-      <div class="top-actions">
-        <button class="ghost" data-action="random-start">一键随机</button>
-        <button class="ghost" data-action="new">新人生</button>
-      </div>
+      ${gameplay
+        ? `<div class="brand"><span>命</span>人生模拟器</div>`
+        : `<button class="brand" data-action="home"><span>命</span>人生模拟器</button>`}
+      ${gameplay ? "" : `
+        <div class="top-actions">
+          <button class="ghost" data-action="random-start">一键随机</button>
+          <button class="ghost" data-action="new">新人生</button>
+        </div>
+      `}
     </header>
     ${content}
   `;
@@ -250,7 +254,7 @@ function renderLife() {
         <div class="life-status">
           <strong>${state.meta.age} 岁</strong>
           <span>${state.meta.currentYear} 年 · ${labels.gender[state.birth.gender] ?? state.birth.gender} · ${stageLabel(state.meta.stage)} · ${provinceDisplayName(state)}</span>
-          <button data-action="copy-seed">Seed ${state.meta.seed}</button>
+          <span class="seed-label">Seed ${state.meta.seed}</span>
         </div>
         ${mobileHud()}
         <div class="timeline">
@@ -269,7 +273,7 @@ function renderLife() {
         ${statsContent()}
       </aside>
     </main>
-  `);
+  `, { gameplay: true });
 }
 
 function statsContent() {
@@ -692,7 +696,7 @@ function buildLifeStory() {
   const birthProvince = state.birth.provinceNameAtBirth || labels.province[state.birth.province] || state.birth.province;
   const cityTier = data.getOptionLabel(data.getCityTierOptionsForYear(state.birth.year), state.birth.cityTier);
   const familyClass = data.getOptionLabel(data.getFamilyClassOptionsForYear(state.birth.year), state.birth.familyClass);
-  const talents = state.talents
+  const talents = (state.openingTalents ?? state.talents)
     .map((id) => data.talents.find((talent) => talent.id === id)?.name ?? id)
     .join("、");
   const eventGroups = groupBy(state.history, (log) => `${log.age}|${log.year}`);

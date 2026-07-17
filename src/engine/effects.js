@@ -3,7 +3,7 @@ import { clamp, clone, getPath, setPath } from "./path.js";
 export function applyEffects(effects = [], state, sourceEvent) {
   for (const effect of effects) {
     if (effect.path) {
-      if ("set" in effect) setPath(state, effect.path, effect.set);
+      if ("set" in effect) setPath(state, effect.path, cloneSetValue(effect.set));
       if ("add" in effect) setPath(state, effect.path, (getPath(state, effect.path) ?? 0) + effect.add);
       if ("multiply" in effect) setPath(state, effect.path, (getPath(state, effect.path) ?? 0) * effect.multiply);
     }
@@ -23,6 +23,10 @@ export function applyEffects(effects = [], state, sourceEvent) {
     if (effect.triggerEnding) state.meta.endingId = effect.triggerEnding;
   }
   normalizeState(state);
+}
+
+function cloneSetValue(value) {
+  return value !== null && typeof value === "object" ? clone(value) : value;
 }
 
 export function makeEffectSummary(before, after) {

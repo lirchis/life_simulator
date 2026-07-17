@@ -364,6 +364,7 @@ export const historyEarlyPrcEvents = [
       18,
       50
     ],
+    "maxOccurrences": 1,
     "currentRegions": {
       "cityTiers": [
         "city",
@@ -572,8 +573,24 @@ export const historyEarlyPrcEvents = [
       0,
       8
     ],
-    "priority": 70,
-    "baseWeight": 2,
+    "birthRegions": {
+      "hukou": [
+        "rural"
+      ]
+    },
+    "maxOccurrences": 1,
+    "baseWeight": 3,
+    "conditions": {
+      "all": [
+        {
+          "hasTag": "famine_memory"
+        },
+        {
+          "path": "resources.health",
+          "lte": 38
+        }
+      ]
+    },
     "weightModifiers": [
       {
         "path": "resources.health",
@@ -779,6 +796,7 @@ export const historyEarlyPrcEvents = [
       0,
       70
     ],
+    "maxOccurrences": 1,
     "baseWeight": 26,
     "text": "村里的赤脚医生背着药箱来，针头在开水里滚过。简陋归简陋，很多命就靠这点亮光拖住。",
     "effects": [
@@ -1074,6 +1092,7 @@ export const historyEarlyPrcEvents = [
       4,
       80
     ],
+    "maxOccurrences": 1,
     "birthRegions": {
       "hukou": [
         "rural"
@@ -1231,6 +1250,7 @@ export const historyEarlyPrcEvents = [
       16,
       45
     ],
+    "maxOccurrences": 1,
     "conditions": {
       "any": [
         {
@@ -1344,6 +1364,7 @@ export const historyEarlyPrcEvents = [
       12,
       60
     ],
+    "maxOccurrences": 1,
     "baseWeight": 20,
     "text": "广播里念着劳模的名字，大家抬头听了一会儿。那种被看见的荣光很远，却也让手里的活多了一点劲。",
     "effects": [
@@ -1380,7 +1401,7 @@ export const historyEarlyPrcEvents = [
         "tier1"
       ]
     },
-    "maxOccurrences": 2,
+    "maxOccurrences": 1,
     "baseWeight": 22,
     "text": "你拿着粮票排队，前面的人一边等一边算。那时生活常常不是看想要什么，而是看票上还剩什么。",
     "effects": [
@@ -1443,6 +1464,7 @@ export const historyEarlyPrcEvents = [
       8,
       75
     ],
+    "maxOccurrences": 1,
     "birthRegions": {
       "hukou": [
         "rural"
@@ -1608,6 +1630,778 @@ export const historyEarlyPrcEvents = [
       {
         "addTag": "year_1976_memory"
       }
+    ]
+  },
+  {
+    id: "era_patriotic_health_fly_swatter",
+    title: "苍蝇也有指标",
+    category: "health",
+    yearRange: [1952, 1960],
+    ageRange: [8, 60],
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "街道和学校发起爱国卫生运动，你拿着苍蝇拍四处巡查。窗台擦亮了，水沟清了；只是苍蝇从不看通知，给集体工作增加了不少技术难度。",
+    effects: [
+      { path: "resources.health", add: 3 },
+      { path: "resources.happiness", add: 1 },
+      { addTag: "patriotic_health_memory" }
+    ]
+  },
+  {
+    id: "era_child_vaccination_queue",
+    title: "胳膊上的小疤",
+    category: "health",
+    yearRange: [1950, 1967],
+    ageRange: [0, 8],
+    maxOccurrences: 1,
+    baseWeight: 25,
+    text: "大人抱着你去接种，队伍从诊室排到院里。针头带来一阵哭声，也在胳膊上留下一枚小疤；许多年后，你未必记得那天，却一直带着它的保护。",
+    effects: [
+      { path: "resources.health", add: 7 },
+      { path: "relationships.family", add: 2 },
+      { addTag: "early_vaccination_memory" }
+    ]
+  },
+  {
+    id: "era_infant_cloth_ticket_bundle",
+    title: "小被子里的布票",
+    category: "family",
+    yearRange: [1955, 1977],
+    ageRange: [0, 3],
+    maxOccurrences: 1,
+    baseWeight: 18,
+    text: "家里攒出布票，给你缝了一床小被子。新棉花不够，就把旧袄拆开续进去；被角花色各不相同，亲人的手却把它们缝成了同一个暖处。",
+    effects: [
+      { path: "resources.health", add: 3 },
+      { path: "relationships.family", add: 5 },
+      { path: "resources.wealth", add: -2 },
+      { addTag: "rationed_childhood_care" }
+    ]
+  },
+  {
+    id: "era_work_unit_nursery_child",
+    title: "单位托儿所",
+    category: "family",
+    yearRange: [1953, 1976],
+    ageRange: [1, 6],
+    birthFamilyClasses: ["worker_family", "state_worker", "cadre_family", "intellectual_family"],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    text: "父母上班前把你送进单位托儿所。铁皮小床排成一行，阿姨一声令下，几十只小勺同时碰碗；集体生活的第一课，是哭也最好别挑同一个时辰。",
+    effects: [
+      { path: "relationships.friendship", add: 3 },
+      { path: "resources.health", add: 2 },
+      { path: "relationships.family", add: -1 },
+      { addTag: "work_unit_nursery_child" }
+    ]
+  },
+  {
+    id: "era_primary_school_slate_pencil",
+    title: "石板上的一行字",
+    category: "school",
+    yearRange: [1951, 1965],
+    ageRange: [6, 12],
+    maxOccurrences: 1,
+    baseWeight: 22,
+    text: "你用石板和石笔练字，写满了就拿袖口擦掉。字迹留不住，手腕却一天天稳下来；老师说知识要积累，你觉得袖口上的白灰倒是先积累得很快。",
+    effects: [
+      { path: "education.score", add: 5 },
+      { path: "resources.happiness", add: 2 },
+      { addTag: "slate_school_memory" }
+    ]
+  },
+  {
+    id: "era_pinyin_wall_chart",
+    title: "墙上的拼音表",
+    category: "school",
+    yearRange: [1958, 1966],
+    ageRange: [6, 13],
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "教室墙上贴起汉语拼音表，你跟着老师把声母韵母一遍遍念齐。有人把四声拐得像山路，全班笑完再重来；陌生的字，开始有了可以问路的办法。",
+    effects: [
+      { path: "education.score", add: 6 },
+      { path: "attrs.intelligence", add: 1 },
+      { addTag: "early_pinyin_learner" }
+    ]
+  },
+  {
+    id: "era_rural_combined_grade_class",
+    title: "一间教室几个年级",
+    category: "school",
+    yearRange: [1952, 1977],
+    ageRange: [7, 14],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    text: "村小只有一间教室，几个年级朝着同一块黑板。老师给高年级讲算术时，你低头认字；等他转过身，你也顺便偷听懂了一点明年的功课。",
+    effects: [
+      { path: "education.score", add: 5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "rural_combined_class" }
+    ]
+  },
+  {
+    id: "era_school_collective_labor_day",
+    title: "课桌搬到田边",
+    category: "school",
+    yearRange: [1958, 1976],
+    ageRange: [9, 18],
+    maxOccurrences: 1,
+    baseWeight: 22,
+    text: "学校安排集体劳动，你和同学去田里、工地或车间帮忙。书本上的劳动很整齐，真正的泥土却会钻进鞋里；一天结束，你对这两个字有了腰酸背痛的注释。",
+    effects: [
+      { path: "resources.health", add: -2 },
+      { path: "education.score", add: 2 },
+      { path: "resources.achievement", add: 2 },
+      { addTag: "school_labor_memory" }
+    ]
+  },
+  {
+    id: "era_urban_latchkey_child",
+    title: "钥匙挂在脖子上",
+    category: "family",
+    yearRange: [1960, 1977],
+    ageRange: [7, 14],
+    birthFamilyClasses: ["worker_family", "state_worker", "cadre_family", "intellectual_family", "small_trader_transformed"],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "父母都在上班，家门钥匙用线穿好挂在你脖子上。放学后你先烧水、再看弟妹，年纪不大，却已经是半个当家人；唯一的威严，是不许别人乱动煤炉。",
+    effects: [
+      { path: "resources.freedom", add: 3 },
+      { path: "relationships.family", add: 3 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "urban_latchkey_child" }
+    ]
+  },
+  {
+    id: "era_rural_child_collects_manure",
+    title: "粪筐里的勤快",
+    category: "family",
+    yearRange: [1960, 1977],
+    ageRange: [7, 15],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 18,
+    text: "清早你背着小筐出门拾粪，给生产队或自家地里攒肥。路上几个孩子暗暗比较收成，谁也没想到童年的胜负心，有一天会这样朴素地冒着热气。",
+    effects: [
+      { path: "resources.health", add: 1 },
+      { path: "resources.wealth", add: 2 },
+      { path: "resources.happiness", add: 1 },
+      { addTag: "rural_child_labor" }
+    ]
+  },
+  {
+    id: "era_1970s_school_returns",
+    title: "教室重新坐满",
+    category: "school",
+    yearRange: [1971, 1977],
+    ageRange: [8, 20],
+    maxOccurrences: 1,
+    baseWeight: 28,
+    conditions: {
+      any: [
+        { hasTag: "interrupted_schooling" },
+        { hasTag: "school_paused_memory" }
+      ]
+    },
+    text: "学校渐渐恢复上课，你又坐回教室。教材、教师和秩序都还不完整，落下的年月也补不齐；但粉笔重新划过黑板时，你仍把那声音听成一条窄窄的路。",
+    effects: [
+      { path: "education.score", add: 7 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "schooling_partly_resumed" }
+    ]
+  },
+  {
+    id: "era_soldier_family_letter_wait",
+    title: "军邮来的薄信",
+    category: "family",
+    yearRange: [1950, 1977],
+    ageRange: [5, 65],
+    birthFamilyClasses: ["soldier_family"],
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "家里等到一封军邮，信纸很薄，只写训练、天气和一切都好。没写的部分反而更重，大人把信折回原样，压在箱底最稳妥的地方。",
+    effects: [
+      { path: "relationships.family", add: 5 },
+      { path: "resources.happiness", add: 1 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "soldier_family_letter" }
+    ]
+  },
+  {
+    id: "era_street_committee_household_book",
+    title: "街道名册",
+    category: "family",
+    yearRange: [1951, 1957],
+    ageRange: [18, 70],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 18,
+    text: "街道干部挨户登记人口、住处和营生。邻里从此既是熟人，也是名册上的一行；你第一次感到，一座城市可以从灶台和门牌开始被重新组织。",
+    effects: [
+      { path: "resources.freedom", add: -2 },
+      { path: "relationships.friendship", add: 2 },
+      { addTag: "street_committee_registry" }
+    ]
+  },
+  {
+    id: "era_joint_state_private_shop_abacus",
+    title: "算盘换了主人",
+    category: "career",
+    yearRange: [1955, 1957],
+    ageRange: [16, 65],
+    birthFamilyClasses: ["craftsman", "shop_clerk", "merchant", "small_trader_transformed"],
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 32,
+    text: "店铺挂上公私合营的新牌子，柜台、账本和算盘仍在原处，身份却变了。你照常开门做事，只是每拨一颗算珠，都要重新弄懂这笔账算给谁。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "grassroots_post" },
+      { path: "career.income", add: 5 },
+      { path: "resources.freedom", add: -5 },
+      { addTag: "joint_state_private_shop" }
+    ]
+  },
+  {
+    id: "era_urban_household_grain_book",
+    title: "粮本上的人口",
+    category: "wealth",
+    yearRange: [1958, 1977],
+    ageRange: [14, 80],
+    currentRegions: { hukou: ["urban"], cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    text: "家里按户口领粮本，人口、定量和月份写得清清楚楚。吃饭从来是家事，此后也成了表格里的事；月底锅里还剩多少，常比任何算术题都更准确。",
+    effects: [
+      { path: "resources.wealth", add: 1 },
+      { path: "resources.freedom", add: -4 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "urban_grain_book" }
+    ]
+  },
+  {
+    id: "era_cloth_ticket_coat_handoff",
+    title: "旧棉袄往下传",
+    category: "family",
+    yearRange: [1955, 1977],
+    ageRange: [5, 18],
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "哥哥姐姐穿小的棉袄拆洗补好，轮到你继续穿。袖口颜色和衣身不太一致，保暖却不讲究体面；一家孩子的身高，像年轮一样留在接过几次的针脚上。",
+    effects: [
+      { path: "resources.wealth", add: 2 },
+      { path: "relationships.family", add: 4 },
+      { path: "resources.health", add: 2 },
+      { addTag: "handed_down_coat" }
+    ]
+  },
+  {
+    id: "era_factory_master_teaches_gauge",
+    title: "师傅的卡尺",
+    category: "career",
+    yearRange: [1953, 1977],
+    ageRange: [16, 35],
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 30,
+    text: "老工人把卡尺递给你，教你听机器的异响、看零件的毛刺。他不爱讲大道理，只在你差半毫米时敲敲台面；手艺就是这样，从一次次不肯将就里传下来。",
+    effects: [
+      { path: "career.level", add: 6 },
+      { path: "resources.achievement", add: 5 },
+      { path: "relationships.friendship", add: 4 },
+      { addTag: "factory_apprenticeship" }
+    ]
+  },
+  {
+    id: "era_factory_lunchbox_steam",
+    title: "饭盒排队蒸",
+    category: "career",
+    yearRange: [1954, 1977],
+    ageRange: [16, 60],
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "上工前大家把铝饭盒码进蒸箱，盖上都刻着名字。开饭时热气一涌，菜味彼此串门；你家的咸菜偶尔沾上一点别人的肉香，也算完成了短暂的物资交流。",
+    effects: [
+      { path: "resources.health", add: 1 },
+      { path: "relationships.friendship", add: 3 },
+      { path: "resources.happiness", add: 2 },
+      { addTag: "factory_lunchbox_memory" }
+    ]
+  },
+  {
+    id: "era_factory_safety_guard_added",
+    title: "给机器补上护罩",
+    category: "health",
+    yearRange: [1955, 1977],
+    ageRange: [18, 60],
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 17,
+    text: "车间出过一次险情后，师傅们连夜给皮带轮补护罩。事故报告只有几页，伤口却要长很久；你从此每次开机前，都多看一眼手和机器之间的距离。",
+    effects: [
+      { path: "resources.health", add: 3 },
+      { path: "career.level", add: 2 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "factory_safety_memory" }
+    ]
+  },
+  {
+    id: "era_work_unit_clinic_visit",
+    title: "厂医听诊",
+    category: "health",
+    yearRange: [1953, 1977],
+    ageRange: [18, 65],
+    conditions: {
+      all: [
+        { path: "career.status", eq: "employed" },
+        { path: "resources.health", lte: 72 }
+      ]
+    },
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 23,
+    text: "你咳了几天，去单位医务室让厂医听诊。药品不算齐全，病假条却写得很端正；有人替你顶了一班，你才承认身体也有权暂时停机。",
+    effects: [
+      { path: "resources.health", add: 7 },
+      { path: "relationships.friendship", add: 2 },
+      { path: "career.income", add: -1 },
+      { addTag: "work_unit_clinic_memory" }
+    ]
+  },
+  {
+    id: "era_factory_mother_nursery_dash",
+    title: "下班铃与托儿所",
+    category: "family",
+    yearRange: [1955, 1976],
+    ageRange: [20, 42],
+    genders: ["female"],
+    conditions: {
+      all: [
+        { path: "relationships.children", gte: 1 }
+      ],
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    text: "下班铃一响，你先把工具归位，再赶去托儿所接孩子。车间说妇女能顶半边天，家里的另外半边却不会因此少洗一件衣裳；你把两边都接住，手一直没闲。",
+    effects: [
+      { path: "resources.health", add: -3 },
+      { path: "relationships.family", add: 5 },
+      { path: "resources.achievement", add: 3 },
+      { addTag: "working_mother_double_shift" }
+    ]
+  },
+  {
+    id: "era_work_unit_room_allocation",
+    title: "分到一间屋",
+    category: "family",
+    yearRange: [1955, 1977],
+    ageRange: [22, 50],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    conditions: {
+      all: [
+        { path: "career.status", eq: "employed" },
+        { path: "relationships.partnerStatus", in: ["partnered", "married"] }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 18,
+    text: "单位终于分下一间屋，面积不大，门窗也旧。你和爱人拿粉笔在地上比划床、桌子和孩子的位置；几平方米被反复安排，竟也慢慢长出了家的样子。",
+    effects: [
+      { path: "resources.wealth", add: 5 },
+      { path: "resources.happiness", add: 7 },
+      { path: "relationships.family", add: 5 },
+      { path: "resources.freedom", add: -2 },
+      { addTag: "work_unit_housing" }
+    ]
+  },
+  {
+    id: "era_work_unit_radio_exercise",
+    title: "广播操站位",
+    category: "health",
+    yearRange: [1954, 1977],
+    ageRange: [16, 60],
+    conditions: { all: [{ path: "career.status", eq: "employed" }] },
+    currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 17,
+    text: "广播一响，全单位到院里做操。前排动作标准，后排各有理解；你伸展了十分钟，回来继续弯腰工作，至少证明身体曾短暂拥有过统一的方向。",
+    effects: [
+      { path: "resources.health", add: 3 },
+      { path: "relationships.friendship", add: 2 },
+      { path: "resources.happiness", add: 1 },
+      { addTag: "work_unit_exercise" }
+    ]
+  },
+  {
+    id: "era_mended_work_gloves",
+    title: "补了又补的手套",
+    category: "family",
+    yearRange: [1953, 1977],
+    ageRange: [18, 60],
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 18,
+    text: "劳动手套磨破了，家里用厚布一层层补上。新的那双舍不得领得太勤，旧的又不能真让手指露出来；针线在掌心绕过机器留下的油，也绕过一家人的细算。",
+    effects: [
+      { path: "resources.wealth", add: 2 },
+      { path: "resources.health", add: 2 },
+      { path: "relationships.family", add: 3 },
+      { addTag: "mended_work_gloves" }
+    ]
+  },
+  {
+    id: "era_workpoint_public_recount",
+    title: "工分要当面算",
+    category: "career",
+    yearRange: [1958, 1977],
+    ageRange: [16, 70],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    conditions: {
+      any: [
+        { path: "career.field", eq: "production_team" },
+        { hasTag: "collective_laborer" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 27,
+    text: "年终分配前，队里把每户工分当众念一遍。谁少记半天、谁的重活该算几分，平日压着的话都挤到煤油灯下；账算到最后，最响的往往不是算盘。",
+    effects: [
+      { path: "resources.wealth", add: 3 },
+      { path: "relationships.friendship", add: -2 },
+      { path: "resources.reputation", add: 2 },
+      { addTag: "workpoint_recount_memory" }
+    ]
+  },
+  {
+    id: "era_rural_woman_busy_season",
+    title: "双抢里的两副担子",
+    category: "family",
+    yearRange: [1958, 1977],
+    ageRange: [18, 50],
+    genders: ["female"],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "农忙时你白天下田抢收抢种，天黑后还要烧饭、洗衣、哄孩子。工分本只记下田里的那一段，灶台旁的劳动没有格子可填；你累得沉默，却知道一家人的日子正压在这两副担子上。",
+    effects: [
+      { path: "resources.health", add: -5 },
+      { path: "relationships.family", add: 5 },
+      { path: "resources.achievement", add: 2 },
+      { addTag: "rural_woman_double_labor" }
+    ]
+  },
+  {
+    id: "era_production_team_night_accounting",
+    title: "替生产队算账",
+    category: "career",
+    yearRange: [1962, 1977],
+    ageRange: [18, 55],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    conditions: {
+      all: [{ path: "education.score", gte: 34 }],
+      any: [
+        { path: "career.field", eq: "production_team" },
+        { hasTag: "collective_laborer" },
+        { path: "career.status", eq: "family_labor" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 20,
+    text: "队里看你识字算数，叫你晚上帮忙核工分和口粮。煤油灯下，每一笔都连着一家人的饭碗；你写得比从前更慢，因为数字一旦落错，挨饿的不会是纸。",
+    effects: [
+      { path: "career.level", add: 4 },
+      { path: "resources.reputation", add: 5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "production_team_accountant" }
+    ]
+  },
+  {
+    id: "era_first_tractor_shift",
+    title: "拖拉机进了田",
+    category: "career",
+    yearRange: [1965, 1977],
+    ageRange: [16, 55],
+    currentRegions: {
+      provinces: ["heilongjiang", "jilin", "liaoning", "hebei", "henan", "shandong", "anhui", "jiangsu"],
+      hukou: ["rural"],
+      cityTiers: ["village", "town"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 17,
+    text: "公社的拖拉机第一次开进附近田里，孩子跟着跑，大人围着看。机器能顶许多牛力，也会在最忙时趴窝；你闻着柴油味，知道农业的未来先得学会修理。",
+    effects: [
+      { path: "resources.achievement", add: 3 },
+      { path: "education.score", add: 2 },
+      { path: "resources.happiness", add: 3 },
+      { addTag: "early_tractor_memory" }
+    ]
+  },
+  {
+    id: "era_commune_winter_waterworks",
+    title: "冬天修水利",
+    category: "career",
+    yearRange: [1963, 1976],
+    ageRange: [16, 60],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 21,
+    text: "冬闲时队里组织修渠筑坝，你挑土、夯坡，手掌裂出血口。工程有的后来真挡住旱涝，有的只在汇报里壮观；你记得最清楚的，是冻土落进筐里的分量。",
+    effects: [
+      { path: "resources.health", add: -4 },
+      { path: "resources.achievement", add: 3 },
+      { path: "resources.reputation", add: 2 },
+      { addTag: "commune_waterworks" }
+    ]
+  },
+  {
+    id: "era_rural_hosts_sent_down_youth",
+    title: "知青住进队里",
+    category: "family",
+    yearRange: [1968, 1976],
+    ageRange: [25, 70],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    conditions: { none: [{ hasTag: "sent_down_youth" }] },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    text: "一批城里青年住进生产队，你教他们认庄稼、烧土灶，也看着他们在夜里想家。彼此都被时代安排到这里：他们带来远方的书和口音，你们教会他们泥土并不抽象。",
+    effects: [
+      { path: "relationships.friendship", add: 5 },
+      { path: "education.score", add: 2 },
+      { path: "resources.wealth", add: -1 },
+      { addTag: "hosted_sent_down_youth" }
+    ]
+  },
+  {
+    id: "era_third_front_family_letter",
+    title: "山沟厂里的家书",
+    category: "family",
+    yearRange: [1965, 1977],
+    ageRange: [20, 58],
+    conditions: { all: [{ hasTag: "third_front_builder" }] },
+    maxOccurrences: 1,
+    baseWeight: 32,
+    text: "三线厂区离家很远，你在信里写机器已经安装、宿舍不漏雨，却没写山路封雪和孩子发烧时赶不回去。建设的尺度很大，牵挂仍按一封信、一张车票来计算。",
+    effects: [
+      { path: "relationships.family", add: 4 },
+      { path: "resources.happiness", add: -2 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "third_front_family_distance" }
+    ]
+  },
+  {
+    id: "era_urban_air_raid_shelter",
+    title: "楼下挖防空洞",
+    category: "career",
+    yearRange: [1969, 1972],
+    ageRange: [14, 65],
+    currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 30,
+    text: "形势紧张，街道和单位组织挖防空洞。你轮班运土，回家时鞋里全是沙；人们讨论远处可能发生的战争，手里却先得解决一筐土往哪里倒。",
+    effects: [
+      { path: "resources.health", add: -3 },
+      { path: "resources.freedom", add: -3 },
+      { path: "relationships.friendship", add: 2 },
+      { addTag: "air_raid_shelter_memory" }
+    ]
+  },
+  {
+    id: "era_schistosomiasis_control_team",
+    title: "血吸虫病防治队",
+    category: "health",
+    yearRange: [1955, 1970],
+    ageRange: [5, 65],
+    currentRegions: {
+      provinces: ["jiangsu", "zhejiang", "anhui", "jiangxi", "hubei", "hunan", "sichuan", "yunnan", "guangdong", "guangxi"],
+      hukou: ["rural"],
+      cityTiers: ["village", "town"]
+    },
+    maxOccurrences: 1,
+    baseWeight: 24,
+    text: "防治队到村里查病、灭螺，反复叮嘱别赤脚下疫水。那些年大肚子、乏力常被当成命苦，如今第一次有人沿着沟渠和身体，一寸寸追问病从哪里来。",
+    effects: [
+      { path: "resources.health", add: 8 },
+      { path: "education.score", add: 2 },
+      { addTag: "schistosomiasis_control_memory" }
+    ]
+  },
+  {
+    id: "era_new_method_midwife",
+    title: "产房里的开水",
+    category: "health",
+    yearRange: [1952, 1970],
+    ageRange: [18, 42],
+    genders: ["female"],
+    conditions: {
+      all: [
+        { path: "relationships.partnerStatus", in: ["partnered", "married"] },
+        { path: "relationships.children", gte: 1 }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    text: "生产时，新法接生员带来消毒过的剪刀、纱布和一盆滚开的水。疼痛没有因此变轻，危险却少了一层；你抱住孩子时，也记住了干净的器具怎样把一条命稳稳接住。",
+    effects: [
+      { path: "resources.health", add: 7 },
+      { path: "relationships.family", add: 6 },
+      { path: "resources.happiness", add: 4 },
+      { addTag: "new_method_childbirth" }
+    ]
+  },
+  {
+    id: "era_hidden_books_in_ceiling",
+    title: "书藏到梁上",
+    category: "family",
+    yearRange: [1966, 1971],
+    ageRange: [12, 70],
+    maxOccurrences: 1,
+    baseWeight: 17,
+    conditions: {
+      any: [
+        { hasTag: "intellectual_family" },
+        { path: "education.score", gte: 58 }
+      ]
+    },
+    text: "家里把几本旧书包好，藏进屋梁或箱底。不是每本书都危险，可没人知道危险会怎样被定义；你摸黑放好最后一本，第一次明白保存文字也可能需要胆量。",
+    effects: [
+      { path: "resources.freedom", add: -7 },
+      { path: "resources.happiness", add: -5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "hidden_books_memory" }
+    ]
+  },
+  {
+    id: "era_factory_faction_stoppage",
+    title: "车间停转的日子",
+    category: "career",
+    yearRange: [1967, 1969],
+    ageRange: [16, 65],
+    conditions: {
+      any: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "factory_worker" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "争论和派性进入车间，机器断断续续停转，熟悉的同事也站到不同一边。你守着工位，不知道一句话会把人推到哪里；生产可以恢复，彼此的信任却没有统一的检修规程。",
+    effects: [
+      { path: "career.income", add: -4 },
+      { path: "relationships.friendship", add: -7 },
+      { path: "resources.happiness", add: -6 },
+      { addTag: "factory_faction_stoppage" }
+    ]
+  },
+  {
+    id: "era_rural_cooperative_medical_fee",
+    title: "五角钱的合作医疗",
+    category: "health",
+    yearRange: [1968, 1976],
+    ageRange: [18, 70],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    maxOccurrences: 1,
+    baseWeight: 22,
+    text: "队里商量办合作医疗，每人凑一点钱和粮，平常小病能少拖几天。账不大，争论不少；可真有人半夜高烧时，大家才明白这点共同出的份子，是给陌生的明天留一条路。",
+    effects: [
+      { path: "resources.wealth", add: -1 },
+      { path: "resources.health", add: 6 },
+      { path: "relationships.friendship", add: 3 },
+      { addTag: "rural_cooperative_healthcare" }
+    ]
+  },
+  {
+    id: "era_rural_substitute_teacher",
+    title: "站到村小讲台上",
+    category: "career",
+    yearRange: [1962, 1977],
+    ageRange: [18, 38],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    conditions: {
+      all: [{ path: "education.score", gte: 40 }],
+      none: [{ path: "career.field", eq: "factory" }]
+    },
+    maxOccurrences: 1,
+    baseWeight: 16,
+    text: "村小缺老师，队里让识字较多的你先顶上。工资和工分都不算宽裕，教具也常靠自己做；孩子们把问题举得很高，你只好一边备课，一边继续学习怎样回答。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "grassroots_post" },
+      { path: "career.income", add: 5 },
+      { path: "resources.reputation", add: 6 },
+      { addTag: "rural_substitute_teacher" }
+    ]
+  },
+  {
+    id: "era_barefoot_doctor_training",
+    title: "背起药箱",
+    category: "career",
+    yearRange: [1968, 1976],
+    ageRange: [18, 38],
+    currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
+    conditions: {
+      all: [{ path: "education.score", gte: 34 }],
+      none: [
+        { path: "career.field", eq: "factory" },
+        { hasTag: "rural_substitute_teacher" }
+      ]
+    },
+    maxOccurrences: 1,
+    baseWeight: 14,
+    text: "公社选你去学常见病、针灸和基本急救，培训不长，责任却很快落到肩上。你背着药箱走村串户，知道自己能治的有限，于是比谁都认真分辨哪些病不能再等。",
+    effects: [
+      { path: "career.status", set: "employed" },
+      { path: "career.field", set: "grassroots_post" },
+      { path: "career.income", add: 4 },
+      { path: "resources.reputation", add: 7 },
+      { path: "resources.achievement", add: 5 },
+      { addTag: "trained_barefoot_doctor" }
+    ]
+  },
+  {
+    id: "era_grassroots_postman_bicycle",
+    title: "邮包压住后座",
+    category: "career",
+    yearRange: [1955, 1977],
+    ageRange: [18, 58],
+    conditions: { all: [{ path: "career.field", eq: "grassroots_post" }] },
+    currentRegions: { cityTiers: ["village", "town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 16,
+    text: "你骑车把信件、汇款单和报纸送进村巷，后座邮包压得车轮发沉。有人盼录取通知，有人只等一句平安；你不能拆信，却渐渐认识了每扇门后最着急的那件事。",
+    effects: [
+      { path: "career.level", add: 4 },
+      { path: "relationships.friendship", add: 5 },
+      { path: "resources.health", add: 2 },
+      { addTag: "grassroots_postal_route" }
     ]
   }
 ];
