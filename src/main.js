@@ -16,6 +16,9 @@ let screen = "home";
 
 const context = () => ({ aggregateRegistry, rng });
 
+document.addEventListener("keydown", handleGlobalKeydown);
+document.addEventListener("click", handleGlobalTap);
+
 function createDefaultSetup() {
   const initial = {
     seed: randomSeed(),
@@ -352,7 +355,7 @@ function renderChoice() {
       <section class="modal">
         <p class="eyebrow">关键选择</p>
         <h2>${pendingChoice.title}</h2>
-        <p>${pendingChoice.text}</p>
+        <p>${pendingChoice.displayText ?? pendingChoice.text}</p>
         <div class="choice-list">
           ${pendingChoice.choices.map((choice) => `<button data-choice="${choice.id}">${choice.text}</button>`).join("")}
         </div>
@@ -427,6 +430,34 @@ function bindEvents() {
   }));
 }
 
+function handleGlobalKeydown(event) {
+  if (![" ", "Spacebar", "ArrowDown", "ArrowRight"].includes(event.key)) return;
+  if (isTypingTarget(event.target) || !canAdvanceLife()) return;
+  event.preventDefault();
+  advanceLife();
+}
+
+function handleGlobalTap(event) {
+  if (!isCoarsePointer() || isInteractiveTarget(event.target) || !canAdvanceLife()) return;
+  advanceLife();
+}
+
+function canAdvanceLife() {
+  return screen === "life" && state?.meta.isAlive && !pendingChoice;
+}
+
+function isTypingTarget(target) {
+  return Boolean(target?.closest?.("input, textarea, select, [contenteditable='true']"));
+}
+
+function isInteractiveTarget(target) {
+  return Boolean(target?.closest?.("button, input, textarea, select, a, [data-choice], .modal, .modal-backdrop"));
+}
+
+function isCoarsePointer() {
+  return window.matchMedia?.("(pointer: coarse)")?.matches ?? false;
+}
+
 function handleAction(action) {
   if (action === "home") screen = "home";
   if (action === "setup") screen = "setup";
@@ -448,15 +479,21 @@ function handleAction(action) {
   if (action === "refresh-talents") refreshTalents(true);
   if (action === "start") startLife();
   if (action === "advance") {
-    const result = advanceYear(state, data, context());
-    pendingChoice = result.choiceEvent;
-    render();
-    if (!pendingChoice) scrollToBottom();
+    advanceLife();
+    return;
   }
   if (action === "report") screen = "report";
   if (action === "copy-seed") navigator.clipboard?.writeText(state.meta.seed);
   if (action === "copy-report") navigator.clipboard?.writeText(buildReport().text);
   render();
+}
+
+function advanceLife() {
+  if (!canAdvanceLife()) return;
+  const result = advanceYear(state, data, context());
+  pendingChoice = result.choiceEvent;
+  render();
+  if (!pendingChoice) scrollToBottom();
 }
 
 function startLife(options = {}) {

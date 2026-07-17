@@ -25,7 +25,7 @@ export function advanceYear(state, data, context) {
 
   for (const event of selected) {
     if (!state.meta.isAlive) break;
-    if (event.choices?.length) return { logs, choiceEvent: event, ended: false };
+    if (event.choices?.length) return { logs, choiceEvent: prepareChoiceEvent(event, state, context), ended: false };
     logs.push(applyEvent(event, null, state, context));
   }
 
@@ -63,7 +63,7 @@ export function applyEvent(event, choice, state, context) {
     year: state.meta.currentYear,
     eventId: event.id,
     title: event.title,
-    text: selectText(event.text, state, context),
+    text: event.displayText ?? selectText(event.text, state, context),
     category: event.category,
     priority: event.priority ?? 0,
     choiceId: choice?.id,
@@ -73,6 +73,13 @@ export function applyEvent(event, choice, state, context) {
   };
   state.history.push(log);
   return log;
+}
+
+function prepareChoiceEvent(event, state, context) {
+  return {
+    ...event,
+    displayText: selectText(event.text, state, context),
+  };
 }
 
 function selectEvents(candidates, state, context) {

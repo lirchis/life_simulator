@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, extname, resolve } from "node:path";
 import { createAggregateRegistry } from "../src/engine/aggregates.js";
 import { advanceYear, resolveChoice } from "../src/engine/advanceYear.js";
 import { matchConditions } from "../src/engine/conditions.js";
@@ -15,22 +15,34 @@ const args = parseArgs(process.argv.slice(2));
 const count = readNumberArg(args, "count", DEFAULT_COUNT);
 const maxAge = readNumberArg(args, "max-age", DEFAULT_MAX_AGE);
 const baseSeed = args.seed ?? DEFAULT_BASE_SEED;
+const batchId = args["batch-id"] ?? `${baseSeed}-${timestamp()}`;
 const outFile = resolve(args.out ?? `reports/batch-simulations-${timestamp()}.csv`);
+const outputFiles = makeOutputFiles(outFile);
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
 
-const rows = [];
+const summaryRows = [];
+const yearRows = [];
+const eventRows = [];
 for (let index = 0; index < count; index += 1) {
   const seed = `${baseSeed}-${String(index + 1).padStart(4, "0")}`;
   const rng = createRng(seed);
   const setup = randomSetup(seed, rng);
   const state = createInitialState(setup, data, { rng, aggregateRegistry });
   const result = runLife(state, rng, maxAge);
-  rows.push(toCsvRow(index + 1, setup, state, result));
+  const runIndex = index + 1;
+  const runId = `${batchId}-run-${String(runIndex).padStart(4, "0")}`;
+  summaryRows.push(toSummaryCsvRow(runIndex, runId, setup, state, result));
+  yearRows.push(...toYearCsvRows(runIndex, runId, setup, state));
+  eventRows.push(...toEventCsvRows(runIndex, runId, setup, state));
 }
 
-mkdirSync(dirname(outFile), { recursive: true });
-writeFileSync(outFile, toCsv(rows), "utf8");
-console.log(`Wrote ${rows.length} simulations to ${outFile}`);
+mkdirSync(dirname(outputFiles.summary), { recursive: true });
+writeFileSync(outputFiles.summary, toCsv(summaryRows), "utf8");
+writeFileSync(outputFiles.years, toCsv(yearRows), "utf8");
+writeFileSync(outputFiles.events, toCsv(eventRows), "utf8");
+console.log(`Wrote ${summaryRows.length} simulation summaries to ${outputFiles.summary}`);
+console.log(`Wrote ${yearRows.length} yearly detail rows to ${outputFiles.years}`);
+console.log(`Wrote ${eventRows.length} event detail rows to ${outputFiles.events}`);
 
 function runLife(state, rng, maxAge) {
   let choiceCount = 0;
@@ -139,11 +151,13 @@ function chooseChoice(event, state, rng) {
   return pick(choices.length ? choices : event.choices, rng);
 }
 
-function toCsvRow(index, setup, state, result) {
+function toSummaryCsvRow(index, runId, setup, state, result) {
   const categoryCounts = countBy(state.history, (log) => log.category ?? "unknown");
   const eventIds = state.history.map((log) => log.eventId);
   const rareEvents = state.history.filter((log) => log.priority || log.death).map((log) => log.eventId);
   return {
+    batch_id: batchId,
+    run_id: runId,
     run_index: index,
     seed: setup.seed,
     birth_year: state.birth.year,
@@ -188,12 +202,106 @@ function toCsvRow(index, setup, state, result) {
   };
 }
 
+function toYearCsvRows(index, runId, setup, state) {
+  const eventsByYear = groupBy(state.history, (log) => yearKey(log));
+  const changesByYear = groupBy(state.yearlyChanges, (change) => yearKey(change));
+  return state.snapshots.map((snapshot) => {
+    const key = yearKey(snapshot);
+    const logs = eventsByYear[key] ?? [];
+    const changes = changesByYear[key] ?? [];
+    const yearId = `${runId}-year-${String(snapshot.age).padStart(3, "0")}`;
+    return {
+      batch_id: batchId,
+      run_id: runId,
+      year_id: yearId,
+      run_index: index,
+      seed: setup.seed,
+      age: snapshot.age,
+      year: snapshot.year,
+      stage: snapshot.stage,
+      alive_after_year: logs.some((log) => log.death) ? "no" : "yes",
+      birth_year: state.birth.year,
+      gender: state.birth.gender,
+      current_province: snapshot.location.currentProvince,
+      current_city_tier: snapshot.location.currentCityTier,
+      health: snapshot.resources.health,
+      wealth: snapshot.resources.wealth,
+      happiness: snapshot.resources.happiness,
+      achievement: snapshot.resources.achievement,
+      reputation: snapshot.resources.reputation,
+      freedom: snapshot.resources.freedom,
+      physique: snapshot.attrs.physique,
+      intelligence: snapshot.attrs.intelligence,
+      charm: snapshot.attrs.charm,
+      family: snapshot.attrs.family,
+      luck: snapshot.attrs.luck,
+      mental: snapshot.attrs.mental,
+      education_level: snapshot.education.level,
+      education_score: snapshot.education.score,
+      career_status: snapshot.career.status,
+      career_income: snapshot.career.income,
+      event_count: logs.length,
+      event_ids: logs.map((log) => log.eventId).join("|"),
+      event_titles: logs.map((log) => log.title).join("|"),
+      event_categories: logs.map((log) => log.category).join("|"),
+      event_texts: logs.map((log) => log.text).join("|"),
+      event_effects: logs.flatMap((log) => log.effectsSummary ?? []).join("|"),
+      natural_effects: changes.flatMap((change) => change.effectsSummary ?? []).join("|"),
+      choice_ids: logs.filter((log) => log.choiceId).map((log) => `${log.eventId}:${log.choiceId}`).join("|"),
+      traits: snapshot.traits.join("|"),
+      tags: snapshot.tags.join("|"),
+    };
+  });
+}
+
+function toEventCsvRows(index, runId, setup, state) {
+  return state.history.map((log, eventIndex) => ({
+    batch_id: batchId,
+    run_id: runId,
+    year_id: `${runId}-year-${String(log.age).padStart(3, "0")}`,
+    event_row_id: `${runId}-event-${String(eventIndex + 1).padStart(4, "0")}`,
+    run_index: index,
+    seed: setup.seed,
+    event_order: eventIndex + 1,
+    age: log.age,
+    year: log.year,
+    birth_year: state.birth.year,
+    gender: state.birth.gender,
+    birth_province: state.birth.province,
+    birth_city_tier: state.birth.cityTier,
+    hukou: state.birth.hukou,
+    family_class: state.birth.familyClass,
+    event_id: log.eventId,
+    title: log.title,
+    category: log.category,
+    priority: log.priority ?? 0,
+    choice_id: log.choiceId ?? "",
+    final_text: log.text,
+    final_result_text: log.resultText ?? "",
+    effects_summary: (log.effectsSummary ?? []).join("|"),
+    death: log.death ? "yes" : "no",
+  }));
+}
+
 function countBy(items, getKey) {
   return items.reduce((result, item) => {
     const key = getKey(item);
     result[key] = (result[key] ?? 0) + 1;
     return result;
   }, {});
+}
+
+function groupBy(items, getKey) {
+  return items.reduce((result, item) => {
+    const key = getKey(item);
+    result[key] ??= [];
+    result[key].push(item);
+    return result;
+  }, {});
+}
+
+function yearKey(item) {
+  return `${item.age}|${item.year}`;
 }
 
 function toCsv(rows) {
@@ -231,6 +339,17 @@ function readNumberArg(source, key, fallback) {
   const value = Number(source[key] ?? fallback);
   if (!Number.isFinite(value) || value <= 0) throw new Error(`--${key} must be a positive number`);
   return Math.floor(value);
+}
+
+function makeOutputFiles(summaryFile) {
+  const extension = extname(summaryFile);
+  const base = extension ? summaryFile.slice(0, -extension.length) : summaryFile;
+  const suffix = extension || ".csv";
+  return {
+    summary: summaryFile,
+    years: `${base}.years${suffix}`,
+    events: `${base}.events${suffix}`,
+  };
 }
 
 function timestamp() {
