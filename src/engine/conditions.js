@@ -23,6 +23,13 @@ export function matchCondition(condition, state, context) {
     const occurred = state.occurredEvents[condition.eventOccurredWithin.eventId];
     return Boolean(occurred && state.meta.currentYear - occurred.lastYear <= condition.eventOccurredWithin.years);
   }
+  if (condition.eventOccurredBetween) {
+    const rule = condition.eventOccurredBetween;
+    const occurred = state.occurredEvents[rule.eventId];
+    if (!occurred) return false;
+    const elapsedYears = state.meta.currentYear - occurred.lastYear;
+    return elapsedYears >= (rule.minYears ?? 0) && elapsedYears <= (rule.maxYears ?? Number.POSITIVE_INFINITY);
+  }
   if (condition.counter) return compareValue(state.counters[condition.counter] ?? 0, condition);
   if (condition.past) return matchPast(condition.past, state, context);
   if (condition.path) {

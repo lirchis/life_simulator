@@ -1,8 +1,8 @@
 import { createAggregateRegistry } from "./engine/aggregates.js";
-import { advanceYear } from "./engine/advanceYear.js?v=narrative-1";
+import { advanceYear } from "./engine/advanceYear.js?v=shadow-1";
 import { createRng, pick, randomSeed } from "./engine/random.js";
-import { createInitialState } from "./engine/state.js?v=narrative-1";
-import { data } from "./data/index.js?v=future-history-1";
+import { createInitialState } from "./engine/state.js?v=shadow-1";
+import { data } from "./data/index.js?v=shadow-1";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
@@ -277,22 +277,24 @@ function renderLife() {
 }
 
 function statsContent() {
+  const publicTags = visibleTags(state.tags);
   return `
     <h2>状态</h2>
     ${statRows(state.resources)}
     <h2>特质</h2>
     <div class="tags">${state.traits.slice(0, 12).map((trait) => `<span>${tagLabel(trait)}</span>`).join("") || "<em>暂无</em>"}</div>
     <h2>标签</h2>
-    <div class="tags">${state.tags.slice(0, 16).map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无</em>"}</div>
+    <div class="tags">${publicTags.slice(0, 16).map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无</em>"}</div>
   `;
 }
 
 function mobileHud() {
   const priorityStats = ["health", "wealth", "happiness", "achievement"];
+  const publicTags = visibleTags(state.tags);
   return `
     <section class="mobile-hud" aria-label="状态摘要">
       <div class="hud-stats">${statRows(state.resources, priorityStats)}</div>
-      <div class="hud-tags">${[...state.traits.slice(-2), ...state.tags.slice(-2)].map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无标签</em>"}</div>
+      <div class="hud-tags">${[...state.traits.slice(-2), ...publicTags.slice(-2)].map((tag) => `<span>${tagLabel(tag)}</span>`).join("") || "<em>暂无标签</em>"}</div>
     </section>
   `;
 }
@@ -790,6 +792,10 @@ function rarityLabel(rarity) {
 
 function tagLabel(tag) {
   return labels.tag[tag] ?? tag;
+}
+
+function visibleTags(tags = []) {
+  return tags.filter((tag) => !tag.startsWith("shadow_"));
 }
 
 function formatEffectSummary(item) {

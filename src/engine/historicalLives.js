@@ -1,4 +1,4 @@
-import { applyEffects } from "./effects.js";
+import { applyEffects } from "./effects.js?v=shadow-1";
 import { weightedPick } from "./random.js";
 
 export function attachHistoricalLife(state, historicalLives = [], context = {}) {

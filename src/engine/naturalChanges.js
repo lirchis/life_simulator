@@ -1,5 +1,6 @@
-import { addTrait, normalizeState, removeTrait } from "./effects.js";
+import { addTrait, normalizeState, removeTrait } from "./effects.js?v=shadow-1";
 import { applyNaturalLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { applyNaturalShadowEvolution } from "./shadow.js?v=shadow-1";
 
 export function applyNaturalChanges(state) {
   if (state.meta.age <= 0 || !state.meta.isAlive) return;
@@ -7,6 +8,7 @@ export function applyNaturalChanges(state) {
   applyNaturalLifeCourse(state);
   applyHealthDrift(state);
   updateHealthTraits(state);
+  applyNaturalShadowEvolution(state);
   normalizeState(state);
 }
 

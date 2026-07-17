@@ -1,8 +1,14 @@
 import { clamp, clone, getPath, setPath } from "./path.js";
 import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
-import { normalizeNarrativeState } from "./narrative.js?v=narrative-1";
+import { normalizeNarrativeState } from "./narrative.js?v=shadow-1";
+import { evolveShadowFromEffects, normalizeShadowState } from "./shadow.js?v=shadow-1";
 
 export function applyEffects(effects = [], state, sourceEvent) {
+  const beforeShadowEvolution = {
+    shadow: { ...(state.shadow ?? {}) },
+    resources: { ...(state.resources ?? {}) },
+    relationships: { ...(state.relationships ?? {}) },
+  };
   for (const effect of effects) {
     if (effect.path) {
       if ("set" in effect) setPath(state, effect.path, cloneSetValue(effect.set));
@@ -24,6 +30,7 @@ export function applyEffects(effects = [], state, sourceEvent) {
     }
     if (effect.triggerEnding) state.meta.endingId = effect.triggerEnding;
   }
+  evolveShadowFromEffects(beforeShadowEvolution, state);
   normalizeState(state);
   normalizeLifeCourse(state);
 }
@@ -50,7 +57,7 @@ export function makeEffectSummary(before, after) {
     luck: "运气",
     mental: "心态",
   });
-  for (const tag of after.tags.filter((tag) => !before.tags.includes(tag))) summary.push(`获得 ${tag}`);
+  for (const tag of after.tags.filter((tag) => !before.tags.includes(tag) && !tag.startsWith("shadow_"))) summary.push(`获得 ${tag}`);
   for (const trait of after.traits.filter((trait) => !before.traits.includes(trait))) summary.push(`获得特质 ${trait}`);
   for (const trait of before.traits.filter((trait) => !after.traits.includes(trait))) summary.push(`失去特质 ${trait}`);
   if (!after.meta.isAlive && before.meta.isAlive) summary.push(`死亡：${after.meta.deathReason}`);
@@ -84,6 +91,7 @@ export function writeSnapshot(state) {
     career: clone(state.career),
     lifeCourse: clone(state.lifeCourse),
     narrative: clone(state.narrative),
+    shadow: clone(state.shadow),
     traits: [...state.traits],
     tags: [...state.tags],
   });
@@ -100,6 +108,7 @@ export function normalizeState(state) {
   state.career.level = clamp(Math.round(state.career.level), 0, 100);
   state.career.income = clamp(Math.round(state.career.income), 0, 100);
   normalizeNarrativeState(state);
+  normalizeShadowState(state);
 }
 
 function collectDiffs(summary, before, after, labels) {

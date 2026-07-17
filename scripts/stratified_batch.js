@@ -4,6 +4,7 @@ import { createAggregateRegistry } from "../src/engine/aggregates.js";
 import { advanceYear } from "../src/engine/advanceYear.js";
 import { createRng, pick } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
+import { SHADOW_FIELDS } from "../src/engine/shadow.js";
 import { data } from "../src/data/index.js";
 
 const DEFAULT_SEED = "STRATIFIED-QA";
@@ -328,6 +329,7 @@ function toSummaryRow(runId, runIndex, matrixCase, setup, state, maxAge) {
     final_health: state.resources.health,
     final_wealth: state.resources.wealth,
     final_happiness: state.resources.happiness,
+    ...shadowColumns(state.shadow, "final"),
     final_achievement: state.resources.achievement,
     final_education_level: state.education.level,
     final_education_status: state.education.status,
@@ -340,8 +342,10 @@ function toSummaryRow(runId, runIndex, matrixCase, setup, state, maxAge) {
 
 function toYearRows(runId, runIndex, matrixCase, setup, state) {
   const eventsByKey = groupByMap(state.history, (log) => `${log.age}|${log.year}`);
+  const snapshotsByAge = new Map(state.snapshots.map((snapshot) => [snapshot.age, snapshot]));
   return state.snapshots.map((snapshot) => {
     const logs = eventsByKey.get(`${snapshot.age}|${snapshot.year}`) ?? [];
+    const beforeShadow = snapshotsByAge.get(snapshot.age - 1)?.shadow ?? logs[0]?.shadowBefore ?? snapshot.shadow;
     return {
       ...baseColumns(runId, runIndex, matrixCase, setup),
       year_id: `${runId}-year-${String(snapshot.age).padStart(3, "0")}`,
@@ -365,6 +369,8 @@ function toYearRows(runId, runIndex, matrixCase, setup, state) {
       achievement: snapshot.resources.achievement,
       reputation: snapshot.resources.reputation,
       freedom: snapshot.resources.freedom,
+      ...shadowColumns(beforeShadow, "before"),
+      ...shadowColumns(snapshot.shadow, "after"),
       physique: snapshot.attrs.physique,
       intelligence: snapshot.attrs.intelligence,
       charm: snapshot.attrs.charm,
@@ -456,6 +462,8 @@ function toEventRows(runId, runIndex, matrixCase, setup, state) {
       career_field_after: continuityAfter?.career.field ?? after?.career.field ?? state.career.field,
       career_jobs_held_after: continuityAfter?.career.jobsHeld ?? after?.career.jobsHeld ?? state.career.jobsHeld,
       primary_activity_after: continuityAfter?.primaryActivity ?? after?.lifeCourse.primaryActivity ?? state.lifeCourse.primaryActivity,
+      ...shadowColumns(log.shadowBefore, "before"),
+      ...shadowColumns(log.shadowAfter, "after"),
       event_id: log.eventId,
       title: log.title,
       category: log.category,
@@ -487,6 +495,13 @@ function formatLifeCourseTransition(transition) {
     ? `${transition.to.status}:${transition.to.level}`
     : `${transition.to.status}:${transition.to.field}`;
   return `${transition.year}/${transition.age}/${transition.domain}/${from}->${to}/${transition.source}`;
+}
+
+function shadowColumns(shadow = {}, suffix) {
+  return Object.fromEntries(SHADOW_FIELDS.map((field) => [
+    `shadow_${field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)}_${suffix}`,
+    shadow[field] ?? 0,
+  ]));
 }
 
 function maximumTextureStreak(history) {

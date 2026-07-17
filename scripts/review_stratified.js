@@ -3,6 +3,7 @@ import { dirname, extname, resolve } from "node:path";
 import { createAggregateRegistry } from "../src/engine/aggregates.js";
 import { data } from "../src/data/index.js";
 import { educationRank } from "../src/engine/lifeCourse.js";
+import { SHADOW_FIELDS } from "../src/engine/shadow.js";
 
 const args = parseArgs(process.argv.slice(2));
 const sampleLimit = positiveInteger(args.samples, 12, "--samples");
@@ -55,6 +56,14 @@ function review(batch, output) {
   const narrative = reviewNarrativeStructure(batch);
   addFinding(output, "warning", "OVERLY_DAILY_LIFE", `结构性事件不足、连续纹理年过长或成年生活长期没有叙事推进 ${narrative.problemLives.length} 局`, narrative.problemLives);
 
+  const shadow = reviewShadowNarrative(batch);
+  addFinding(output, "warning", "SHADOW_HARM_WITHOUT_TRACE", `主动伤害叙述后十五年内没有责任、关系或内在痕迹 ${shadow.harmWithoutTrace.length} 处；这不要求人物受到惩罚`, shadow.harmWithoutTrace);
+  addFinding(output, "warning", "SHADOW_REPENTANCE_ONLY_CLOSURE", `人生末尾疑似用一次悔悟替代此前持续后果 ${shadow.repentanceOnlyClosures.length} 局`, shadow.repentanceOnlyClosures);
+  addFinding(output, "warning", "SHADOW_STATE_JUMP", `单个事件的阴影状态变化超过25点 ${shadow.stateJumps.length} 处`, shadow.stateJumps);
+  addFinding(output, "warning", "SHADOW_LIFE_CONTRADICTION", `累计伤害倒退、无修复的大额信任债清零或同年状态断裂 ${shadow.contradictions.length} 处`, shadow.contradictions);
+  addFinding(output, "warning", "SHADOW_OVERCONCENTRATION", `同一人生阴影事件过度集中 ${shadow.overconcentratedLives.length} 局`, shadow.overconcentratedLives);
+  addFinding(output, "warning", "SHADOW_SUBGROUP_SKEW", `性别、阶层或城乡的阴影人生触发明显失衡 ${shadow.subgroupSkews.length} 组；差异可以来自处境，但不应把身份本身写成道德原因`, shadow.subgroupSkews);
+
   const futureHistory = reviewFutureHistory(batch);
   addFinding(output, "warning", "FUTURE_HISTORY_HOLE", `2036年后的某个未来阶段仍缺少时代事件 ${futureHistory.holes.length} 段`, futureHistory.holes);
 
@@ -87,9 +96,197 @@ function review(batch, output) {
     },
     frequency,
     narrative,
+    shadow,
     future_history: futureHistory,
     subgroups,
     mortality,
+  };
+}
+
+function reviewShadowNarrative(batch) {
+  const definitions = new Map(data.events.map((event) => [event.id, event]));
+  const byRun = groupByMap(batch.events, (row) => row.run_id);
+  const harmWithoutTrace = [];
+  const repentanceOnlyClosures = [];
+  const stateJumps = [];
+  const contradictions = [];
+  const harmfulEvents = [];
+  const changedEvents = [];
+  const changedRuns = new Set();
+  const observedAfter = Object.fromEntries(SHADOW_FIELDS.map((field) => [field, []]));
+  const authoredRows = batch.events.filter((row) => row.event_id.startsWith("shadow_"));
+  const authoredDefinitions = data.events.filter((event) => event.id.startsWith("shadow_"));
+  const authoredLives = new Set(authoredRows.map((row) => row.run_id));
+  const authoredByRun = groupByMap(authoredRows, (row) => row.run_id);
+  const authoredCounts = [...authoredByRun.values()].map((rows) => rows.length);
+  const overconcentratedLives = [];
+  for (const [runId, rows] of authoredByRun) {
+    const lifeEvents = byRun.get(runId) ?? [];
+    const rate = ratio(rows.length, lifeEvents.length);
+    if (rows.length >= 22 || (rows.length >= 16 && rate > 0.25)) {
+      overconcentratedLives.push(`${runId}: 阴影事件${rows.length}/${lifeEvents.length}（${percent(rate)}）`);
+    }
+  }
+
+  const subgroupDistribution = {};
+  const subgroupSkews = [];
+  for (const dimension of ["gender", "class_tier", "settlement"]) {
+    const groups = [];
+    for (const [value, lives] of groupByMap(batch.summary, (row) => row[dimension])) {
+      if (!value) continue;
+      const eventCount = lives.reduce((sum, life) => sum + (authoredByRun.get(life.run_id)?.length ?? 0), 0);
+      const affected = lives.filter((life) => authoredByRun.has(life.run_id)).length;
+      groups.push({
+        value,
+        runs: lives.length,
+        affected_lives: affected,
+        affected_rate: ratio(affected, lives.length),
+        events: eventCount,
+        events_per_life: ratio(eventCount, lives.length),
+      });
+    }
+    subgroupDistribution[dimension] = Object.fromEntries(groups.map((item) => [item.value, item]));
+    const comparable = groups.filter((item) => item.runs >= 12);
+    if (comparable.length < 2) continue;
+    const lowestRate = comparable.reduce((best, item) => item.affected_rate < best.affected_rate ? item : best);
+    const highestRate = comparable.reduce((best, item) => item.affected_rate > best.affected_rate ? item : best);
+    const lowestDensity = comparable.reduce((best, item) => item.events_per_life < best.events_per_life ? item : best);
+    const highestDensity = comparable.reduce((best, item) => item.events_per_life > best.events_per_life ? item : best);
+    if (highestRate.affected_rate - lowestRate.affected_rate > 0.35) {
+      subgroupSkews.push(`${dimension}: 触发率 ${lowestRate.value} ${percent(lowestRate.affected_rate)} vs ${highestRate.value} ${percent(highestRate.affected_rate)}（样本${lowestRate.runs}/${highestRate.runs}）`);
+    }
+    if (highestDensity.events_per_life - lowestDensity.events_per_life > 2) {
+      subgroupSkews.push(`${dimension}: 人均事件 ${lowestDensity.value} ${lowestDensity.events_per_life.toFixed(2)} vs ${highestDensity.value} ${highestDensity.events_per_life.toFixed(2)}（样本${lowestDensity.runs}/${highestDensity.runs}）`);
+    }
+  }
+
+  for (const [runId, unsorted] of byRun) {
+    const rows = [...unsorted].sort((left, right) => num(left.event_order) - num(right.event_order));
+    let previous = null;
+    let runChanged = false;
+    let hasHarmNarrative = false;
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const row = rows[index];
+      const before = readShadow(row, "before");
+      const after = readShadow(row, "after");
+      const deltas = Object.fromEntries(SHADOW_FIELDS.map((field) => [field, after[field] - before[field]]));
+      const copy = `${row.title}。${row.final_text}${row.final_result_text ?? ""}`;
+      const prefix = `${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}`;
+      const changed = SHADOW_FIELDS.some((field) => deltas[field] !== 0);
+      if (changed) {
+        changedEvents.push(row.event_row_id);
+        runChanged = true;
+      }
+      for (const field of SHADOW_FIELDS) {
+        observedAfter[field].push(after[field]);
+        if (before[field] < 0 || before[field] > 100 || after[field] < 0 || after[field] > 100) {
+          contradictions.push(`${prefix}: shadow.${field} 越界 ${before[field]} -> ${after[field]}`);
+        }
+        if (Math.abs(deltas[field]) > 25) {
+          stateJumps.push(`${prefix}: shadow.${field} ${before[field]} -> ${after[field]}（${signed(deltas[field])}）“${excerpt(copy)}”`);
+        }
+      }
+
+      if (deltas.harmDone < 0) contradictions.push(`${prefix}: 累计 harmDone 不应倒退 ${before.harmDone} -> ${after.harmDone}`);
+      if (deltas.trustDebt < -15 && !SHADOW_REPAIR_TEXT.test(copy)) {
+        contradictions.push(`${prefix}: trustDebt 大幅下降但正文没有修复、坦白或赔偿 ${before.trustDebt} -> ${after.trustDebt}`);
+      }
+      if (deltas.guilt < -20 && !SHADOW_REFLECTION_TEXT.test(copy)) {
+        contradictions.push(`${prefix}: guilt 大幅下降但正文没有反思或承担 ${before.guilt} -> ${after.guilt}`);
+      }
+      if (previous && num(previous.year) === num(row.year)) {
+        const previousAfter = readShadow(previous, "after");
+        for (const field of SHADOW_FIELDS) {
+          if (previousAfter[field] !== before[field]) {
+            contradictions.push(`${prefix}: 同年相邻事件 shadow.${field} 断裂 ${previousAfter[field]} -> ${before[field]}`);
+          }
+        }
+      }
+
+      const harmful = (row.event_id.startsWith("shadow_") && row.narrative_tier === "turning_point" && deltas.harmDone > 0)
+        || (!row.event_id.startsWith("shadow_") && SHADOW_HARM_ACTION.test(copy));
+      if (harmful) {
+        hasHarmNarrative = true;
+        harmfulEvents.push(row.event_row_id);
+        const followup = rows.slice(index + 1).filter((item) => num(item.year) <= num(row.year) + 15);
+        const hasStateTrace = followup.some((item) => {
+          const start = readShadow(item, "before");
+          const end = readShadow(item, "after");
+          return end.harmDone > start.harmDone
+            || end.guilt > start.guilt
+            || end.complicity > start.complicity
+            || end.trustDebt > start.trustDebt
+            || end.selfDeception > start.selfDeception;
+        });
+        const hasNarrativeTrace = followup.some((item) => SHADOW_CONSEQUENCE_TEXT.test(`${item.title}。${item.final_text}${item.final_result_text ?? ""}`));
+        const lifeEndedBeforeTraceWindow = rows.at(-1)?.death === "yes" && num(rows.at(-1).year) <= num(row.year) + 15;
+        if (!lifeEndedBeforeTraceWindow && !hasStateTrace && !hasNarrativeTrace) {
+          harmWithoutTrace.push(`${prefix}: “${excerpt(copy)}”；未要求报应或处罚，仅缺少责任、关系、记忆或自我解释的延续`);
+        }
+      }
+      previous = row;
+    }
+
+    if (runChanged) changedRuns.add(runId);
+    if (hasHarmNarrative && rows.length) {
+      const closingRows = rows.slice(-3);
+      const closure = closingRows.find((row) => SHADOW_REPENTANCE_CLOSURE.test(`${row.title}。${row.final_text}${row.final_result_text ?? ""}`));
+      const earlierRows = rows.slice(0, Math.max(0, rows.length - 3));
+      const sustainedTrace = earlierRows.filter((row) => {
+        const before = readShadow(row, "before");
+        const after = readShadow(row, "after");
+        return after.guilt > before.guilt || after.trustDebt > before.trustDebt || SHADOW_CONSEQUENCE_TEXT.test(`${row.title}。${row.final_text}${row.final_result_text ?? ""}`);
+      }).length;
+      if (closure && sustainedTrace === 0) {
+        repentanceOnlyClosures.push(`${runId}: 末尾“${excerpt(`${closure.title}。${closure.final_text}`)}”，此前没有持续的愧疚、信任债或关系后果`);
+      }
+    }
+  }
+
+  const fieldDistribution = {};
+  for (const field of SHADOW_FIELDS) {
+    const summaryColumn = shadowColumn(field, "final");
+    const finals = batch.summary.map((row) => num(row[summaryColumn]));
+    fieldDistribution[field] = {
+      mean_final: average(finals),
+      p90_final: quantile(finals, 0.9),
+      max_observed: Math.max(0, ...observedAfter[field]),
+      changed_events: batch.events.filter((row) => num(row[shadowColumn(field, "after")]) !== num(row[shadowColumn(field, "before")])).length,
+    };
+  }
+
+  return {
+    authored_event_count: authoredRows.length,
+    authored_event_rate: ratio(authoredRows.length, batch.events.length),
+    authored_lives: authoredLives.size,
+    authored_life_rate: ratio(authoredLives.size, batch.summary.length),
+    authored_definitions: authoredDefinitions.length,
+    observed_authored_definitions: new Set(authoredRows.map((row) => row.event_id)).size,
+    authored_definition_coverage_rate: ratio(new Set(authoredRows.map((row) => row.event_id)).size, authoredDefinitions.length),
+    completed_chain_events: authoredRows.filter((row) => definitions.get(row.event_id)?.narrativeThread?.close).length,
+    authored_events_per_affected_life_mean: average(authoredCounts),
+    authored_events_per_affected_life_p90: quantile(authoredCounts, 0.9),
+    authored_events_per_affected_life_max: Math.max(0, ...authoredCounts),
+    authored_by_family: countBy(authoredRows, (row) => row.event_id.startsWith("shadow_public_") ? "public" : row.event_id.startsWith("shadow_private_") ? "private" : "survival"),
+    shadow_change_events: changedEvents.length,
+    shadow_change_event_rate: ratio(changedEvents.length, batch.events.length),
+    lives_with_shadow_change: changedRuns.size,
+    lives_with_shadow_change_rate: ratio(changedRuns.size, batch.summary.length),
+    harm_narrative_events: harmfulEvents.length,
+    harm_without_trace_count: harmWithoutTrace.length,
+    harm_without_trace_rate: ratio(harmWithoutTrace.length, harmfulEvents.length),
+    repentance_only_closure_count: repentanceOnlyClosures.length,
+    state_jump_count: stateJumps.length,
+    contradiction_count: contradictions.length,
+    field_distribution: fieldDistribution,
+    harmWithoutTrace,
+    repentanceOnlyClosures,
+    stateJumps,
+    contradictions,
+    overconcentratedLives,
+    subgroup_distribution: subgroupDistribution,
+    subgroupSkews,
   };
 }
 
@@ -652,8 +849,11 @@ function evaluateGates(metrics, allFindings) {
     min_event_definition_coverage_rate: numericArg(args["min-event-coverage"], 0.45),
     min_future_history_rate: numericArg(args["min-future-history-rate"], 0.08),
     min_future_history_coverage_rate: numericArg(args["min-future-history-coverage"], 0.45),
+    max_shadow_untraced_rate: numericArg(args["max-shadow-untraced-rate"], 0.12),
+    max_shadow_overconcentrated_life_rate: numericArg(args["max-shadow-overconcentrated-rate"], 0.05),
   };
   const hasFutureSample = metrics.future_history.person_years >= 200;
+  const hasShadowSample = metrics.shadow.harm_narrative_events >= 20;
   const checks = [
     gate("no_error_findings", !allFindings.some((item) => item.severity === "error"), allFindings.filter((item) => item.severity === "error").map((item) => item.code).join(", ") || "ok"),
     gate("repeated_visible_copy_rate", metrics.frequency.repeated_visible_copy_rate <= thresholds.max_repeated_visible_copy_rate, `${percent(metrics.frequency.repeated_visible_copy_rate)} <= ${percent(thresholds.max_repeated_visible_copy_rate)}`),
@@ -665,6 +865,10 @@ function evaluateGates(metrics, allFindings) {
     gate("event_definition_coverage_rate", metrics.frequency.event_definition_coverage_rate >= thresholds.min_event_definition_coverage_rate, `${percent(metrics.frequency.event_definition_coverage_rate)} >= ${percent(thresholds.min_event_definition_coverage_rate)}`),
     gate("future_history_rate", !hasFutureSample || metrics.future_history.historical_event_rate >= thresholds.min_future_history_rate, hasFutureSample ? `${percent(metrics.future_history.historical_event_rate)} >= ${percent(thresholds.min_future_history_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
     gate("future_history_definition_coverage", !hasFutureSample || metrics.future_history.definition_coverage_rate >= thresholds.min_future_history_coverage_rate, hasFutureSample ? `${percent(metrics.future_history.definition_coverage_rate)} >= ${percent(thresholds.min_future_history_coverage_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
+    gate("shadow_harm_trace", !hasShadowSample || metrics.shadow.harm_without_trace_rate <= thresholds.max_shadow_untraced_rate, hasShadowSample ? `${percent(metrics.shadow.harm_without_trace_rate)} <= ${percent(thresholds.max_shadow_untraced_rate)}` : `跳过：仅${metrics.shadow.harm_narrative_events}个主动伤害开端`),
+    gate("shadow_state_integrity", metrics.shadow.state_jump_count === 0 && metrics.shadow.contradiction_count === 0, `跳变${metrics.shadow.state_jump_count} / 矛盾${metrics.shadow.contradiction_count}`),
+    gate("shadow_overconcentration", ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs) <= thresholds.max_shadow_overconcentrated_life_rate, `${percent(ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs))} <= ${percent(thresholds.max_shadow_overconcentrated_life_rate)}`),
+    gate("shadow_identity_skew", metrics.counts.runs < 100 || metrics.shadow.subgroupSkews.length === 0, metrics.counts.runs < 100 ? `跳过：仅${metrics.counts.runs}局` : `${metrics.shadow.subgroupSkews.length}组显著偏差`),
   ];
   return { passed: checks.every((item) => item.passed), thresholds, checks };
 }
@@ -687,6 +891,9 @@ function formatReport(result) {
     `- 平常年占比：${percent(metrics.frequency.quiet_year_rate)}`,
     `- 结构性事件：${percent(metrics.narrative.structural_event_rate)}（转折 ${percent(metrics.narrative.turning_point_rate)} / 后果 ${percent(metrics.narrative.consequence_rate)} / 历史压力 ${percent(metrics.narrative.historical_pressure_rate)}）`,
     `- 日常纹理：${percent(metrics.narrative.texture_event_rate)}；最长纹理超过5年的生命 ${metrics.narrative.lives_with_texture_streak_over_5} 局`,
+    `- 阴影人生：${metrics.shadow.authored_lives}/${metrics.counts.runs}局触发 ${metrics.shadow.authored_event_count} 条（公共 ${metrics.shadow.authored_by_family.public ?? 0} / 私人 ${metrics.shadow.authored_by_family.private ?? 0} / 生存 ${metrics.shadow.authored_by_family.survival ?? 0}）；定义覆盖 ${metrics.shadow.observed_authored_definitions}/${metrics.shadow.authored_definitions}（${percent(metrics.shadow.authored_definition_coverage_rate)}）`,
+    `- 阴影连续性：主动伤害开端 ${metrics.shadow.harm_narrative_events} 条，其中十五年内缺少后续痕迹 ${metrics.shadow.harm_without_trace_count} 条；状态跳变 ${metrics.shadow.state_jump_count} 条，矛盾 ${metrics.shadow.contradiction_count} 条`,
+    `- 阴影身份偏差：性别、阶层、城乡显著失衡 ${metrics.shadow.subgroupSkews.length} 组（允许处境不同，不允许身份直接等于恶）`,
     `- 未来历史（2036—2120）：${metrics.future_history.historical_events}/${metrics.future_history.person_years}个人年（${percent(metrics.future_history.historical_event_rate)}）；事件定义覆盖 ${metrics.future_history.observed_definitions}/${metrics.future_history.definitions}（${percent(metrics.future_history.definition_coverage_rate)}）`,
     `- 同局重复事件：${metrics.frequency.repeated_event_excess}（${percent(metrics.frequency.repeated_event_rate)}）；排除平常年后 ${metrics.frequency.repeated_nonquiet_event_excess}`,
     `- 同局重复可见文案：${metrics.frequency.repeated_visible_copy_excess}（${percent(metrics.frequency.repeated_visible_copy_rate)}）`,
@@ -727,6 +934,7 @@ function loadBatch(inputFiles) {
       "birth_year", "gender", "birth_province", "birth_city_tier", "hukou", "family_class",
       "final_age", "alive", "reached_age_cap", "event_count", "repeated_visible_copy_excess",
       "structural_event_count", "texture_event_count", "max_texture_streak", "longest_structural_gap",
+      ...SHADOW_FIELDS.map((field) => shadowColumn(field, "final")),
     ])),
     years: parseCsv(readFileSync(inputFiles.years, "utf8"), new Set([
       "run_id", "year_id", "birth_year", "chronicle_id", "age", "year", "event_count", "event_ids",
@@ -735,6 +943,7 @@ function loadBatch(inputFiles) {
       "life_course_transition_count", "alive_after_year", "tags",
       "narrative_last_tier", "narrative_last_domain", "narrative_years_since_structural",
       "narrative_texture_streak", "narrative_structural_count", "narrative_active_threads",
+      ...SHADOW_FIELDS.flatMap((field) => [shadowColumn(field, "before"), shadowColumn(field, "after")]),
     ])),
     events: parseCsv(readFileSync(inputFiles.events, "utf8"), new Set([
       "run_id", "event_row_id", "year_id", "event_order", "cohort", "region_group", "settlement",
@@ -749,6 +958,7 @@ function loadBatch(inputFiles) {
       "narrative_tier", "narrative_domain", "narrative_texture_streak_before",
       "narrative_texture_streak_after", "narrative_years_since_structural_before",
       "narrative_years_since_structural_after", "narrative_active_threads_after",
+      ...SHADOW_FIELDS.flatMap((field) => [shadowColumn(field, "before"), shadowColumn(field, "after")]),
     ])),
     manifest: JSON.parse(readFileSync(inputFiles.manifest, "utf8")),
   };
@@ -881,6 +1091,19 @@ function normalizeText(value) {
   return String(value ?? "").replace(/[\s，。！？、；：,.!?;:“”‘’'"《》〈〉（）()【】\[\]—…·0-9]/g, "").trim();
 }
 
+function readShadow(row, suffix) {
+  return Object.fromEntries(SHADOW_FIELDS.map((field) => [field, num(row[shadowColumn(field, suffix)])]));
+}
+
+function shadowColumn(field, suffix) {
+  const name = field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  return `shadow_${name}_${suffix}`;
+}
+
+function signed(value) {
+  return `${value > 0 ? "+" : ""}${value}`;
+}
+
 function excerpt(value) {
   const text = String(value).replace(/\s+/g, " ");
   return text.length > 58 ? `${text.slice(0, 58)}…` : text;
@@ -938,6 +1161,12 @@ function severityLabel(severity) {
 const STRATUM_DIMENSIONS = ["cohort", "gender", "settlement", "class_tier", "region_group", "attribute_tier"];
 
 const INFANT_ADULT_PERSPECTIVE = /你(?:知道|第一次知道|意识到|明白|懂得|发现|觉得|认为|盘算|决定|期待|担心|记住|记得|回想|先记起|学会|只好|终于|从此)|后来回想|多年以后你仍记得|你把每一笔开销|你没有忽然成为|你一面被年月改变|日子像被洗亮/;
+
+const SHADOW_HARM_ACTION = /(?:你|他|她)(?:亲手|曾经|又|也|决定|选择|开始|被迫)?(?:告密|出卖|背叛|侵吞|贪污|收受贿赂|受贿|欺骗|诈骗|逼迫|强迫|殴打|打伤|报复|勒索|偷走|抢走|羞辱|虐待|伤害|杀害|处决|镇压|迫害)|(?:你|他|她)(?:参与|默许|纵容|下令|领导).{0,16}(?:镇压|迫害|掠夺|欺骗|暴力|伤害|杀害|屠杀)/;
+const SHADOW_CONSEQUENCE_TEXT = /内疚|愧疚|噩梦|失去信任|不再信任|疏远|决裂|关系破裂|伤口|阴影|代价|责任|追责|赔偿|道歉|坦白|恐惧|无法原谅|记恨|报复|自我辩解/;
+const SHADOW_REPAIR_TEXT = /道歉|坦白|赔偿|补偿|归还|修复|重建信任|承担责任|弥补/;
+const SHADOW_REFLECTION_TEXT = /反思|承认|面对|承担|坦白|道歉|赎罪|悔|愧疚|内疚|理解了自己的/;
+const SHADOW_REPENTANCE_CLOSURE = /(?:晚年|临终|最后|终于).{0,20}(?:悔|认错|道歉|赎罪|获得原谅|得到原谅|放下)|(?:一切|过往).{0,12}(?:释然|洗清|得到原谅|获得原谅)/;
 
 const AGE_RULES = [
   { label: "襁褓/吃奶/学步", pattern: /你(?:还|仍)?(?:在)?襁褓|你(?:开始)?吃奶|你(?:开始)?学步|你咿呀学语/, max: 4 },

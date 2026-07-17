@@ -5,6 +5,8 @@ import { createRng } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
 import { educationRank, hasActiveCareer, matchLifeCourse } from "../src/engine/lifeCourse.js";
 import { getNarrativeDomain, getNarrativeTier, isStructuralTier, narrativeTiers } from "../src/engine/narrative.js";
+import { matchConditions } from "../src/engine/conditions.js";
+import { SHADOW_FIELDS } from "../src/engine/shadow.js";
 
 const errors = [];
 const eventIds = new Set();
@@ -79,8 +81,15 @@ for (const event of data.events) {
   }
 }
 
+for (const event of data.events) {
+  validateTemporalConditionTree(event.conditions, event.id);
+  for (const variant of Array.isArray(event.text) ? event.text : []) validateTemporalConditionTree(variant.conditions, `${event.id}.text`);
+}
+
 validateHistoricalLives();
 validateOrdinaryContinuity();
+validateShadowMechanism();
+validateShadowArcStructure();
 validateReportedContradiction();
 
 if (errors.length) {
@@ -122,6 +131,29 @@ function validateContinuityDefinition(event, owner, scope) {
 function hasCondition(group, predicate) {
   if (!group) return false;
   return ["all", "any", "none"].some((key) => (group[key] ?? []).some((condition) => predicate(condition)));
+}
+
+function validateTemporalConditionTree(value, owner) {
+  if (!value || typeof value !== "object") return;
+  for (const key of ["eventOccurredWithin", "eventOccurredBetween"]) {
+    const rule = value[key];
+    if (!rule) continue;
+    if (!eventIds.has(rule.eventId)) errors.push(`${owner} 的 ${key} 引用了不存在的事件：${rule.eventId}`);
+    if (key === "eventOccurredWithin" && (!Number.isFinite(rule.years) || rule.years < 0)) {
+      errors.push(`${owner} 的 eventOccurredWithin.years 无效：${rule.years}`);
+    }
+    if (key === "eventOccurredBetween") {
+      const minYears = rule.minYears ?? 0;
+      const maxYears = rule.maxYears ?? Number.POSITIVE_INFINITY;
+      if (!Number.isFinite(minYears) || minYears < 0 || !(Number.isFinite(maxYears) || maxYears === Number.POSITIVE_INFINITY) || maxYears < minYears) {
+        errors.push(`${owner} 的 eventOccurredBetween 时间窗无效：${minYears}-${maxYears}`);
+      }
+    }
+  }
+  for (const child of Object.values(value)) {
+    if (Array.isArray(child)) child.forEach((item) => validateTemporalConditionTree(item, owner));
+    else if (child && typeof child === "object") validateTemporalConditionTree(child, owner);
+  }
 }
 
 function validateOrdinaryContinuity() {
@@ -215,6 +247,120 @@ function validateReportedContradiction() {
   state.meta.currentYear = 2021;
   const vocational = data.events.find((event) => event.id === "era_vocational_college_expansion");
   if (matchLifeCourse(vocational, state)) errors.push("回归失败：公司职员仍可无解释进入全日制职业院校");
+}
+
+function validateShadowMechanism() {
+  const aggregateRegistry = createAggregateRegistry(data.aggregates);
+  const makeState = (familyClass, family) => {
+    const seed = `shadow-${familyClass}`;
+    const rng = createRng(seed);
+    return createInitialState({
+      seed,
+      birthYear: 1990,
+      gender: "female",
+      province: "jiangsu",
+      provinceHistoryCode: "jiangsu",
+      cityTier: "city",
+      hukou: "urban",
+      familyClass,
+      attrs: { physique: 4, intelligence: 5, charm: 4, family, luck: 4, mental: 5 },
+      talents: [],
+    }, { ...data, historicalLives: [] }, { rng, aggregateRegistry });
+  };
+  const lowClass = data.getFamilyClassOptionsForContext(1990, "city", "urban")[0][0];
+  const highClass = data.getFamilyClassOptionsForContext(1990, "city", "urban").at(-1)[0];
+  const lowState = makeState(lowClass, data.familyClassMeta[lowClass]?.score ?? 2);
+  const highState = makeState(highClass, data.familyClassMeta[highClass]?.score ?? 7);
+
+  for (const state of [lowState, highState]) {
+    for (const field of SHADOW_FIELDS) {
+      if (!Number.isInteger(state.shadow[field]) || state.shadow[field] < 0 || state.shadow[field] > 100) {
+        errors.push(`shadow 初始字段无效：${field}=${state.shadow[field]}`);
+      }
+    }
+  }
+  for (const field of ["guilt", "complicity", "harmDone", "trustDebt"]) {
+    if (lowState.shadow[field] !== 0 || highState.shadow[field] !== 0) {
+      errors.push(`shadow.${field} 不应由家庭阶层推导：low=${lowState.shadow[field]}, high=${highState.shadow[field]}`);
+    }
+  }
+
+  const state = lowState;
+  state.meta.age = 25;
+  state.meta.currentYear = 2015;
+  const event = {
+    id: "validation_shadow_effect",
+    title: "阴影机制回归检查",
+    category: "random",
+    effects: [
+      { path: "shadow.harmDone", add: 8 },
+      { path: "shadow.trustDebt", add: 6 },
+      { path: "shadow.guilt", add: 4 },
+    ],
+  };
+  const log = applyEvent(event, null, state, { rng: createRng("shadow-event"), aggregateRegistry }, "阴影机制回归检查");
+  if (!matchConditions({ all: [{ path: "shadow.harmDone", gte: 8 }, { path: "shadow.trustDebt", gte: 6 }] }, state, { aggregateRegistry })) {
+    errors.push("事件条件无法读取 state.shadow 路径");
+  }
+  if (log.shadowBefore?.harmDone !== 0 || log.shadowAfter?.harmDone < 8) {
+    errors.push(`事件日志缺少正确 shadow before/after：${log.shadowBefore?.harmDone} -> ${log.shadowAfter?.harmDone}`);
+  }
+  state.occurredEvents.validation_shadow_open = { count: 1, firstYear: 2012, lastYear: 2012 };
+  if (!matchConditions({ all: [{ eventOccurredBetween: { eventId: "validation_shadow_open", minYears: 2, maxYears: 4 } }] }, state, { aggregateRegistry })) {
+    errors.push("eventOccurredBetween 未能命中有效的最短/最长跨年窗口");
+  }
+  if (matchConditions({ all: [{ eventOccurredBetween: { eventId: "validation_shadow_open", minYears: 4, maxYears: 9 } }] }, state, { aggregateRegistry })) {
+    errors.push("eventOccurredBetween 在未达到最短间隔时错误命中");
+  }
+}
+
+function validateShadowArcStructure() {
+  const prefixes = ["shadow_public_", "shadow_private_", "shadow_survival_"];
+  const events = data.events.filter((event) => prefixes.some((prefix) => event.id.startsWith(prefix)));
+  const byId = new Map(events.map((event) => [event.id, event]));
+  const rootCache = new Map();
+  const rootOf = (event) => {
+    if (rootCache.has(event.id)) return rootCache.get(event.id);
+    const parentId = event.requiresEvents?.find((id) => byId.has(id));
+    const root = parentId ? rootOf(byId.get(parentId)) : event.id;
+    rootCache.set(event.id, root);
+    return root;
+  };
+  const rootsByDomain = new Map();
+  const domainsByRoot = new Map();
+
+  for (const event of events) {
+    const root = rootOf(event);
+    const domain = getNarrativeDomain(event);
+    const rootDomains = domainsByRoot.get(root) ?? new Set();
+    rootDomains.add(domain);
+    domainsByRoot.set(root, rootDomains);
+    const domainRoots = rootsByDomain.get(domain) ?? new Set();
+    domainRoots.add(root);
+    rootsByDomain.set(domain, domainRoots);
+
+    const shadowParents = event.requiresEvents?.filter((id) => byId.has(id)) ?? [];
+    if (shadowParents.length && !conditionTreeSome(event.conditions, (condition) => {
+      const rule = condition.eventOccurredBetween;
+      return rule && shadowParents.includes(rule.eventId) && (rule.minYears ?? 0) >= 1;
+    })) {
+      errors.push(`${event.id} 是阴影链后续，但没有用 eventOccurredBetween 声明至少一年的跨年间隔`);
+    }
+  }
+  for (const [root, domains] of domainsByRoot) {
+    if (domains.size !== 1) errors.push(`${root} 同一阴影链使用了多个 narrativeDomain：${[...domains].join(",")}`);
+  }
+  for (const [domain, roots] of rootsByDomain) {
+    if (roots.size > 1) errors.push(`多个无关阴影链共用 narrativeDomain=${domain}：${[...roots].join(",")}`);
+  }
+}
+
+function conditionTreeSome(value, predicate) {
+  if (!value || typeof value !== "object") return false;
+  if (predicate(value)) return true;
+  return Object.values(value).some((child) => Array.isArray(child)
+    ? child.some((item) => conditionTreeSome(item, predicate))
+    : conditionTreeSome(child, predicate));
 }
 
 function validateHistoricalLives() {

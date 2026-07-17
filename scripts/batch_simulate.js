@@ -4,6 +4,7 @@ import { createAggregateRegistry } from "../src/engine/aggregates.js";
 import { advanceYear } from "../src/engine/advanceYear.js";
 import { createRng, pick } from "../src/engine/random.js";
 import { createInitialState } from "../src/engine/state.js";
+import { SHADOW_FIELDS } from "../src/engine/shadow.js";
 import { data } from "../src/data/index.js";
 
 const DEFAULT_COUNT = 100;
@@ -221,6 +222,7 @@ function toSummaryCsvRow(index, runId, setup, state, result) {
     achievement: state.resources.achievement,
     reputation: state.resources.reputation,
     freedom: state.resources.freedom,
+    ...shadowColumns(state.shadow, "final"),
     education_level: state.education.level,
     education_score: state.education.score,
     education_status: state.education.status,
@@ -245,10 +247,12 @@ function toSummaryCsvRow(index, runId, setup, state, result) {
 function toYearCsvRows(index, runId, setup, state) {
   const eventsByYear = groupBy(state.history, (log) => yearKey(log));
   const changesByYear = groupBy(state.yearlyChanges, (change) => yearKey(change));
+  const snapshotsByAge = new Map(state.snapshots.map((snapshot) => [snapshot.age, snapshot]));
   return state.snapshots.map((snapshot) => {
     const key = yearKey(snapshot);
     const logs = eventsByYear[key] ?? [];
     const changes = changesByYear[key] ?? [];
+    const beforeShadow = snapshotsByAge.get(snapshot.age - 1)?.shadow ?? logs[0]?.shadowBefore ?? snapshot.shadow;
     const yearId = `${runId}-year-${String(snapshot.age).padStart(3, "0")}`;
     return {
       batch_id: batchId,
@@ -270,6 +274,8 @@ function toYearCsvRows(index, runId, setup, state) {
       achievement: snapshot.resources.achievement,
       reputation: snapshot.resources.reputation,
       freedom: snapshot.resources.freedom,
+      ...shadowColumns(beforeShadow, "before"),
+      ...shadowColumns(snapshot.shadow, "after"),
       physique: snapshot.attrs.physique,
       intelligence: snapshot.attrs.intelligence,
       charm: snapshot.attrs.charm,
@@ -338,6 +344,8 @@ function toEventCsvRows(index, runId, setup, state) {
       career_status_after: continuityAfter?.career.status ?? after?.career.status ?? state.career.status,
       career_jobs_held_after: continuityAfter?.career.jobsHeld ?? after?.career.jobsHeld ?? state.career.jobsHeld,
       primary_activity_after: continuityAfter?.primaryActivity ?? after?.lifeCourse.primaryActivity ?? state.lifeCourse.primaryActivity,
+      ...shadowColumns(log.shadowBefore, "before"),
+      ...shadowColumns(log.shadowAfter, "after"),
       event_id: log.eventId,
       title: log.title,
       category: log.category,
@@ -357,6 +365,13 @@ function countBy(items, getKey) {
     result[key] = (result[key] ?? 0) + 1;
     return result;
   }, {});
+}
+
+function shadowColumns(shadow = {}, suffix) {
+  return Object.fromEntries(SHADOW_FIELDS.map((field) => [
+    `shadow_${field.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)}_${suffix}`,
+    shadow[field] ?? 0,
+  ]));
 }
 
 function groupBy(items, getKey) {

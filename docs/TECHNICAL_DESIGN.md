@@ -49,6 +49,7 @@ type PlayerState = {
   career: CareerState;
   lifeCourse: LifeCourseState;
   narrative: NarrativeState;
+  shadow: ShadowState; // 隐藏叙事后果，不是善恶评分
   talents: string[]; // 开局选择记录
   traits: string[];
   tags: string[];

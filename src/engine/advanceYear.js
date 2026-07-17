@@ -2,10 +2,10 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=narrative-1";
-import { matchConditions } from "./conditions.js";
-import { applyNaturalChanges } from "./naturalChanges.js";
-import { getHistoricalLife } from "./historicalLives.js?v=continuity-1";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=shadow-1";
+import { matchConditions } from "./conditions.js?v=shadow-1";
+import { applyNaturalChanges } from "./naturalChanges.js?v=shadow-1";
+import { getHistoricalLife } from "./historicalLives.js?v=shadow-1";
 import { composeQuietYearText } from "./quietYearText.js?v=continuity-1";
 import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=continuity-1";
 import {
@@ -16,7 +16,7 @@ import {
   narrativeSnapshot,
   narrativeWeightMultiplier,
   recordNarrativeEvent,
-} from "./narrative.js?v=narrative-1";
+} from "./narrative.js?v=shadow-1";
 
 export function advanceYear(state, data, context) {
   if (!state.meta.isAlive) return { logs: [], ended: true };
@@ -113,6 +113,8 @@ export function applyEvent(event, outcome, state, context, displayText = selectT
     continuityAfter: lifeCourseSnapshot(state),
     narrativeBefore: narrativeSnapshot(before),
     narrativeAfter: narrativeSnapshot(state),
+    shadowBefore: clone(before.shadow),
+    shadowAfter: clone(state.shadow),
     death: !state.meta.isAlive,
   };
   state.history.push(log);
@@ -198,6 +200,7 @@ function scheduledCandidates(state, events, context) {
     .filter((event) => ids.has(event.id))
     .filter((event) => matchTime(event, state))
     .filter((event) => matchGenderFilters(event, state))
+    .filter((event) => matchFamilyFilters(event, state))
     .filter((event) => matchRegionFilters(event, state, context))
     .filter((event) => matchDependencies(event, state))
     .filter((event) => matchConditions(event.conditions, state, context))

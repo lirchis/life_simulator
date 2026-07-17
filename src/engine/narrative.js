@@ -248,7 +248,7 @@ function hasEventDependency(event) {
 
 function conditionTreeHasEventDependency(value) {
   if (!value || typeof value !== "object") return false;
-  if (value.eventOccurred || value.eventOccurredWithin) return true;
+  if (value.eventOccurred || value.eventOccurredWithin || value.eventOccurredBetween) return true;
   return Object.values(value).some((item) => Array.isArray(item)
     ? item.some(conditionTreeHasEventDependency)
     : conditionTreeHasEventDependency(item));

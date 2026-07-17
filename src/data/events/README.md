@@ -8,6 +8,9 @@ Add events under this directory by era or everyday-life theme:
 
 - `core/lifecycle.js`: birth, school entry, first job framework, marriage, retirement, death.
 - `core/narrative-arcs.js`: cross-year structural chains with an opening turn, stateful consequences, and a partial resolution.
+- `core/shadow-public-arcs.js`: public power, workplace, institutional complicity, and rule-making harm across three-stage arcs.
+- `core/shadow-private-arcs.js`: betrayal, control, neglect, favoritism, and intimate harm across three-stage arcs.
+- `core/shadow-survival-arcs.js`: morally compromising acts under explicit external crises, with continuing consequences rather than guaranteed punishment or repentance.
 - `history/pre1949.js`: late Qing, Republic era, Red Army, Anti-Japanese War, Civil War, Nanyang migration.
 - `history/early-prc.js`: 1949-1977, land reform, collectivization, famine, Cultural Revolution, sent-down youth, planned work.
 - `history/reform-era.js`: 1978-1999, restored gaokao, reform opening, getihu, xiahai, layoffs, early migration.
@@ -29,3 +32,5 @@ When one file grows beyond roughly 100-150 events, split it by a narrower theme,
 - `daily/work/platform.js`
 
 Authoring rule: keep one semantic life event as one event object. If only the wording changes by era, province, class, hukou, gender, trait, or tag, use `text: [{ conditions, text, weight }]`. Split into separate event IDs only when trigger logic, effects, priority, follow-up dependencies, or historical meaning genuinely differ.
+
+Shadow authoring rule: identity is context, never a moral cause. Poverty, gender, settlement, migration, illness, or region must not initialize harm or guilt. A survival-harm opener needs a concrete external crisis in the state or the event itself, and every chain must use a unique `narrativeDomain` so unrelated consequences cannot overwrite one another.

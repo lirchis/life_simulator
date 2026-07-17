@@ -36,6 +36,7 @@ http://localhost:4175
 - 按时代、城乡、年龄与人物状态组合书写的平常年景
 - 转折、历史压力、跨年后果与日常纹理分层的叙事选择器
 - 债务、照护、职业、迁居、关系、疾病与高龄阶段的跨年人生主线
+- 公共权力、私人关系与生存压力下的阴影人生链：允许伤害、逃避、硬化和未被惩罚，不把结局强行写成悔悟
 - 2036—2120 年虚构未来史：以制度、冲突和集体记忆串联时代，而非只罗列未来日用品
 - 死亡和人生报告
 
@@ -46,6 +47,8 @@ http://localhost:4175
 覆盖出生世代、性别、城乡、家庭资源、地区与属性的 1188 局分层矩阵，以及年龄/身份/地点/频率/未来年代覆盖自动审查，见 [`docs/BATCH_TESTING.md`](docs/BATCH_TESTING.md) 与 [`docs/STRATIFIED_CONTENT_REVIEW.md`](docs/STRATIFIED_CONTENT_REVIEW.md)。
 
 虚构未来史的年代结构、写作边界与事件链见 [`docs/SPECULATIVE_FUTURE_HISTORY.md`](docs/SPECULATIVE_FUTURE_HISTORY.md)。
+
+阴影叙事使用隐藏的责任、信任债、自我辩解等连续状态，不向玩家显示善恶分，也不从贫穷、地区或身份推断作恶；机制和评测边界见 [`docs/SHADOW_STATE.md`](docs/SHADOW_STATE.md)。
 
 教育与职业采用可回放的人生状态轨迹：入学、毕业、辍学、首次就业、离职和退休均记录来源事件；无桥接的全日制/在职冲突会阻断内容发布。
 
