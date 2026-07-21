@@ -9,6 +9,10 @@ export function matchConditions(group, state, context) {
 }
 
 export function matchCondition(condition, state, context) {
+  // Nested logical groups are common in authored rules, for example an `any`
+  // whose alternatives are complete `all` branches. Treat those branches as
+  // groups instead of silently accepting an object with no atomic operator.
+  if (condition.all || condition.any || condition.none) return matchConditions(condition, state, context);
   if (condition.hasTag) return state.tags.includes(condition.hasTag);
   if (condition.missingTag) return !state.tags.includes(condition.missingTag);
   if (condition.tagIn) return condition.tagIn.some((tag) => state.tags.includes(tag));
@@ -34,6 +38,12 @@ export function matchCondition(condition, state, context) {
   if (condition.past) return matchPast(condition.past, state, context);
   if (condition.path) {
     const value = getPath(state, condition.path);
+    if ("yearsSinceGte" in condition || "yearsSinceLte" in condition) {
+      if (!Number.isFinite(Number(value))) return false;
+      const yearsSince = state.meta.currentYear - Number(value);
+      if ("yearsSinceGte" in condition && yearsSince < condition.yearsSinceGte) return false;
+      if ("yearsSinceLte" in condition && yearsSince > condition.yearsSinceLte) return false;
+    }
     if (condition.in && !condition.in.includes(value)) return false;
     if (condition.notIn && condition.notIn.includes(value)) return false;
     if (condition.inGroup && !context.aggregateRegistry.includes(condition.inGroup, value)) return false;

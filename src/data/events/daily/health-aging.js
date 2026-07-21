@@ -343,11 +343,15 @@ export const dailyHealthAgingEvents = [
     ],
     "text": [
       {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "牙疼拖了几天，你先用盐水漱口，等赶集时再进镇找行医的人问。偏方不难找，真正能处置坏牙的人却远，盘缠也同疼痛一起算。"
+      },
+      {
         "conditions": { "all": [{ "path": "resources.wealth", "lte": 35 }] },
         "text": "牙疼了几天，你先问诊费，再说哪里疼。饭只能用一边慢慢嚼，小病不至于停下生活，却能让每一口都提醒钱不够宽裕。"
       },
       {
-        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1975 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1950 }, { "path": "meta.currentYear", "lte": 1975 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
         "text": "牙疼拖了几天，你用盐水漱口，等赶集或卫生员来时再问。止疼办法很多，真正能处理坏牙的地方却离得远。"
       },
       { "text": "你把牙疼拖了几天，吃饭时总要避开一边，夜里又被一阵阵钝痛叫醒。小疼痛不体面，却很会把生活占得只剩半张嘴。" }
@@ -528,6 +532,26 @@ export const dailyHealthAgingEvents = [
       {
         "conditions": { "all": [{ "path": "meta.age", "gte": 68 }] },
         "text": "你扶着走廊栏杆练习，一步一步把重心交回双腿。年轻人从旁经过很快，你不追；康复的钟只按自己的刻度走。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "病后你扶着竹杖从床边走到院门，家里人把凳子隔几步放一张。邻人问怎么才走这么远，你说他若肯替双腿受累，明日可以多走一里。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }] },
+        "text": "病后你沿屋檐和街墙慢慢练脚力，走到药铺或医院门口便歇一会儿。熟人替你提东西，不替你走那几步；身体恢复起来，最怕别人只替它着急。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1950 }, { "path": "meta.currentYear", "lte": 1989 }] },
+        "text": "病后你按医嘱在病房走廊或院子里来回走。别人用搪瓷杯替你在拐角占一张椅子，走一圈就喝一口；康复没有产量，仍被全家认真记着进度。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1990 }, { "path": "meta.currentYear", "lte": 2035 }] },
+        "text": "康复师让你把十步拆成几次完成，家人却总忍不住问什么时候能恢复原样。你扶着墙慢慢走，终于说原样也许回不来，新日常仍可以从第十一步开始。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2036 }] },
+        "text": "病后训练记录会自动画出一条缓慢上升的线。某天数字退了一点，你仍自己走到门外晒太阳；系统标成未达目标，身体把它记成一次出门。"
       },
       { "text": "病后你按医嘱慢慢增加步数，走累便停，不再拿逞强当进步。身体没有一下回来，日常却从床边、门口到楼下一点点接上。" }
     ],

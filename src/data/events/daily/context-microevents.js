@@ -16,6 +16,13 @@ const comfortable = c("resources.wealth", "gte", 65);
 const weak = c("resources.health", "lte", 45);
 const closeFamily = c("relationships.family", "gte", 65);
 const working = c("career.status", "eq", "employed");
+const enrolled = c("education.status", "eq", "enrolled");
+const workingAdult = {
+  all: [
+    { path: "meta.age", gte: 18 },
+    { path: "career.status", eq: "employed" },
+  ],
+};
 
 const H = [{ path: "resources.happiness", add: 2 }];
 const F = [{ path: "relationships.family", add: 2 }];
@@ -148,10 +155,16 @@ export const dailyContextMicroevents = [
     "街上卖冰的人匆匆走过，棉被裹着的货仍一路滴水。你买不起整块，只记住那一点近在眼前的凉。", W, urbanRegion),
   micro("qing_school_inkstone", "砚台里的干墨", [1840, 1911], [6, 20], "education", poor,
     "你舍不得多磨墨，字写到后来越来越淡。先生说心要定，纸上的贫富却比心先显出来。",
-    "课前你加水磨墨，手腕绕了许多圈。字还没写，耐性已经先交了一遍功课。", L, urbanRegion),
+    "课前你加水磨墨，手腕绕了许多圈。字还没写，耐性已经先交了一遍功课。", L, {
+      ...urbanRegion,
+      conditions: enrolled,
+    }),
   micro("qing_abacus_bead", "柜台下一粒算盘珠", [1840, 1911], [8, 65], "work", working,
     "你在铺里拨了一天算盘，收工后手指还在被褥上虚拨。账已经合上，身体却没收到通知。",
-    "一粒算盘珠松了，掌柜叫你拆线换好。生意靠许多大数支撑，也会被一粒小木珠耽误半天。", L, urbanRegion),
+    "一粒算盘珠松了，掌柜叫你拆线换好。生意靠许多大数支撑，也会被一粒小木珠耽误半天。", L, {
+      ...urbanRegion,
+      conditions: c("career.field", "in", ["apprentice", "shop_clerk", "small_business", "trade", "pharmacy", "estate_management"]),
+    }),
   micro("qing_sedan_curtain", "轿帘掀起一角", [1840, 1911], [4, 13], "random", comfortable,
     "你坐轿经过闹街，只掀开一角帘子看。大人让你坐稳，外面的热闹便被切成窄窄一条。",
     "一顶轿子从街上过去，风掀起帘角又落下。你只看见半张脸，却和同伴猜了很远。", L, urbanRegion),
@@ -170,7 +183,7 @@ export const dailyContextMicroevents = [
   micro("qing_fire_barrel", "铺门外的水缸", [1840, 1911], [10, 75], "random", working,
     "掌柜让你每天把门外水缸添满，以防走水。水很重，火尚未来；预防的功劳总显得不太热闹。",
     "邻街失过一次火后，几家铺子都在门口摆了水缸。大家安心了些，也多了一个长蚊子的地方。", N, urbanRegion),
-  micro("qing_teahouse_kettle", "铜壶续水", [1840, 1911], [12, 80], "work", working,
+  micro("qing_teahouse_kettle", "铜壶续水", [1840, 1911], [12, 80], "work", c("career.field", "in", ["shop_clerk", "small_business", "trade"]),
     "你在茶馆替客人续水，谁谈大事、谁欠茶钱都听得清。伙计知道许多消息，通常没有插话的资格。",
     "茶馆的铜壶嘴冒着白气，你把杯子往里挪了一点。旁桌争论天下，你先防着自己的袖口被烫。", H, urbanRegion),
   micro("qing_hair_oil", "桂花油抹少了", [1840, 1911], [9, 24], "family", female,
@@ -216,7 +229,12 @@ export const dailyContextMicroevents = [
     "你扶着布边踩缝纫机，线迹一度歪出去，只好拆掉重来。效率来到家里后，返工也跟着机械化。", L, urbanRegion),
   micro("republic_tram_ticket", "电车票攥皱了", [1914, 1949], [8, 75], "random", poor,
     "你第一次搭电车，把车票一直攥在手里，查票时已经湿软。售票员看了一眼便放行，没评价你的紧张。",
-    "电车上人挤人，你护着衣袋里的零钱。窗外街景走得很快，车内每个人仍在原地挪不开脚。", H, urbanRegion),
+    "电车上人挤人，你护着衣袋里的零钱。窗外街景走得很快，车内每个人仍在原地挪不开脚。", H, {
+      currentRegions: {
+        provinces: ["shanghai", "tianjin", "xianggang"],
+        cityTiers: ["city", "tier2", "tier1"],
+      },
+    }),
   micro("republic_gramophone_needle", "唱针磨钝", [1920, 1949], [8, 80], "random", comfortable,
     "留声机的唱针磨钝，歌声反复带着沙。家人仍把一面唱片听完，贵重的娱乐不宜因小毛病提前结束。",
     "邻家留声机隔墙响起，你只听清副歌。墙替主人保住了机器，也替全巷分了一点音乐。", H, urbanRegion),
@@ -237,10 +255,10 @@ export const dailyContextMicroevents = [
     "蚊帐补过几回，像一张小小的地图。夜里仍有漏网的蚊子，家人只好靠耳朵继续巡防。", N),
   micro("republic_cloth_schoolbag", "布书包的带子", [1912, 1949], [6, 18], "education", poor,
     "书包带断后，家里用旧鞋带接上。你背去学校，结头硌着肩；知识的重量有时很具体。",
-    "家人给你缝了一个布书包，口袋略歪，倒很结实。你把最薄的书放在最外面，显得书很多。", L),
+    "家人给你缝了一个布书包，口袋略歪，倒很结实。你把最薄的书放在最外面，显得书很多。", L, { conditions: enrolled }),
   micro("republic_used_textbook", "别人写过的课本", [1912, 1949], [7, 22], "education", poor,
     "你用的是高年级传下来的课本，答案已被前人写在页边。老师让独立思考，旧铅笔字却总抢先发言。",
-    "旧课本缺了封角，前一任主人在空白处画过小人。你读正文，也顺便认识一个没见过的同学。", L),
+    "旧课本缺了封角，前一任主人在空白处画过小人。你读正文，也顺便认识一个没见过的同学。", L, { conditions: enrolled }),
   micro("republic_chipped_market_bowl", "摊上的缺口碗", [1912, 1949], [8, 75], "wealth", poor,
     "你在路边吃一碗热食，碗沿缺了一口，摊主总把那面朝外。人人都看见，礼貌地不从那里喝。",
     "小摊的碗洗得很快，水也不算多。你吹着热汤，只挑最干净的一边下嘴，算是与现实协商。", H),
@@ -260,7 +278,7 @@ export const dailyContextMicroevents = [
     "药铺把药粉分成几个纸角，家人照时辰给你冲服。你记住的只有苦味；病情和价钱，是大人后来反复说的。",
     "你把药粉倒进温水，纸角还粘着一点，舍不得漏掉。治病时，连苦味也要吃得完整。", N),
   micro("republic_ear_trumpet", "听筒朝错了方向", [1912, 1949], [60, 95], "health", weak,
-    "家里给你找来一只简易听筒，孙辈对着它大声说话，却常把话口举歪。你听不清内容，倒看得出他们很努力。",
+    "家里给你找来一只简易听筒，小辈对着它大声说话，却常把话口举歪。你听不清内容，倒看得出他们很努力。",
     "你把手拢在耳后听家人说话，对方立刻提高嗓门。音量有了，意思仍需再问一遍。", [{ path: "relationships.family", add: 1 }]),
   micro("republic_retouched_portrait", "相片上补了一点颜色", [1912, 1949], [12, 80], "family", comfortable,
     "照相馆替你的黑白相片在脸颊添了淡色。本人没有更精神，相片先完成了改善。",
@@ -299,7 +317,7 @@ export const dailyContextMicroevents = [
     "你和同伴追着一只布球跑，球不太圆，路线因此很公平，谁也猜不准。", [{ path: "relationships.friendship", add: 2 }]),
   micro("earlyprc_pencil_stub", "铅笔头套进笔管", [1950, 1977], [6, 18], "education", poor,
     "铅笔短得握不住，家里把它塞进一截空笔管继续用。字仍能写，浪费便没有理由。",
-    "你把铅笔削得很谨慎，木屑薄薄卷下。笔芯断一次，心疼比作业错一题更具体。", L),
+    "你把铅笔削得很谨慎，木屑薄薄卷下。笔芯断一次，心疼比作业错一题更具体。", L, { conditions: enrolled }),
   micro("earlyprc_lunchbox_cloth", "铝饭盒裹着旧布", [1950, 1977], [15, 65], "work", working,
     "饭盒刚蒸热，你用旧布包住端回工位。布角沾着油，洗不净也舍不得换；它已经很熟悉你的午饭。",
     "你打开铝饭盒，米饭压出方方一块。菜不多，大家仍先比较谁家的咸菜更下饭。", N),
@@ -311,7 +329,10 @@ export const dailyContextMicroevents = [
     "胶鞋裂了一道细口，家里烧热胶皮补住。第二天仍要下地，检验比说明书来得快。", N, ruralRegion),
   micro("earlyprc_lamp_homework", "煤油灯下写字", [1950, 1977], [7, 18], "education", weak,
     "你伏在煤油灯边写作业，眼睛酸了便抬头看一会儿黑墙。大人催你早睡，又催你把题写完，两项要求轮流占理。",
-    "灯光只够照亮一小圈，你把本子往火苗边挪。鼻尖不知何时沾了灰，知识暂时没有提醒你。", L, ruralRegion),
+    "灯光只够照亮一小圈，你把本子往火苗边挪。鼻尖不知何时沾了灰，知识暂时没有提醒你。", L, {
+      ...ruralRegion,
+      conditions: enrolled,
+    }),
   micro("earlyprc_candy_tin", "铁盒里不是糖", [1950, 1977], [4, 16], "family", poor,
     "你打开一只旧糖果铁盒，里面装的是针线和扣子。失望只持续一下，盒盖上的糖仍可再看一遍。",
     "家里那只漂亮铁盒被用来收票据和线头。孩子每次打开都抱一点希望，大人每次都觉得这很好笑。", H),
@@ -364,7 +385,7 @@ export const dailyContextMicroevents = [
     "闹钟清早响得过分响亮，按下后全家都醒了，只有最该起的人又睡了一会儿。", H),
   micro("reform_plastic_ruler", "塑料尺裂了一道", [1980, 2000], [6, 18], "education", poor,
     "塑料尺裂了，你用胶带粘好继续画线。线到裂处略弯，老师只看见几何不够端正。",
-    "新尺子带着透明颜色，你总忍不住透过它看字。世界变了色，作业没有变少。", L),
+    "新尺子带着透明颜色，你总忍不住透过它看字。世界变了色，作业没有变少。", L, { conditions: enrolled }),
   micro("reform_ink_stain", "钢笔漏在口袋里", [1978, 1998], [8, 60], "education", working,
     "钢笔在胸前口袋漏墨，蓝印洗了几次仍在。你只好把它说成工作留下的痕迹。",
     "你给钢笔吸墨，手指先染蓝。字还没写一个，认真学习的证据已经十分明显。", L),
@@ -450,10 +471,13 @@ export const dailyContextMicroevents = [
     "放学铃响后，你在指定位置等家人。人群散去一点时，老师问了两次名字；大人终于匆匆出现。", F, urbanRegion),
   micro("modern_tutor_wait", "补习班门口的车", [2005, 2035], [7, 18], "education", comfortable,
     "周末下课，门口接孩子的车排成一列。你抱着练习册钻进后座，大人先问今天学了什么，再问晚饭吃什么。",
-    "你结束额外课程时天已暗了，书包里又多几页题。家人说这是为将来，今晚仍得先把它写完。", L, urbanRegion),
+    "你结束额外课程时天已暗了，书包里又多几页题。家人说这是为将来，今晚仍得先把它写完。", L, {
+      ...urbanRegion,
+      conditions: enrolled,
+    }),
   micro("modern_school_bottle", "保温杯装错了", [2003, 2035], [6, 18], "education", closeFamily,
     "你在学校拧开保温杯，才发现家人装的是淡汤不是水。同桌闻见味道，午饭提前有了预告。",
-    "保温杯盖太紧，你请同学帮忙拧开。一个人握杯、一个人转盖，喝水短暂成为合作项目。", H),
+    "保温杯盖太紧，你请同学帮忙拧开。一个人握杯、一个人转盖，喝水短暂成为合作项目。", H, { conditions: enrolled }),
   micro("modern_elevator_pause", "电梯停在每一层", [2001, 2035], [5, 90], "random", urban,
     "电梯里有人按亮几乎每层，你提着东西一路停。垂直交通仍然高效，只是今天很有耐心。",
     "电梯门将关时，你替远处的人按住开门键。对方小跑进来道谢，两人随后各自低头看手机。", [{ path: "relationships.friendship", add: 1 }], urbanRegion),
@@ -532,9 +556,9 @@ export const dailyContextMicroevents = [
   micro("modern_child_sticker", "贴纸粘在洗衣机里", [2001, 2035], [4, 9], "family", closeFamily,
     "你把奖励贴纸忘在衣袋，洗完后它分散到全家衣服上。一次表扬获得了超出预期的覆盖面。",
     "你把最喜欢的贴纸贴歪了，想揭下重来，却扯掉一个角。完美只坚持了几秒，喜欢仍然继续。", H),
-  micro("modern_thermos_gasket", "杯盖忘装密封圈", [2008, 2035], [8, 80], "random", working,
-    "保温杯盖忘装密封圈，水在包里完成了自由流动。你抢救纸张，喝水计划自动取消。",
-    "杯盖拧得太紧，你在办公室找人帮忙。几个人传了一圈，最后由最瘦的同事拧开。", H),
+  micro("modern_thermos_gasket", "杯盖忘装密封圈", [2008, 2035], [8, 80], "random", workingAdult,
+    "上班路上，保温杯因忘装密封圈漏进包里。你先抢救纸张，再取消今天的喝水计划。",
+    "杯盖拧得太紧，你请身边的人帮忙。几双手传了一圈，最后被一句‘刚才只是没找准劲’轻轻收尾。", H),
   micro("modern_elder_delivery", "替老人退一件货", [2010, 2035], [20, 70], "family", closeFamily,
     "你替家中老人办理退货，他坚持东西其实也能用。页面要求选择理由，你们关于节俭的争论没有对应选项。",
     "长辈收到网购包裹，先把纸箱和填充物收好。你说可以扔，他说以后有用；以后又多了一只箱子。", F),

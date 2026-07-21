@@ -272,7 +272,7 @@ export const dailyChildhoodEvents = [
     "text": [
       {
         "conditions": { "all": [{ "path": "meta.age", "lte": 3 }] },
-        "text": "雷声在半夜突然压过屋顶，两三岁的孩子惊醒大哭。照料者摸黑抱起他，轻拍后背；窗外仍在闪，怀里的呼吸先慢下来。"
+        "text": "雷声在半夜突然压过屋顶，两三岁的孩子惊醒大哭。照料者摸黑把孩子抱起，轻拍后背；窗外仍在闪，怀里的呼吸先慢下来。"
       },
       {
         "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }, { "path": "meta.currentYear", "lte": 1985 }] },

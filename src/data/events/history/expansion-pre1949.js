@@ -126,7 +126,7 @@ export const expansionPre1949Events = [
     currentRegions: { hukou: ["rural"], cityTiers: rural },
     effects: [add("relationships.family", 3), add("education.score", 1), add("resources.freedom", -2)],
   }),
-  event("qing_temple_school_fee", "束脩凑不齐", "school", [1840, 1904], [6, 15], [
+  event("qing_temple_school_fee", "塾门内外", "school", [1840, 1904], [6, 15], [
     variant({ all: [{ path: "birth.familyClass", "in": literateHomes }] }, "家里送你进塾，束脩按时备下。先生教你把字写端正，也教你见长辈时站得端正；两样本事，后者见效更快。"),
     fallback("家里想送你进塾，却一时凑不齐束脩。你在门外听了几回，先认会自己的姓，余下的字要等日子宽一点。"),
   ], {
@@ -177,8 +177,15 @@ export const expansionPre1949Events = [
   ], {
     birthFamilyClasses: ["tenant", "poor_peasant", "smallholder", "craftsman", "shop_clerk"],
     currentRegions: { cityTiers: ["village", "town", "county"] },
-    conditions: { all: [{ path: "resources.wealth", lte: 45 }, { path: "relationships.partnerStatus", "in": ["none", "partnered", "married"] }] },
-    effects: [add("resources.wealth", -4), add("relationships.family", 4), add("resources.happiness", 2)],
+    conditions: { all: [{ path: "resources.wealth", lte: 45 }, { path: "relationships.partnerStatus", "in": ["none", "partnered"] }] },
+    effects: [
+      { path: "relationships.partnerStatus", set: "married" },
+      add("relationships.partnerQuality", 5),
+      add("resources.wealth", -4),
+      add("relationships.family", 4),
+      add("resources.happiness", 2),
+      { addTag: "married" },
+    ],
   }),
   event("qing_midwife_basin", "产婆的铜盆", "family", [1840, 1911], [19, 43], [
     variant({ all: [{ path: "birth.gender", eq: "female" }] }, "临产时，家里请来的产婆把铜盆、布条和热水摆好。门外的人只会来回踱步，门内的疼痛却有自己的时辰。"),
@@ -214,11 +221,20 @@ export const expansionPre1949Events = [
 
   // Treaty ports, mines, workshops, transport and clerical life.
   event("port_dock_tally_stick", "码头的筹码", "career", [1843, 1911], [15, 58], [
-    variant({ all: [{ path: "birth.familyClass", eq: "shop_clerk" }] }, "你在埠头替货栈记下挑夫的趟数。木筹一根根落进筐里，人的腰力被算得很清，只有摔伤和喘气不入账。"),
+    variant({ all: [{ path: "career.field", in: ["shop_clerk", "apprentice"] }, { path: "education.score", gte: 32 }] }, "你在埠头替货栈记下挑夫的趟数。木筹一根根落进筐里，人的腰力被算得很清，只有摔伤和喘气不入账。"),
+    variant({ all: [{ path: "birth.gender", eq: "female" }] }, "你替货栈收发木筹、核对趟数，偶尔把少算的一根退回账房重记。码头上扛货的人按肩力吃饭，你的工钱则系在别把一根轻木片算错。"),
     fallback("你在码头扛包，每走一趟领一根木筹。收工后按筹算钱，少一根便少一顿饭；木片很轻，大家攥得很紧。"),
   ], {
     birthFamilyClasses: townWorkers,
     currentRegions: { provinces: ["shanghai", "tianjin", "guangdong", "fujian", "zhejiang", "jiangsu", "hubei", "shandong"], cityTiers: largeCity },
+    conditions: {
+      all: [{ path: "resources.health", gte: 38 }],
+      any: [
+        { path: "career.field", in: ["manual_worker", "apprentice", "shop_clerk"] },
+        { path: "career.status", in: ["none", "unemployed"] },
+      ],
+      none: [{ path: "career.field", in: ["estate_management", "care_work", "pharmacy", "teacher"] }],
+    },
     effects: [add("resources.wealth", 4), add("resources.health", -3)],
   }),
   event("port_warehouse_rain", "货栈漏雨", "career", [1843, 1911], [16, 63], "暴雨从货栈屋顶漏下，你们忙着挪茶箱和棉包。货不能湿，人湿一点无妨；掌柜这套次序，讲得比天气还明白。", {
@@ -312,6 +328,7 @@ export const expansionPre1949Events = [
   event("paper_mill_lime", "纸坊里的石灰水", "career", [1840, 1911], [14, 60], "你在纸坊浸料、舂浆，手长久泡在碱水里，裂口一碰便疼。纸出槽时白而平整，人的手倒显得像用旧的草纸。", {
     birthFamilyClasses: ["craftsman", "poor_peasant", "shop_clerk"],
     currentRegions: { provinces: ["fujian", "jiangxi", "zhejiang", "anhui", "sichuan", "yunnan", "guangdong"], cityTiers: ["town", "county", "city"] },
+    narrativeTier: "historical_pressure",
     effects: [add("resources.wealth", 4), add("resources.health", -3)],
   }),
   event("blacksmith_bellows_child", "替师傅拉风箱", "career", [1840, 1911], [9, 18], [

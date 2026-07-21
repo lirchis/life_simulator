@@ -166,11 +166,15 @@ export const dailyFamilyRelationshipsEvents = [
     "baseWeight": 36,
     "text": [
       {
-        "conditions": { "all": [{ "path": "meta.age", "lte": 16 }] },
+        "conditions": { "all": [{ "path": "meta.age", "lte": 16 }, { "path": "education.status", "eq": "enrolled" }] },
         "text": "家里为作业、晚归或一件弄坏的东西拌了几句。大人的火气来得快，饭仍旧盛到你面前；和好没有仪式，只是筷子又开始往同一盘菜里伸。"
       },
       {
-        "conditions": { "all": [{ "hasTag": "married" }] },
+        "conditions": { "all": [{ "path": "meta.age", "lte": 16 }] },
+        "text": "家里为晚归、忘做一件差事或弄坏的东西拌了几句。大人的火气来得快，饭仍旧盛到你面前；和好没有仪式，只是筷子又开始往同一盘菜里伸。"
+      },
+      {
+        "conditions": { "all": [{ "path": "relationships.partnerStatus", "eq": "married" }] },
         "text": "你和伴侣为家务或一句没听清的话拌嘴，门声比事情本身响。过一会儿谁也没道歉，只把晾在外面的衣服一起收了。"
       },
       { "text": "家里因为一点小事拌了几句，锅铲、脚步和沉默轮流响起。事情未必真正解决，只是日子还要继续，水开了总得有人关火。" }
@@ -606,19 +610,31 @@ export const dailyFamilyRelationshipsEvents = [
     "conditions": {
       "all": [
         {
-          "hasTag": "married"
+          "path": "relationships.partnerStatus",
+          "eq": "married"
         }
       ]
     },
     "text": [
-      "孩子出生了。小小一团哭声把你的人生往前推了一大步，也把疼痛、虚弱和新的身份一起留在你身上。",
-      "家里又添了一个孩子。你比上次更熟悉襁褓的重量，却仍会在深夜听见哭声时怀疑自己是否准备充分。",
-      "又一个孩子来到家里。喜悦没有比从前少，手忙脚乱也没有；你抱着孩子，知道一家人的日程又要重新排过。"
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "lte": 0 }] },
+        "text": "孩子出生了。小小一团哭声把你的人生往前推了一大步，也把疼痛、虚弱和新的身份一起留在你身上。"
+      },
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "eq": 1 }] },
+        "text": "家里又添了一个孩子。你比上次更熟悉襁褓的重量，却仍会在深夜听见哭声时怀疑自己是否准备充分。"
+      },
+      {
+        "text": "又一个孩子来到家里。喜悦没有比从前少，手忙脚乱也没有；你抱着孩子，知道一家人的日程又要重新排过。"
+      }
     ],
     "effects": [
       {
         "path": "relationships.children",
         "add": 1
+      },
+      {
+        "recordChildBirth": true
       },
       {
         "path": "relationships.family",
@@ -658,19 +674,31 @@ export const dailyFamilyRelationshipsEvents = [
     "conditions": {
       "all": [
         {
-          "hasTag": "married"
+          "path": "relationships.partnerStatus",
+          "eq": "married"
         }
       ]
     },
     "text": [
-      "孩子出生了。你抱着那团小小的哭声，突然明白“当父亲”不是一个称呼，而是一张从今天开始长期扣款的账单。",
-      "家里又添了一个孩子。你抱人的姿势熟练了一点，心里的账却越算越长；好在孩子打了个哈欠，暂时拒绝参与财务讨论。",
-      "又一个孩子来到家里。你在喜悦与责任之间来回走动，最后发现两者都不会替你值夜。"
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "lte": 0 }] },
+        "text": "孩子出生了。你抱着那团小小的哭声，突然明白“当父亲”不是一个称呼，而是一张从今天开始长期扣款的账单。"
+      },
+      {
+        "conditions": { "all": [{ "path": "relationships.children", "eq": 1 }] },
+        "text": "家里又添了一个孩子。你抱人的姿势熟练了一点，心里的账却越算越长；好在孩子打了个哈欠，暂时拒绝参与财务讨论。"
+      },
+      {
+        "text": "又一个孩子来到家里。你在喜悦与责任之间来回走动，最后发现两者都不会替你值夜。"
+      }
     ],
     "effects": [
       {
         "path": "relationships.children",
         "add": 1
+      },
+      {
+        "recordChildBirth": true
       },
       {
         "path": "relationships.family",
@@ -711,6 +739,10 @@ export const dailyFamilyRelationshipsEvents = [
         {
           "path": "relationships.children",
           "gte": 1
+        },
+        {
+          "path": "relationships.oldestChildAge",
+          "gte": 6
         }
       ]
     },
@@ -944,22 +976,78 @@ export const dailyFamilyRelationshipsEvents = [
     "title": "年夜饭桌",
     "category": "family",
     "ageRange": [
-      3,
+      6,
       90
     ],
-    "lifetimeProbability": 0.45,
-    "baseWeight": 26,
+    "lifetimeProbability": 0.28,
+    "baseWeight": 16,
     "text": [
       {
         "conditions": {
           "all": [
-            {
-              "path": "meta.currentYear",
-              "lte": 1980
-            }
+            { "path": "meta.currentYear", "lte": 1911 },
+            { "path": "resources.wealth", "lte": 35 },
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
           ]
         },
-        "text": "年夜饭桌上的菜不一定多，但每个人都像在给过去一年收尾。有人夹菜，有人算账，有人悄悄叹气。"
+        "text": "除夕前先有人上门催旧账，家里把门闩落得比往常早。桌上留了一碗白米和一点荤腥，大人仍说年关总要像个年关；所谓体面，有时就是欠债的人也把碗摆正。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1937 },
+            { "path": "meta.currentYear", "lte": 1949 }
+          ]
+        },
+        "text": "这一年的团圆饭没有坐满。有人避难未归，有人的音信停在几个月前；长辈仍多放了一双筷子，又说只是忘了收。桌上的人都听见这句解释，没有人帮它圆得更好。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
+            { "path": "meta.currentYear", "lte": 1977 },
+            { "path": "resources.wealth", "lte": 45 }
+          ]
+        },
+        "text": "家里把平日舍不得用的粮票、油票攒到年根，凑出一桌比往常丰盛的饭。孩子问明年还能不能这样吃，大人忙着夹菜，像是这道问题不在供应范围里。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1983 },
+            { "path": "meta.currentYear", "lte": 1998 },
+            { "path": "location.currentCityTier", "in": ["village", "town", "county"] }
+          ]
+        },
+        "text": "年夜饭摆好后，几家人端着碗去邻居有电视的屋里看晚会。荧光屏把远方照得热闹，屋外还有人惦记明早喂牲口；时代进村时，先占了堂屋里最好的一张凳子。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1990 },
+            { "path": "location.migratedTimes", "gte": 1 },
+            { "path": "meta.age", "gte": 18 }
+          ]
+        },
+        "text": "你赶回去吃了一顿年夜饭。路上花了许多时间，桌边真正安静下来的只有几分钟；一家人用夹菜代替了不少不会说的话。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2000 },
+            { "path": "relationships.family", "lte": 34 },
+            { "path": "meta.age", "gte": 18 }
+          ]
+        },
+        "text": "饭桌上的话题绕到收入、婚姻和谁该照顾老人，几句祝福很快长出倒刺。电视负责制造笑声，你们负责在广告时沉默；零点一过，人人又礼貌地说新年快乐。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2036 }
+          ]
+        },
+        "text": "远处的家人投在墙面的影像里同桌吃饭，延迟让每次举杯都慢半拍。订制年菜按营养指标摆得齐整，老人仍嫌没有从前那一口；技术解决了到场，没能替任何人回答明年住在哪里。"
       },
       {
         "conditions": {
@@ -968,15 +1056,6 @@ export const dailyFamilyRelationshipsEvents = [
           ]
         },
         "text": "年夜饭的菜不多，每一碗却都摆得认真。大人说够吃就是福气，孩子看着盘底，负责判断这句话是否需要复议。"
-      },
-      {
-        "conditions": {
-          "all": [
-            { "path": "meta.currentYear", "gte": 1990 },
-            { "path": "location.migratedTimes", "gte": 1 }
-          ]
-        },
-        "text": "你赶回去吃了一顿年夜饭。路上花了许多时间，桌边真正安静下来的只有几分钟；一家人用夹菜代替了不少不会说的话。"
       },
       {
         "text": "年夜饭桌上热闹了一阵。祝福、催问、玩笑和沉默混在一起，像每个家都会熬的一锅汤。"
@@ -1053,8 +1132,12 @@ export const dailyFamilyRelationshipsEvents = [
     "baseWeight": 20,
     "text": [
       {
-        "conditions": { "all": [{ "path": "meta.age", "lte": 22 }] },
+        "conditions": { "all": [{ "path": "meta.age", "lte": 22 }, { "path": "education.status", "eq": "enrolled" }] },
         "text": "你和父母谈到升学、离家或喜欢做的事。他们先说现实，你先觉得不被理解；谈到最后仍没一致，至少彼此知道争执背后在怕什么。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "lte": 22 }, { "path": "education.status", "neq": "enrolled" }] },
+        "text": "你和父母谈到谋生、离家或喜欢做的事。他们先说日子要紧，你先觉得不被理解；谈到最后仍没一致，至少彼此知道争执背后在怕什么。"
       },
       {
         "conditions": { "all": [{ "path": "meta.age", "gte": 35 }] },
@@ -1084,8 +1167,68 @@ export const dailyFamilyRelationshipsEvents = [
       22,
       70
     ],
-    "baseWeight": 20,
-    "text": "亲戚开口借钱，话说得客气，难处却是真的。你在情分和账本之间停了很久。",
+    "maxOccurrences": 1,
+    "lifetimeProbability": 0.24,
+    "baseWeight": 12,
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 1949 },
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
+        "text": "亲戚来借买种、抓药或赎田的钱，开口前先把族里的辈分重新叙了一遍。借据写不写都伤体面，不借又会在下一场红白事上重逢；乡土很大，大到容得下几代人，也小到躲不开一笔账。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
+            { "path": "meta.currentYear", "lte": 1977 }
+          ]
+        },
+        "text": "亲戚来借一笔现钱，还试探着问能不能匀几张票证。工资簿上的数字彼此都知道，他仍从孩子近况说起，绕了很久才说难处；那个年代钱不算多，缺口却同样会挑一家人最薄的地方出现。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1978 },
+            { "path": "meta.currentYear", "lte": 1999 },
+            { "path": "career.status", "in": ["self_employed", "employed"] }
+          ]
+        },
+        "text": "亲戚说想盘铺、进货或买一台机器，借钱时把将来的利润讲得很近。你听见机会，也听见他刻意没提的风险；亲情在这几年学会了谈生意，却还不习惯写清退出办法。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2000 },
+            { "path": "resources.wealth", "lte": 34 }
+          ]
+        },
+        "text": "亲戚知道你也不宽裕，还是来借医药费、学费或周转的钱。两个缺钱的人把各自账单摊开，像在比较哪一种窘迫更有资格先被照顾；最后谁开口说不，谁便显得比较残忍。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2015 },
+            { "path": "resources.wealth", "gte": 65 }
+          ]
+        },
+        "text": "亲戚在消息里发来一串解释和收款码，说只差这一笔就能把窟窿填上。你收入好些以后，族人便默认你离困难更远；屏幕上的转账只要一次确认，往后的关系却没有撤回键。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.family", "lte": 32 }
+          ]
+        },
+        "text": "一位平日很少往来的亲戚忽然来借钱，把从前的亲近说得像刚发生过。你们都没有提上一笔迟迟未还的账；有些家庭记忆并未消失，只是在需要签字时才重新上线。"
+      },
+      {
+        "text": "亲戚开口借钱，话说得客气，难处却是真的。你在情分和账本之间停了很久；他等一个数目，你想的却是下一次见面还能不能照常称呼。"
+      }
+    ],
     "outcomes": [
       {
         "id": "lend_some",
@@ -1256,7 +1399,8 @@ export const dailyFamilyRelationshipsEvents = [
     "conditions": {
       "all": [
         {
-          "hasTag": "married"
+          "path": "relationships.partnerStatus",
+          "eq": "married"
         }
       ]
     },
@@ -1276,6 +1420,10 @@ export const dailyFamilyRelationshipsEvents = [
       {
         "conditions": { "all": [{ "path": "relationships.children", "gte": 1 }] },
         "text": "你们为孩子的花费拌嘴，一个怕亏待眼前，一个怕拖累以后。争的看似是一张账单，其实是两种都说得通的担心。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1975 }] },
+        "text": "你和伴侣为储蓄、花费或谁承担得更多争了几句。算盘珠拨得很响，真正需要重新分配的却不只是钱。"
       },
       { "text": "你和伴侣为储蓄、花费或谁承担得更多争了几句。计算器按得很响，真正需要重新分配的却不只是钱。" }
     ],
@@ -1338,7 +1486,8 @@ export const dailyFamilyRelationshipsEvents = [
     "conditions": {
       "all": [
         {
-          "hasTag": "married"
+          "path": "relationships.partnerStatus",
+          "eq": "married"
         }
       ]
     },
@@ -1427,6 +1576,10 @@ export const dailyFamilyRelationshipsEvents = [
       {
         "conditions": { "all": [{ "path": "meta.age", "gte": 55 }] },
         "text": "老同学聚在一起，先认人，再对着旧照片确认谁坐过哪排。有人谈退休，有人谈病，最响的笑声仍来自一件几十年前不肯承认的糗事。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 38 }, { "path": "meta.currentYear", "lte": 1999 }] },
+        "text": "同学聚会选的地方不算便宜，你犹豫后还是去了。席间有人谈工资、住房和孩子的去处，你把近况说得简短；真正让你放松的，是还有人记得你当年怕哪门课。"
       },
       {
         "conditions": { "all": [{ "path": "resources.wealth", "lte": 38 }] },

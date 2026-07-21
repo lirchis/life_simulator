@@ -12,6 +12,23 @@ const COAST = {
 };
 const NORTHEAST = { provinces: ["liaoning", "jilin", "heilongjiang"], cityTiers: ["town", "county", "city", "tier2", "tier1"] };
 const WEST = { provinces: ["sichuan", "chongqing", "guizhou", "yunnan", "shaanxi", "gansu", "qinghai", "ningxia", "xinjiang", "guangxi"], cityTiers: ALL };
+const SPECIAL_ADMINISTRATIVE_REGIONS = ["xianggang", "aomen", "taiwan"];
+const MAINLAND_INSTITUTION_EVENT_IDS = new Set([
+  "urban_grain_book",
+  "unit_bath_ticket",
+  "unit_infirmary_queue",
+  "workers_children_nursery",
+  "rural_workpoint_notch",
+  "rural_barefoot_visit",
+  "rural_literacy_name",
+  "county_normal_student",
+  "sewing_cooperative_button",
+  "third_front_family_letter",
+  "reform_exam_borrowed_reference",
+  "reform_unit_bonus_envelope",
+  "reform_unit_housing_measure",
+  "reform_one_child_school_pickup",
+]);
 
 const C = (path, op, value) => ({ path, [op]: value });
 const lowWealth = (specific, fallback) => [
@@ -34,6 +51,13 @@ const healthText = (specific, fallback) => [
   { conditions: { all: [C("resources.health", "lte", 45)] }, text: specific },
   { text: fallback },
 ];
+const mainlandConditions = (conditions) => ({
+  ...(conditions ?? {}),
+  none: [
+    ...(conditions?.none ?? []),
+    C("location.currentProvince", "in", SPECIAL_ADMINISTRATIVE_REGIONS),
+  ],
+});
 const E = ({ id, title, category = "daily", yearRange, ageRange, currentRegions, conditions, text, effects = [], ...rest }) => ({
   id: `exp49_${id}`,
   title,
@@ -41,7 +65,7 @@ const E = ({ id, title, category = "daily", yearRange, ageRange, currentRegions,
   yearRange,
   ageRange,
   currentRegions,
-  conditions,
+  conditions: MAINLAND_INSTITUTION_EVENT_IDS.has(id) ? mainlandConditions(conditions) : conditions,
   maxOccurrences: 1,
   baseWeight: 16,
   text,
@@ -439,7 +463,7 @@ export const historyExpansionPost1949Events = [
     text: femaleText("群里通知明天带手工作品，你看了看时间和材料，最后还是自己动手。孩子的作业有时精准地考查母亲的睡眠。", "老师发起接龙，家长们整齐回复。你还没弄懂任务，编号已经排到了四十七。"),
     effects: [{ path: "relationships.family", add: 2 }, { path: "resources.happiness", add: -1 }] }),
   E({ id: "modern_tutoring_waiting_room", title: "补习班外的椅子", category: "education", yearRange: [2008, 2021], ageRange: [28, 52], currentRegions: URBAN,
-    conditions: { all: [C("relationships.children", "gte", 1), C("resources.wealth", "gte", 38), C("resources.wealth", "lte", 80)] },
+    conditions: { all: [C("relationships.children", "gte", 1), C("relationships.oldestChildAge", "gte", 6), C("relationships.oldestChildAge", "lte", 18), C("resources.wealth", "gte", 38), C("resources.wealth", "lte", 80)] },
     text: lowWealth("你在补习班外等孩子，悄悄算这学期的费用。教室里争分，门外的大人争取不表现出心疼。", "家长们坐在走廊小椅子上，嘴上说顺其自然，手机里存着历年分数线。"),
     effects: [{ path: "resources.wealth", add: -4 }, { path: "education.score", add: 2 }] }),
   E({ id: "modern_left_behind_video_call", title: "视频里的饭桌", category: "family", yearRange: [2012, 2025], ageRange: [18, 62], currentRegions: RURAL,

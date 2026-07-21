@@ -1,4 +1,10 @@
 const add = (path, value) => ({ path, add: value });
+const MAINLAND_PROVINCES = [
+  "beijing", "tianjin", "hebei", "shanxi", "neimenggu", "liaoning", "jilin", "heilongjiang",
+  "shanghai", "jiangsu", "zhejiang", "anhui", "fujian", "jiangxi", "shandong", "henan",
+  "hubei", "hunan", "guangdong", "guangxi", "hainan", "chongqing", "sichuan", "guizhou",
+  "yunnan", "xizang", "shaanxi", "gansu", "qinghai", "ningxia", "xinjiang",
+];
 
 function once(id, title, category, yearRange, ageRange, text, extra = {}) {
   return {
@@ -105,10 +111,17 @@ export const dailyEraTextureEvents = [
   }),
 
   once("texture_teahouse_shared_newspaper", "一张报纸轮着看", "random", [1912, 1949], [15, 72], [
-    { conditions: { all: [{ path: "education.score", gte: 60 }] }, text: "茶客把报纸推到你面前，请你念一段时局消息。生僻地名刚读完，四周已有人开始判断胜负；识字给了你发言顺序，没有给你裁决权。" },
+    { conditions: { all: [{ path: "meta.currentYear", gte: 1937 }, { any: [{ hasTag: "wartime_refugee" }, { hasTag: "family_war_loss" }, { path: "location.migratedTimes", gte: 1 }] }] }, text: "战事年月，报纸被摊在茶桌上找地名。你和旁人沿着战线一站站往下看，谁也不肯先说最坏的猜测；一张纸从此不只是新闻，也像一份迟迟没有写全的家书。" },
     { conditions: { all: [{ path: "meta.currentYear", gte: 1937 }] }, text: "战事年月，茶馆里一张报纸被轮流翻看，伤亡和失地常被人念出声。有人追问自家亲人所在的地方，报纸却只印到省名。" },
+    { conditions: { all: [{ path: "meta.currentYear", gte: 1931 }, { path: "meta.currentYear", lte: 1936 }, { path: "location.currentProvince", in: ["liaoning", "jilin", "heilongjiang"] }] }, text: "报纸写着关外的消息，茶客把熟悉的县名逐个指给旁人看。有人争辩消息真假，有人一句话也没说，只把凉透的茶又端起来；故乡第一次变成了铅字里的局势。" },
+    { conditions: { all: [{ path: "education.score", gte: 60 }, { path: "meta.currentYear", lte: 1927 }] }, text: "茶客把报纸推到你面前，请你念议会、内阁和各省的消息。生僻名词刚读完，四周已经有人判定天下归属；识字给了你发言顺序，没有给你裁决权。" },
+    { conditions: { all: [{ path: "education.score", lte: 24 }] }, text: "你认不全报上的字，只听旁桌的人把标题念得抑扬顿挫。念到粮价时人人都听懂了，念到政令时各人听出各人的意思；最后那张报纸比开场时皱了许多，天下仍没有因此平整。" },
+    { conditions: { all: [{ path: "career.status", eq: "retired" }, { path: "resources.wealth", lte: 34 }] }, text: "你先翻米价、船期和招工消息，再看那些更大的标题。工钱已经不再按日结给你，柴米却仍每天开价；一张报纸把天下和晚饭印在正反两面。" },
+    { conditions: { all: [{ path: "resources.wealth", lte: 34 }] }, text: "你先翻到米价、招工和车船停运的消息，再看那些更大的标题。茶馆里有人谈国家，你默算明日的工钱；同一张报纸把两种焦虑印在正反两面。" },
+    { conditions: { all: [{ path: "location.currentCityTier", in: ["town", "county"] }] }, text: "县城送来的报纸晚了几日，边角已被折软。众人仍围着看，先纠正地名，再争论真假；消息到得慢，意见却从来不肯迟到。" },
     { text: "茶馆里只有一张报纸，几个人从不同方向凑着读。识字的念新闻，不识字的听完照样评论，纸页每翻一次都要先经过众人同意。" },
   ], {
+    baseWeight: 12,
     currentRegions: { cityTiers: ["town", "county", "city", "tier2", "tier1"] },
     effects: [add("education.score", 3), add("relationships.friendship", 2)],
   }),
@@ -143,7 +156,8 @@ export const dailyEraTextureEvents = [
     effects: [add("resources.health", -4), add("resources.wealth", 3)],
   }),
   once("texture_blue_ink_home_letter", "蓝墨水家书", "relationship", [1912, 1977], [16, 72], [
-    { conditions: { all: [{ path: "location.migratedTimes", gte: 1 }, { path: "resources.wealth", lte: 40 }] }, text: "你在外谋生，给家里写信只说工作尚可，没写住处漏雨和钱快用完。信封里夹了一点汇款，薄纸于是比安慰更有重量。" },
+    { conditions: { all: [{ path: "location.migratedTimes", gte: 1 }, { path: "resources.wealth", lte: 40 }, { path: "career.status", in: ["employed", "self_employed", "family_labor", "gig_worker"] }] }, text: "你在外谋生，给家里写信只说工作尚可，没写住处漏雨和钱快用完。信封里夹了一点汇款，薄纸于是比安慰更有重量。" },
+    { conditions: { all: [{ path: "location.migratedTimes", gte: 1 }, { path: "career.status", eq: "retired" }] }, text: "你给故乡写信，先报身体与近况，再问旧屋、旧邻和几件多年未改的事。退休后不再寄回工钱，信里却仍夹着一张认真列好的托办清单。" },
     { conditions: { all: [{ path: "relationships.children", gte: 1 }] }, text: "你写信问孩子吃饭、读书和衣服够不够，自己的难处只用一句‘勿念’带过。父母写家书常很节省篇幅，担心却从不遵守纸张限制。" },
     { text: "你给家里写信，只报平安，不写最难的那一段。蓝墨水在薄纸上慢慢洇开，纸比人先回到故乡，也比人更会把疲惫折好。" },
   ], {
@@ -171,6 +185,7 @@ export const dailyEraTextureEvents = [
     { conditions: { all: [{ path: "meta.age", lte: 18 }] }, text: "大人让你拿票去买东西，你到柜台才发现少了一张。回程一路摸遍口袋，最后它黏在票夹背面，你的委屈和庆幸同时松下来。" },
     { text: "一张票证怎么也找不到，全家进行了一场规模远大于票面的追查。它从旧衣口袋出现时，人人都松口气，又人人声称早就猜到在那里。" },
   ], {
+    currentRegions: { provinces: MAINLAND_PROVINCES },
     effects: [add("resources.happiness", -1), add("relationships.family", 2)],
   }),
   once("texture_village_loudspeaker", "高音喇叭先醒", "random", [1950, 1982], [5, 75], "村头高音喇叭比许多人起得早，通知、天气和口号顺着晨雾传来。你有时没听清内容，却很难没听见它。", {
@@ -206,6 +221,7 @@ export const dailyEraTextureEvents = [
   }),
   once("texture_work_point_book", "工分本上的一横", "career", [1958, 1977], [14, 70], "收工后，记分员在本子上添了一横。一天的腰酸背痛被压成一个数字，你看了看，明白数字也会累，只是它不喊疼。", {
     currentRegions: { cityTiers: ["village", "town"] },
+    conditions: { none: [{ path: "location.currentProvince", in: ["xianggang", "aomen", "taiwan"] }] },
     effects: [add("resources.health", -3), add("resources.wealth", 2)],
   }),
   once("texture_newspaper_window_patch", "报纸糊窗", "family", [1950, 1977], [8, 75], [
@@ -312,7 +328,8 @@ export const dailyEraTextureEvents = [
   }),
   once("texture_old_street_demolition_mark", "墙上的测量记号", "migration", [1998, 2025], [18, 85], [
     { conditions: { all: [{ path: "resources.wealth", lte: 38 }] }, text: "墙上有了测量记号，你最先算补偿能否换回相近的住处。规划图上的新楼很整齐，租金、通勤和旧债却不会自动画进图里。" },
-    { conditions: { all: [{ path: "meta.age", gte: 65 }] }, text: "老街将拆，你慢慢整理住了几十年的屋子，许多东西对子女只是旧物，对你却有明确来处。纸箱装得下家具，装不下每天坐惯的门口。" },
+    { conditions: { all: [{ path: "meta.age", gte: 65 }, { path: "relationships.children", "gte": 1 }] }, text: "老街将拆，你慢慢整理住了几十年的屋子，许多东西对子女只是旧物，对你却有明确来处。纸箱装得下家具，装不下每天坐惯的门口。" },
+    { conditions: { all: [{ path: "meta.age", gte: 65 }] }, text: "老街将拆，你慢慢整理住了几十年的屋子。亲友帮着装箱，常把一件旧物当成无用；你却记得它从哪一年留下，又在谁来访时用过。纸箱装得下家具，装不下每天坐惯的门口。" },
     { text: "老街墙上出现测量记号，邻居开始讨论补偿、去处和哪棵树能留下。城市规划落到生活里，首先变成一屋物件该进多少纸箱。" },
   ], {
     currentRegions: { cityTiers: ["county", "city", "tier2", "tier1"] },

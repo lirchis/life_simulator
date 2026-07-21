@@ -1,9 +1,9 @@
 import { calculateEnvironment } from "./environment.js";
-import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=shadow-1";
+import { addTag, addTrait, applyEffects, normalizeState } from "./effects.js?v=future-history-3";
 import { attachHistoricalLife } from "./historicalLives.js?v=shadow-1";
-import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { normalizeLifeCourse } from "./lifeCourse.js?v=future-history-3";
 import { createNarrativeState, normalizeNarrativeState } from "./narrative.js?v=shadow-1";
-import { createShadowState, normalizeShadowState } from "./shadow.js?v=shadow-1";
+import { createShadowState, normalizeShadowState } from "./shadow.js?v=future-history-3";
 
 export function createInitialState(setup, data, context) {
   const birthProvince = data.resolveHistoricalProvince(setup.provinceHistoryCode ?? setup.province, setup.birthYear, context.rng);
@@ -70,6 +70,9 @@ export function createInitialState(setup, data, context) {
       partnerStatus: "none",
       partnerQuality: 0,
       children: 0,
+      childBirthYears: [],
+      oldestChildAge: null,
+      youngestChildAge: null,
     },
     education: {
       level: "none",
@@ -91,6 +94,12 @@ export function createInitialState(setup, data, context) {
       field: "",
       level: 0,
       income: 0,
+      role: "none",
+      authorityScope: "none",
+      managesPeople: false,
+      controlsBudget: false,
+      writesPolicy: false,
+      controlsProcurement: false,
       startedYear: null,
       statusSinceYear: null,
       jobsHeld: 0,

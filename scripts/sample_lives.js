@@ -11,6 +11,8 @@ const outputPath = resolve(args.out ?? `${base}.samples.md`);
 const summaries = parseSelectedCsv(readFileSync(summaryPath, "utf8"), new Set([
   "run_id", "cohort", "gender", "settlement", "class_tier", "region_group", "attribute_tier",
   "birth_year", "family_class", "final_age", "alive", "event_count",
+  "shadow_harm_done_final", "shadow_guilt_final", "shadow_hardness_final",
+  "shadow_self_deception_final", "shadow_trust_debt_final",
 ]));
 const events = parseSelectedCsv(readFileSync(eventsPath, "utf8"), new Set([
   "run_id", "event_order", "age", "year", "event_id", "title", "category",
@@ -72,6 +74,22 @@ function selectExtremes() {
   addReason([...stats].sort((left, right) => right.shadow - left.shadow)[0]?.run_id, "阴影事件最多");
   addReason([...stats].sort((left, right) => right.quiet - left.quiet)[0]?.run_id, "平常年最多");
   addReason([...stats].sort((left, right) => right.texture - left.texture)[0]?.run_id, "日常纹理最多");
+
+  const selectedShadowExtremes = new Set();
+  for (const [field, label] of [
+    ["shadow_harm_done_final", "造成伤害累计最高"],
+    ["shadow_guilt_final", "愧疚累计最高"],
+    ["shadow_hardness_final", "硬化程度最高"],
+    ["shadow_self_deception_final", "自我欺骗最高"],
+    ["shadow_trust_debt_final", "信任债最高"],
+  ]) {
+    const chosen = [...summaries]
+      .sort((left, right) => number(right[field]) - number(left[field]) || left.run_id.localeCompare(right.run_id))
+      .find((row) => !selectedShadowExtremes.has(row.run_id));
+    if (!chosen || number(chosen[field]) <= 0) continue;
+    selectedShadowExtremes.add(chosen.run_id);
+    addReason(chosen.run_id, label);
+  }
 }
 
 function selectReviewRisks() {
@@ -99,7 +117,7 @@ function renderReport(rows) {
     "",
     `来源：${summaryPath}`,
     `生成：${new Date().toISOString()}`,
-    `样本：${rows.length} 局；选择覆盖出生世代、性别、城乡、家庭资源、地区、属性的中位寿命，以及极端寿命、长纹理空档、阴影与平常年极端。`,
+    `样本：${rows.length} 局；选择覆盖出生世代、性别、城乡、家庭资源、地区、属性的中位寿命，以及极端寿命、长纹理空档、阴影状态与平常年极端。`,
     "",
     "通读时逐年检查：时代与地点是否可信；年龄、职业、婚姻与子女是否承接；同类命运是否因人物状态换了观察角度；幽默是否来自生活而不是段子。",
   ];
@@ -112,6 +130,7 @@ function renderReport(rows) {
       `- 抽样理由：${(reasons.get(summary.run_id) ?? []).join("；")}`,
       `- 开局：${summary.birth_year}年 / ${summary.cohort} / ${summary.gender} / ${summary.settlement} / ${summary.class_tier} / ${summary.region_group} / ${summary.family_class} / ${summary.attribute_tier}`,
       `- 终年：${summary.final_age}岁；事件 ${runEvents.length} 条`,
+      `- 阴影终值：伤害 ${summary.shadow_harm_done_final || 0} / 愧疚 ${summary.shadow_guilt_final || 0} / 硬化 ${summary.shadow_hardness_final || 0} / 自我欺骗 ${summary.shadow_self_deception_final || 0} / 信任债 ${summary.shadow_trust_debt_final || 0}`,
       "",
     );
     for (const event of runEvents) {

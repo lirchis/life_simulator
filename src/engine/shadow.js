@@ -26,6 +26,7 @@ export function createShadowState({ attrs = {}, familyScore = 5 } = {}) {
     selfDeception: 2,
     resentment: 2 + Math.max(0, 4 - mental) + insecurityNudge,
     trustDebt: 0,
+    threads: {},
   };
 }
 
@@ -33,6 +34,12 @@ export function normalizeShadowState(state) {
   state.shadow ??= createShadowState();
   for (const field of SHADOW_FIELDS) {
     state.shadow[field] = clamp(Math.round(numeric(state.shadow[field], 0)), 0, 100);
+  }
+  state.shadow.threads ??= {};
+  for (const thread of Object.values(state.shadow.threads)) {
+    for (const field of ["guilt", "justification", "benefitRetained", "responsibilityAccepted", "victimContact"]) {
+      thread[field] = clamp(Math.round(numeric(thread[field], 0)), 0, 100);
+    }
   }
   return state.shadow;
 }

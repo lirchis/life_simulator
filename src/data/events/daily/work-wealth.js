@@ -81,7 +81,7 @@ export const dailyWorkWealthEvents = [
       8,
       55
     ],
-    "birthRegions": {
+    "currentRegions": {
       "cityTiers": [
         "village",
         "town",
@@ -91,16 +91,24 @@ export const dailyWorkWealthEvents = [
     "baseWeight": 28,
     "text": [
       {
-        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1948 }] },
-        "text": "你跟着大人或同伴去了一趟城里，先在车站、渡口或城门边辨方向。集市、药铺和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1948 }, { "path": "meta.age", "lte": 17 }] },
+        "text": "你跟着大人或同伴去了一趟城里，先在渡口或城门边辨方向。集市、药铺和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
       },
       {
-        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1949 }, { "path": "meta.currentYear", "lte": 1978 }] },
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1949 }, { "path": "meta.currentYear", "lte": 1978 }, { "path": "meta.age", "lte": 17 }] },
         "text": "你跟着大人或同伴去了一趟城里，先在车站、渡口或城门边辨方向。供销店、医院和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
       },
       {
         "conditions": { "all": [{ "path": "meta.age", "lte": 12 }] },
         "text": "大人带你去更大的城里办事，始终叮嘱别松手。你记住高楼、车流和一份路上吃的东西，至于办了什么手续，很快便忘了。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1948 }, { "path": "meta.age", "gte": 18 }] },
+        "text": "你从村镇去城里办了一趟事，在渡口、城门和几条陌生街巷之间辨路。回程时还替邻居捎了药和日用品，肩上的包袱比见闻更先说明这趟路的用处。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1949 }, { "path": "meta.currentYear", "lte": 1978 }, { "path": "meta.age", "gte": 18 }] },
+        "text": "你从村镇去城里办了一趟事，跑过车站、供销店或医院。回来时还替邻居捎了几样东西；一趟路不只属于出门的人，也替没出门的人带回所需。"
       },
       { "text": "你从村镇去了一趟更大的城市，办事之外也看了看橱窗、车站和匆忙的人群。回程时景物已不新鲜，自己的生活却像被从外面看了一眼。" }
     ],

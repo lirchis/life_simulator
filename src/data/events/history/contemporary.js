@@ -20,6 +20,18 @@ export const historyContemporaryEvents = [
     "maxOccurrences": 1,
     "priority": 42,
     "baseWeight": 45,
+    "conditions": {
+      "all": [
+        {
+          "path": "career.status",
+          "in": ["employed", "self_employed", "family_labor"]
+        },
+        {
+          "path": "career.field",
+          "in": ["factory", "textile", "manufacturing", "township_enterprise", "manual_worker"]
+        }
+      ]
+    },
     "text": [
       {
         "conditions": {
@@ -27,10 +39,40 @@ export const historyContemporaryEvents = [
             {
               "path": "birth.gender",
               "eq": "female"
+            },
+            {
+              "path": "meta.age",
+              "lte": 35
             }
           ]
         },
         "text": "加入 WTO 后，厂里的订单像潮水一样涌来。女工宿舍的灯很晚才灭，你在工资条上看见世界，也看见自己的青春被计件。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "career.status",
+              "eq": "self_employed"
+            }
+          ]
+        },
+        "text": "加入 WTO 后，厂里的订单一批批压来。你既要催料、盯交期，也得在工钱和退单之间算账；世界市场来到门口时，先递进来的是一张不能晚交的单。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "birth.gender",
+              "eq": "female"
+            },
+            {
+              "path": "meta.age",
+              "gte": 36
+            }
+          ]
+        },
+        "text": "加入 WTO 后，厂里的订单像潮水一样涌来。年轻工人换了一拨，你仍在灯下赶货；工资条上添了数字，手腕和眼睛也替这些年记着账。"
       },
       {
         "text": "加入 WTO 后，厂里的订单像潮水一样涌来。你在流水线旁站到腿麻，也在工资条上看见世界的影子。"

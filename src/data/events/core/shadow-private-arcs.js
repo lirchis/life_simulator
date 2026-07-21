@@ -24,6 +24,9 @@ const PRIVATE_CHAIN_PREFIXES = [
   "cold_silence",
   "child_harm",
   "schadenfreude",
+  "kin_loan",
+  "work_blame",
+  "care_capture",
 ];
 
 const PRIVATE_CHAIN_STAGES = [
@@ -32,35 +35,63 @@ const PRIVATE_CHAIN_STAGES = [
   ["betrayal_seed", "betrayal_lie", "betrayal_end"],
   ["favoritism_seed", "favoritism_account", "favoritism_end"],
   ["care_dodge_seed", "care_dodge_burden", "care_dodge_end"],
-  ["gambling_seed", "gambling_debt", "gambling_end"],
-  ["drinking_seed", "drinking_repeats", "drinking_end"],
+  ["gambling_seed", "gambling_debt", "gambling_end", "gambling_later"],
+  ["drinking_seed", "drinking_repeats", "drinking_end", "drinking_later"],
   ["petty_theft_seed", "petty_theft_lie", "petty_theft_end"],
   ["long_lie_seed", "long_lie_recruits", "long_lie_end"],
   ["cold_silence_seed", "cold_silence_house", "cold_silence_end"],
   ["child_harm_seed", "child_harm_pattern", "child_harm_end"],
   ["schadenfreude_seed", "schadenfreude_spreads", "schadenfreude_end"],
+  ["kin_loan_seed", "kin_loan_rewrite", "kin_loan_pressure", "kin_loan_end"],
+  ["work_blame_seed", "work_blame_record", "work_blame_distance", "work_blame_end"],
+  ["care_capture_seed", "care_capture_default", "care_capture_boundary", "care_capture_end"],
 ];
-const NEXT_PRIVATE_STAGE = new Map(PRIVATE_CHAIN_STAGES.flatMap(([opening, middle, ending]) => [
-  [opening, middle],
-  [middle, ending],
-]));
+const NEXT_PRIVATE_STAGE = new Map(PRIVATE_CHAIN_STAGES.flatMap((stages) => stages
+  .slice(0, -1)
+  .map((stage, index) => [stage, stages[index + 1]])));
+const FINAL_PRIVATE_STAGES = new Set(PRIVATE_CHAIN_STAGES.map((stages) => stages.at(-1)));
 
 function privateDomain(id) {
   return `shadow_private_${PRIVATE_CHAIN_PREFIXES.find((prefix) => id.startsWith(prefix)) ?? "other"}`;
 }
 
+function scopeThreadConditions(value, domain) {
+  if (Array.isArray(value)) return value.map((item) => scopeThreadConditions(item, domain));
+  if (!value || typeof value !== "object") return value;
+  const scoped = Object.fromEntries(Object.entries(value).map(([key, item]) => [key, scopeThreadConditions(item, domain)]));
+  if (scoped.path === "shadow.guilt") scoped.path = `shadow.threads.${domain}.guilt`;
+  return scoped;
+}
+
+function threadEffects(effects, domain, close) {
+  const adjusted = close ? effects.filter((effect) => effect.path !== "shadow.guilt") : effects;
+  return adjusted.flatMap((effect) => {
+    const mirrored = [];
+    if (effect.path === "shadow.guilt" && effect.add > 0) {
+      mirrored.push(add(`shadow.threads.${domain}.guilt`, effect.add));
+    }
+    if (effect.path === "shadow.selfDeception" && effect.add > 0) {
+      mirrored.push(add(`shadow.threads.${domain}.justification`, effect.add));
+    }
+    if (["resources.wealth", "resources.achievement", "resources.reputation"].includes(effect.path) && effect.add > 0) {
+      mirrored.push(add(`shadow.threads.${domain}.benefitRetained`, Math.min(4, effect.add)));
+    }
+    return [effect, ...mirrored];
+  });
+}
+
 function scheduleNextStage(id, close) {
   const nextId = NEXT_PRIVATE_STAGE.get(id);
   if (!nextId || close) return [];
-  const followsOpening = id.endsWith("_seed");
-  const delayYears = followsOpening ? [2, 7] : [2, 10];
+  const nextIsFinal = FINAL_PRIVATE_STAGES.has(nextId);
+  const delayYears = [2, nextIsFinal ? 10 : 7];
   return [{
     scheduleEvent: {
       eventId: `shadow_private_${nextId}`,
       delayYears,
       // This changes only an already-open arc: it does not make openings more
       // common, but keeps a crowded event pool from silently dropping a trace.
-      weightMultiplier: followsOpening ? 24 : 16,
+      weightMultiplier: nextIsFinal ? 16 : 24,
     },
   }];
 }
@@ -87,6 +118,7 @@ function shadowEvent({
   const timedConditions = timedDependencies.length > 0
     ? { ...conditions, all: [...(conditions?.all ?? []), ...timedDependencies] }
     : conditions;
+  const domain = privateDomain(id);
 
   return {
     id: `shadow_private_${id}`,
@@ -100,12 +132,16 @@ function shadowEvent({
     narrativeTier: opening ? "turning_point" : "consequence",
     // Every private arc owns its thread. Broad domains such as "family" made
     // unrelated control, care and favoritism stories compete for one thread.
-    narrativeDomain: privateDomain(id),
+    narrativeDomain: domain,
     narrativeThread: close ? { close: true } : { expiresAfterYears: dependencyWindow.maxYears },
-    conditions: timedConditions,
+    conditions: scopeThreadConditions(timedConditions, domain),
     requiresEvents,
-    text,
-    effects: [...(effects ?? []), ...scheduleNextStage(id, close)],
+    text: scopeThreadConditions(text, domain),
+    effects: [
+      ...(opening ? [{ initializeShadowThread: domain }] : []),
+      ...threadEffects(effects ?? [], domain, close),
+      ...scheduleNextStage(id, close),
+    ],
   };
 }
 
@@ -377,6 +413,7 @@ export const shadowPrivateArcEvents = [
     category: "wealth",
     ageRange: [18, 62],
     opening: true,
+    conditions: { all: [C("relationships.family", "gte", 20)] },
     text: V(
       [C("relationships.partnerStatus", "in", ["partnered", "married"])],
       "你瞒着伴侣挪用一笔家用去赌侥幸，输掉后先补了一个谎。钱的缺口不大，秘密已经替下一次越界挖好位置。",
@@ -408,7 +445,6 @@ export const shadowPrivateArcEvents = [
     category: "wealth",
     ageRange: [24, 78],
     requiresEvents: ["shadow_private_gambling_debt"],
-    close: true,
     conditions: { all: [C("shadow.harmDone", "gte", 6)] },
     text: V(
       [C("shadow.guilt", "gte", 4)],
@@ -418,6 +454,25 @@ export const shadowPrivateArcEvents = [
       "能借到的钱越来越少，你仍在盘算下一次翻回去，家人却先把欠款和必要开支分开保管。赌局没有替你完成醒悟，只是现实暂时收窄了入口。",
     ),
     effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 2), add("shadow.trustDebt", 4), add("resources.wealth", -7), add("resources.happiness", -4), add("relationships.family", -5), { addTag: "shadow_gambling_debt_disclosed" }],
+  }),
+  shadowEvent({
+    id: "gambling_later",
+    title: "日子不再等你翻本",
+    category: "wealth",
+    ageRange: [28, 92],
+    requiresEvents: ["shadow_private_gambling_end"],
+    close: true,
+    conditions: { all: [C("shadow.trustDebt", "gte", 8)] },
+    text: [
+      { conditions: { all: [C("shadow.selfDeception", "gte", 16), C("shadow.resentment", "gte", 6)] }, text: "你隔过一阵又试图把损失翻回来，借口从手气变成最后一次。家人没有再陪你计算可能赢多少，只按最坏的数目安排吃住；反复仍在，替你兜底的日子先停了。" },
+      { conditions: { all: [C("shadow.guilt", "gte", 7)] }, text: "你有过反复，也有过把钱重新交给冲动的夜晚。后来共同钱款仍由别人保管，你只按约定拿自己的一份；克制不是恢复了信任，只是每天少添一张新欠条。" },
+      { conditions: { all: [C("meta.age", "gte", 65)] }, text: "年纪大后，你把那几年说成走过弯路，很少提家人因此取消过什么。债大多有了着落，旧习惯却留下一条规矩：涉及钱的决定，别人仍会多问一句。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "后来家里的粮钱和急用不再交你一人保管。你偶尔抱怨亲人防得太严，他们只把下一季该留多少重新数一遍；日子照常过，侥幸不再有权先碰家用。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 1950), C("meta.currentYear", "lte", 1999)] }, text: "往后的工资、存折和必要开支由家人分开安排，你若临时要钱便要说清用途。你觉得自己在家里像个外人，别人则终于不用等一个保证决定下个月怎么过。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "家人把共同账户、自动扣款和你的可用钱分开，不再靠口头保证守住生活费。技术只是换了把锁，真正让锁留下的是过去那些被你称作最后一次的夜晚。" },
+      { text: "输赢慢慢退出了日常，家里的计划却没有立刻把你加回去。饭照常盛你的那一碗，要紧开支仍由别人先确认；日历一页页撕掉，旧欠条安静地留在抽屉里。" },
+    ],
+    effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 2), add("shadow.trustDebt", 3), add("relationships.family", -3), add("resources.happiness", -2), { addTag: "shadow_gambling_life_replanned" }],
   }),
 
   // 7. Alcohol-centred self-destruction; only consequences, no use details.
@@ -456,18 +511,39 @@ export const shadowPrivateArcEvents = [
     id: "drinking_end",
     title: "重要安排开始绕开你",
     category: "health",
-    ageRange: [28, 82],
+    ageRange: [22, 82],
     requiresEvents: ["shadow_private_drinking_repeats"],
-    close: true,
     conditions: { all: [C("shadow.trustDebt", "gte", 6)] },
-    text: V(
-      [C("shadow.guilt", "gte", 4)],
-      "你开始接受长期帮助，也允许家人设下清楚边界。关系没有因几个月平稳就复原，日历上的每一天只证明今天没有新增伤害。",
-      [C("resources.health", "lte", 35)],
-      "身体需要照顾时，家人把能做和不能做的事都说清楚，也不再替你向别人解释失约。必要的帮助仍在，过去那种无限兜底已经停了。",
-      "亲友安排重要事情时不再把你的承诺算在内，等你确实到场才临时添一把椅子。你仍把几次缺席说成偶然，日程却已经学会不用你的保证。",
-    ),
+    text: [
+      { conditions: { all: [C("relationships.partnerStatus", "eq", "widowed")] }, text: "伴侣已经不在，亲友也不再替你把过去的失约讲成应酬。需要陪同的事由别人先安排好，你若清醒到场便一起去；死者的缺席没有替你的保证恢复效力。" },
+      { conditions: { all: [C("relationships.partnerStatus", "in", ["separated", "single"])] }, text: "关系结束后，对方只在必要事项上确认你是否能到场，并预备另一套安排。你说这种防备太冷，对方却不再把生活押在判断你这次会不会失约上。" },
+      { conditions: { all: [C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "离开工作后，应酬不再是现成理由，失约却没有立刻停止。亲友把要紧安排交给别人，你才发现问题从来不只属于酒桌或单位。" },
+      { conditions: { all: [C("relationships.children", "gte", 1)] }, text: "孩子长到会自己安排事情后，不再提前把你的承诺写进计划。你确实到场时他仍会高兴，只是不再让期待先承担落空的风险。" },
+      { conditions: { all: [C("shadow.guilt", "gte", 5)] }, text: "你开始接受长期帮助，也允许家人设下清楚边界。关系没有因几个月平稳就复原，日历上的每一天只证明今天没有新增伤害。" },
+      { conditions: { all: [C("resources.health", "lte", 35)] }, text: "身体需要照顾时，家人把能做和不能做的事都说清楚，也不再替你向别人解释失约。必要的帮助仍在，过去那种无限兜底已经停了。" },
+      { text: "亲友安排重要事情时不再把你的承诺算在内，等你确实到场才临时添一把椅子。你仍把几次缺席说成偶然，日程却已经学会不用你的保证。" },
+    ],
     effects: [add("shadow.guilt", 1), add("shadow.trustDebt", 3), add("resources.health", -5), add("relationships.family", -5), add("resources.happiness", -3), { addTag: "shadow_commitments_not_relied_on" }],
+  }),
+  shadowEvent({
+    id: "drinking_later",
+    title: "到场以后，椅子才添上",
+    category: "health",
+    ageRange: [30, 94],
+    requiresEvents: ["shadow_private_drinking_end"],
+    close: true,
+    conditions: { all: [C("shadow.trustDebt", "gte", 8)] },
+    text: [
+      { conditions: { all: [C("shadow.selfDeception", "gte", 16), C("shadow.resentment", "gte", 6)] }, text: "平稳一阵后你又失约，仍说这次情况特殊。亲友没有同你争特殊不特殊，只把接送、照护和要紧安排交给更可靠的人；争论停了，后果照常执行。" },
+      { conditions: { all: [C("shadow.guilt", "gte", 7)] }, text: "你开始较长期地接受帮助，也经历过反复。家人不再把一次清醒当作大团圆，只在你确实到场时把事情交给你；信任恢复得很慢，因为它终于不再靠感动计时。" },
+      { conditions: { all: [C("resources.health", "lte", 35)] }, text: "身体后来需要别人照料，家人仍送药、陪诊，也明确不替你遮掩失约。照护没有被拿来证明过去已经原谅，必要的善意与清楚的边界同时留在屋里。" },
+      { conditions: { all: [C("meta.age", "gte", 65)] }, text: "年纪渐长后，你较少出现在酒桌上，亲友仍保留旧习惯：重要的事先另找一个人托底。你觉得许多年前的账算得太久，他们只是终于不再拿要紧日子试验你的变化。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "往后家里遇到要紧事，先去请另一个可靠的人，你到了再分一件能当场做完的活。没人宣布不再信你，安排本身已经把这句话说得很清楚。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 1950), C("meta.currentYear", "lte", 1999)] }, text: "家里和单位各自学会留一个替补，不再让你的保证占住唯一的位置。你仍参加许多普通聚会，只在真正要紧的时候发现，名单早已按能兑现的人重排。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "群里的时间地点仍会发给你，接送和照护却另有确认过的人负责。你没有被公开赶走，只从关键事项的默认联系人变成了到场以后再算的人。" },
+      { text: "往后的聚会不再由你负责关键一环。你来了，大家便添一把椅子；没来，饭菜和行程照旧。你仍过着普通日子，只是别人的生活终于不必押在你的保证上。" },
+    ],
+    effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 1), add("shadow.trustDebt", 3), add("relationships.family", -3), add("resources.happiness", -2), { addTag: "shadow_drinking_boundaries_hold" }],
   }),
 
   // 8. Petty theft and small fraud.
@@ -515,7 +591,7 @@ export const shadowPrivateArcEvents = [
       "你把能确认的东西和钱退回去，没有编造高尚动机。受损的人收下后仍保持距离；归还是义务，不是购买原谅。",
       [C("resources.reputation", "lte", 35)],
       "事情被人对上细节，你失去一份信任或工作。数目确实不大，别人避开你的原因也不是数目，而是你曾认真证明自己会为小利撒谎。",
-      "有人当面问起，你承认最容易查清的一件，把其余说成记错。小偷小骗没有送你进传奇，只让熟人以后递钱时多点一遍。",
+      "那几次便宜一直没人查到，你也没有因此变成传奇。只是后来每逢东西少了，熟人会先把抽屉合上再同你说话；怀疑不必宣判，也能慢慢改掉一间屋里的动作。",
     ),
     effects: [add("shadow.guilt", 1), add("shadow.trustDebt", 3), add("shadow.selfDeception", 1), add("resources.wealth", -2), add("resources.reputation", -3), add("relationships.friendship", -2), { addTag: "shadow_petty_theft_reckoned" }],
   }),
@@ -554,7 +630,7 @@ export const shadowPrivateArcEvents = [
   }),
   shadowEvent({
     id: "long_lie_end",
-    title: "真相从细节里漏出来",
+    title: "旧说法有了自己的寿命",
     category: "relationship",
     ageRange: [22, 82],
     requiresEvents: ["shadow_private_long_lie_recruits"],
@@ -565,7 +641,7 @@ export const shadowPrivateArcEvents = [
       "一个细节让多年说法崩开，你没有继续补洞，把事实一次讲完。亲近的人听完没有立刻表态，只先核对自己这些年替你说过多少次同一个版本。",
       [C("meta.age", "gte", 60)],
       "晚年整理旧事时，不同版本终于在亲属面前撞到一起。你说年代久了记不清，只有那些曾替你圆谎的人记得异常准确。",
-      "有人再次问到关键细节，你沿用旧版本，却发现替你作证的人已经不肯接话。谎言没有戏剧性地倒塌，只是每次再说都要多留一个无人应声的停顿。",
+      "后来很少再有人核对那段旧事，你的版本便顺利留了下来。曾替你圆谎的人不再主动谈起，你则渐渐把没人追问记成了从未说错。",
     ),
     effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 2), add("shadow.trustDebt", 4), add("resources.reputation", -3), add("relationships.family", -4), add("relationships.friendship", -2), { addTag: "shadow_long_lie_strained" }],
   }),
@@ -627,11 +703,11 @@ export const shadowPrivateArcEvents = [
     category: "family",
     ageRange: [24, 58],
     opening: true,
-    conditions: { all: [C("relationships.children", "gte", 1)] },
+    conditions: { all: [C("relationships.children", "gte", 1), C("relationships.oldestChildAge", "gte", 5)] },
     text: V(
       [C("resources.wealth", "lte", 38)],
       "生活压力很重，你却把挫败变成对孩子的刻薄，讥讽他不懂事、不争气。贫困解释疲惫，不能把孩子变成情绪的偿债人。",
-      [C("education.score", "gte", 65)],
+      [C("education.score", "gte", 65), C("relationships.oldestChildAge", "gte", 7)],
       "你以自己读书或工作的标准要求孩子，一次失误便被说成不用心。你称之为为他好，孩子听见的却是爱要靠成绩续费。",
       "孩子做错一件小事，你脱口说出童年里最伤你的那句话。声音从你嘴里出来时熟悉得可怕，你仍先用管教替它解释。",
     ),
@@ -639,11 +715,11 @@ export const shadowPrivateArcEvents = [
   }),
   shadowEvent({
     id: "child_harm_pattern",
-    title: "孩子学会先藏起成绩单",
+    title: "孩子学会先藏起坏消息",
     category: "family",
     ageRange: [28, 66],
     requiresEvents: ["shadow_private_child_harm_seed"],
-    conditions: { all: [C("relationships.children", "gte", 1), C("shadow.harmDone", "gte", 3)] },
+    conditions: { all: [C("relationships.children", "gte", 1), C("relationships.oldestChildAge", "gte", 7), C("shadow.harmDone", "gte", 3)] },
     text: V(
       [C("meta.currentYear", "gte", 1990)],
       "孩子开始删掉消息、藏起成绩或晚些回家，先把可能招来责备的部分处理干净。你批评他不诚实，却没有问诚实在这个家里要付多少代价。",
@@ -660,11 +736,11 @@ export const shadowPrivateArcEvents = [
     ageRange: [35, 82],
     requiresEvents: ["shadow_private_child_harm_pattern"],
     close: true,
-    conditions: { all: [C("relationships.children", "gte", 1), C("shadow.trustDebt", "gte", 6)] },
+    conditions: { all: [C("relationships.children", "gte", 1), C("relationships.oldestChildAge", "gte", 12), C("shadow.trustDebt", "gte", 6)] },
     text: V(
       [C("shadow.guilt", "gte", 3)],
       "一次争执后，孩子把你常说的那句刻薄话原样复述给你。你这次没有争词义，只承认它确实从自己这里来；后来每次停住半句话，都比一次漂亮道歉更费力。",
-      [C("meta.age", "gte", 65)],
+      [C("meta.age", "gte", 65), C("relationships.oldestChildAge", "gte", 18)],
       "成年孩子来得越来越少，见面时也绕开容易受评判的话题。你说彼此年纪大了没什么可聊，对方只是把最容易受伤的部分留在门外。",
       "孩子当面说起那些伤害，你逐件解释当年多么不容易。你的辛苦是真的，孩子记住的害怕也没有因此消失；谈话没有和解，只把两种事实摆在了同一张桌上。",
     ),
@@ -711,13 +787,247 @@ export const shadowPrivateArcEvents = [
     requiresEvents: ["shadow_private_schadenfreude_spreads"],
     close: true,
     conditions: { all: [C("shadow.complicity", "gte", 3)] },
-    text: V(
-      [C("shadow.guilt", "gte", 4)],
-      "那段话传回当事人耳中，你没有再说只是玩笑，而是承认自己拿他的痛苦换过气氛。对方没有接受道歉，至少羞耻这次没有被继续转交。",
-      [C("meta.age", "gte", 65)],
-      "多年后旧事被晚辈提起，你仍笑说大家当年都这样。桌上没有人接这个笑话，话题很快换了；旧故事还在，只是不再替你活跃气氛。",
-      "当事人从别人那里听见了版本，此后熟人有难处时不再先告诉你。没有公开争吵，也没有戏剧性的报应，只是你后来总比别人晚一点知道消息。",
-    ),
+    text: [
+      { conditions: { all: [C("shadow.guilt", "gte", 4)] }, text: "那段话传回当事人耳中，你没有再说只是玩笑，而是承认自己拿他的痛苦换过气氛。对方没有接受道歉，至少羞耻这次没有被继续转交。" },
+      { conditions: { all: [C("meta.age", "gte", 65)] }, text: "多年后旧事被晚辈提起，你仍笑说大家当年都这样。桌上没有人接这个笑话，话题很快换了；旧故事还在，只是不再替你活跃气氛。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1881)] }, text: "当事人从别人那里听见了版本，此后熟人有难处时不再先告诉你。饭桌仍给你留位置，真正要紧的口信却先托给别人；你后来总比旁人晚一点知道消息。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "当事人从别人那里听见了版本，此后熟人有难处时不再先告诉你。饭桌仍给你留位置，真正要紧的消息却绕过你托人转告；你后来总比旁人晚一点知道消息。" },
+      { text: "当事人从别人那里听见了版本，此后熟人有难处时不再先告诉你。饭桌仍给你留位置，话题到真正要紧处便先绕去打给别人的电话；你后来总比别人晚一点知道消息。" },
+    ],
     effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 1), add("shadow.trustDebt", 3), add("resources.reputation", -3), add("relationships.friendship", -3), add("resources.happiness", -2), { addTag: "shadow_joke_reached_target" }],
+  }),
+
+  // 13. A loan between intimates is slowly rewritten as a favor with no due date.
+  shadowEvent({
+    id: "kin_loan_seed",
+    title: "先借来渡过这一阵",
+    category: "wealth",
+    ageRange: [20, 72],
+    opening: true,
+    conditions: {
+      any: [C("relationships.family", "gte", 28), C("relationships.friendship", "gte", 24)],
+    },
+    text: [
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "你向亲友借了一笔应急的钱或粮，约好下个收成、下次发薪便还。借据写得很短，彼此的信任替许多细节作了担保；你离开时已经在想，若对方不催，也许可以再缓一缓。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "亲友把钱转给你救急，备注栏只写了周转。你答应很快归还，随后删掉聊天框里那句具体日期；数字仍在记录里，期限先从你口中消失。" },
+      { conditions: { all: [C("location.migratedTimes", "gte", 1)] }, text: "异地最难的时候，一位亲友把积蓄匀给你。你说站稳脚便还，后来站稳的标准一再往后挪；距离让催问显得不近人情，也正合你的方便。" },
+      { text: "你从亲友那里借来一笔急用，承诺等手头松一点便归还。钱确实解了燃眉之急，关系也因此多出一个只有你能不断改期的约定。" },
+    ],
+    effects: [add("resources.wealth", 6), add("shadow.harmDone", 2), add("shadow.selfDeception", 3), add("shadow.complicity", 2), add("shadow.trustDebt", 3), add("relationships.friendship", -2), add("relationships.family", -1), { addTag: "shadow_kin_loan_taken" }],
+  }),
+  shadowEvent({
+    id: "kin_loan_rewrite",
+    title: "还款日变成了人情",
+    category: "wealth",
+    ageRange: [22, 79],
+    requiresEvents: ["shadow_private_kin_loan_seed"],
+    conditions: { all: [C("shadow.selfDeception", "gte", 3)] },
+    text: [
+      { conditions: { all: [C("resources.wealth", "gte", 62)] }, text: "手头已经能挪出一部分，你却先添置别的东西，只给债主带了礼物。礼物被你算作情分，借款则继续算作困难；同一笔钱在你这里学会了两套账法。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "对方在消息里问起还款，你隔了很久只回最近也难。几天后你照常晒出一次消费，又安慰自己那不是同一笔钱；屏幕把两件事排得很近，你仍努力把它们分开。" },
+      { conditions: { all: [C("relationships.partnerStatus", "in", ["partnered", "married"])] }, text: "伴侣问这笔借款何时还，你把当年的帮助说成两家互相照应。说法听起来宽厚，却只由欠钱的一方宣布；债主没有参加这次改名。" },
+      { text: "亲友第一次认真催问时，你先觉得受了轻视，列举自己过去帮过他的事。借款没有减少，反倒被你改写成一场谁更讲情分的争论。" },
+    ],
+    effects: [add("shadow.harmDone", 3), add("shadow.selfDeception", 4), add("shadow.resentment", 3), add("shadow.trustDebt", 5), add("relationships.friendship", -5), add("relationships.family", -3), { addTag: "shadow_kin_loan_rewritten" }],
+  }),
+  shadowEvent({
+    id: "kin_loan_pressure",
+    title: "催债的人反而先闭嘴",
+    category: "relationship",
+    ageRange: [24, 86],
+    requiresEvents: ["shadow_private_kin_loan_rewrite"],
+    conditions: { all: [C("shadow.trustDebt", "gte", 6)] },
+    text: [
+      { conditions: { all: [C("shadow.guilt", "gte", 5)] }, text: "对方再问时，你还了一小部分，也第一次没有附带自己的难处。余款仍在，关系也没有因一次转账恢复；迟来的认真只是让债务重新有了准确名字。" },
+      { conditions: { all: [C("shadow.resentment", "gte", 6)] }, text: "你向共同亲友抱怨对方认钱不认人，把催问讲成逼迫。债主后来不再公开追着你，只把借钱那天的信任从此收回；安静不是同意，是他不愿再为事实参加辩论。" },
+      { conditions: { all: [C("meta.age", "gte", 60)] }, text: "年月久了，你开始用记不清数目回答。对方保存着旧纸或转账记录，却很少再拿出来；证据还在，愿意同你说话的部分先磨薄了。" },
+      { text: "债主终于减少来往，也不再问得那么勤。你把沉默理解成算了，他把沉默用来止损；同一个词替两个人保留了完全不同的旧账。" },
+    ],
+    effects: [add("shadow.harmDone", 2), add("shadow.selfDeception", 3), add("shadow.trustDebt", 5), add("relationships.friendship", -7), add("relationships.family", -4), add("resources.reputation", -2), { addTag: "shadow_kin_loan_contact_thins" }],
+  }),
+  shadowEvent({
+    id: "kin_loan_end",
+    title: "往来里不再谈钱",
+    category: "relationship",
+    ageRange: [28, 96],
+    requiresEvents: ["shadow_private_kin_loan_pressure"],
+    close: true,
+    conditions: { all: [C("shadow.trustDebt", "gte", 9)] },
+    text: [
+      { conditions: { all: [C("shadow.guilt", "gte", 8)] }, text: "你后来陆续补还一部分，清楚写下仍欠多少，也没有要求关系随收据一起恢复。对方收下钱，往来仍旧稀薄；偿还可以结束债务的一段，不能替被耗尽的信任签收。" },
+      { conditions: { all: [C("shadow.selfDeception", "gte", 16), C("shadow.resentment", "gte", 8)] }, text: "你一直坚持亲友之间不该算得太清，自己借给别人时却开始写明日期。经验教会了你防范，没有教会你把旧事换回债主的视角。" },
+      { conditions: { all: [C("meta.age", "gte", 70)] }, text: "晚年偶尔见面，你们谈身体、天气和共同认识的人，从不再谈那笔钱。你把这当作彼此放下，对方只是把无法收回的部分连同争辩一起从生活里删掉。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "后来碰上年节或红白事，你们仍按礼数见面，借据却像箱底一张不宜示人的旧纸。你说年月已经替双方磨平了，对方只是再没把粮钱托到你手里。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "转账记录一直躺在旧账号里，往来却只剩节日问候和偶尔点赞。你说真要计较早就计较了，对方只是把追款与亲近一起停止，省下继续解释的力气。" },
+      { text: "亲友没有告你，也没有公开撕破脸，只把金钱和要紧事从此绕开你。你继续过普通日子，旧借款有时甚至不再被提起；不被提起的责任并不会因此自动归零。" },
+    ],
+    effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 2), add("shadow.trustDebt", 3), add("relationships.friendship", -5), add("relationships.family", -3), { addTag: "shadow_kin_loan_became_distance" }],
+  }),
+
+  // 14. A small workplace failure is made to travel downward to the least protected person.
+  shadowEvent({
+    id: "work_blame_seed",
+    title: "差错先落到新人头上",
+    category: "career",
+    ageRange: [22, 66],
+    opening: true,
+    conditions: {
+      any: [
+        {
+          all: [
+            C("meta.currentYear", "lte", 1977),
+            C("career.status", "in", ["employed", "family_labor"]),
+            C("career.level", "gte", 6),
+          ],
+        },
+        {
+          all: [
+            C("meta.currentYear", "gte", 1978),
+            C("career.status", "eq", "employed"),
+            C("career.managesPeople", "eq", true),
+          ],
+        },
+      ],
+    },
+    text: [
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "一件活出了差错，你在东家或管事面前把关键一步推给新来的学徒。对方确实动过手，决定赶工和省料的人却是你；半真最适合拿来压住没有资历的辩解。" },
+      { conditions: { all: [C("career.status", "eq", "family_labor")] }, text: "家里的活误了时辰，你当着长辈说是年轻帮手没听明白。真正改过安排的人是你，辈分却替一句话决定了谁更像在撒谎。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "项目出了小错，你在复盘里强调新人没有及时确认，删去了自己临时改口的那段消息。记录很多，最会写记录的人仍更容易决定哪一条算原因。" },
+      { text: "工作出了问题，你先把责任推给资历最浅的人。对方也有疏忽，却承担了本该由几个人分开的那一份；你的名字因此从说明里轻了一些。" },
+    ],
+    effects: [add("shadow.harmDone", 3), add("shadow.selfDeception", 3), add("shadow.complicity", 3), add("shadow.trustDebt", 4), add("resources.reputation", 2), add("career.level", 1), { addTag: "shadow_work_blame_shifted" }],
+  }),
+  shadowEvent({
+    id: "work_blame_record",
+    title: "一句坏话只跟着一个人走",
+    category: "career",
+    ageRange: [24, 73],
+    requiresEvents: ["shadow_private_work_blame_seed"],
+    conditions: { all: [C("shadow.complicity", "gte", 3)] },
+    text: [
+      { conditions: { all: [C("meta.currentYear", "lte", 1949), C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "你已经离开那间铺子或那伙活，原来的新人却仍背着当年一句坏评语找差事。你说如今插不上话，仿佛换了东家，当年那句失实的话便也不再出自你口。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 1950), C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "你已经离开那份工作，原来的新人却仍带着那次处分或坏评语找下一条路。你说自己如今插不上话，仿佛换了岗位便能把当年的责任留在原处。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949), C("resources.reputation", "gte", 55)] }, text: "东家或同行先信了你的说法，年轻帮手少领一次好差事。后来人们仍称你稳妥；稳妥的一部分，正是有人替你背过不稳妥的名声。" },
+      { conditions: { all: [C("resources.reputation", "gte", 55)] }, text: "你的说法先被采信，年轻同事失去一次机会。后来人们仍称你稳妥，稳妥的一部分正来自有人替你承担过不稳妥的证据。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "那次差错进入绩效记录，新人此后每次失误都被说成又一次。你偶尔在会议上替他讲一句成长很快，听起来宽厚，也让最初那份责任分配更难重开。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "被你点名的人少了一次派活、工钱或入行的门路，你照常做自己的活。伤害最普通的样子，往往只是一个人守住原位，另一个人多走一段弯路。" },
+      { text: "被你点名的人少了一次排班、工钱或晋升机会，你的日子没有明显变化。伤害最普通的样子，往往只是一个人继续上班，另一个人多走一段弯路。" },
+    ],
+    effects: [add("shadow.harmDone", 4), add("shadow.hardness", 2), add("shadow.selfDeception", 3), add("shadow.trustDebt", 5), add("relationships.friendship", -5), add("resources.reputation", 1), { addTag: "shadow_work_blame_recorded" }],
+  }),
+  shadowEvent({
+    id: "work_blame_distance",
+    title: "后来没人替你补最后一句",
+    category: "relationship",
+    ageRange: [26, 82],
+    requiresEvents: ["shadow_private_work_blame_record"],
+    conditions: { all: [C("shadow.trustDebt", "gte", 7)] },
+    text: [
+      { conditions: { all: [C("meta.currentYear", "lte", 1949), C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "离开那间铺子或那伙活后，你偶尔托旧同行办事。对方礼数周全，却不再替你多说一句、赶一步路；旧关系没有报复，只收回了从前额外给你的方便。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 1950), C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "离开那份工作后，你偶尔托旧同事办事，回复总是礼貌而简短。没人提那次差错，也没人再替你补充有利的背景；旧关系没有报复，只撤回了额外的那一步。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949), C("shadow.guilt", "gte", 5)] }, text: "再议起旧事时，你终于承认当年临时改动是自己的主意。账面或众人口中多了一句实话，新人失去的门路却没有倒着回来；补全事实，不等于把后果送还原处。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 1950), C("shadow.guilt", "gte", 5)] }, text: "又一次复盘时，你补充说明当年临时改动是自己的决定。记录终于多了一行，新人失去的机会却没有倒着回来；更正事实不是把后果交还原处。" },
+      {
+        conditions: {
+          all: [C("shadow.hardness", "gte", 7), C("meta.currentYear", "lte", 1979)],
+          any: [
+            C("location.currentCityTier", "in", ["village", "town"]),
+            C("location.currentProvince", "in", ["gansu", "qinghai", "xinjiang", "xizang"]),
+          ],
+        },
+        text: "你后来更会把差错拆成一道道手续，自己的主意只认最末一道。同行当面点头，要紧顾虑却托熟人捎话，或写进一封绕过你的信；路越远，等你听见时越像事情早已有了定论。",
+      },
+      { conditions: { all: [C("shadow.hardness", "gte", 7), C("meta.currentYear", "lte", 1949)] }, text: "你后来更会把差错分给每一道经手，自己的主意反倒说得最轻。同行议事时当面点头，散去后却在另一张桌旁把忧虑讲完；你最后听见的，只剩一句大家早就知道。" },
+      { conditions: { all: [C("shadow.hardness", "gte", 7), C("meta.currentYear", "lte", 1979)] }, text: "你后来更熟练地把问题拆成执行细节，很少再让责任碰到决策本身。同事当面点头，会后却另找人把重要风险讲完，再用口信或一张便条绕过你；消息仍会抵达，只是不再先抵达你。" },
+      { conditions: { all: [C("shadow.hardness", "gte", 7), C("meta.currentYear", "gte", 1980), C("meta.currentYear", "lte", 2004)] }, text: "你后来更熟练地把问题拆成执行细节，很少再让责任碰到决策本身。同事开会时当面点头，重要风险却在打给别人的电话里讲完；你后来接到的，只是已经商量好的结论。" },
+      { conditions: { all: [C("shadow.hardness", "gte", 7), C("meta.currentYear", "gte", 2005)] }, text: "你后来更熟练地把问题拆成执行细节，很少再让责任碰到决策本身。同事开会时当面点头，重要风险却先在没有你的群聊里讲完。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "同行只照明面规矩同你来往，不再替你赶一程、垫一句话或作保。你觉得人情变薄了，没想到他们只是学会不再替别人的失实担一份风险。" },
+      { text: "同事逐渐只按书面流程同你合作，不再替你赶最后一班或口头担保。你觉得大家越来越会算计，没想到他们只是学会不再替别人的失误交押金。" },
+    ],
+    effects: [add("shadow.hardness", 2), add("shadow.selfDeception", 2), add("shadow.trustDebt", 4), add("relationships.friendship", -6), add("resources.reputation", -2), { addTag: "shadow_work_no_one_covers" }],
+  }),
+  shadowEvent({
+    id: "work_blame_end",
+    title: "旧账没有替谁道歉",
+    category: "career",
+    ageRange: [30, 96],
+    requiresEvents: ["shadow_private_work_blame_distance"],
+    close: true,
+    conditions: { all: [C("shadow.trustDebt", "gte", 9)] },
+    text: [
+      { conditions: { all: [C("meta.currentYear", "lte", 1949)] }, text: "多年后同行仍记得那次差错，却只说新人后来去了别处。你继续做活，也把这当成事情已经过去；一个人的去处成了句号，谁把他推到那里则没有写进账。" },
+      { conditions: { all: [C("shadow.guilt", "gte", 8)] }, text: "你后来为那位旧同事写了一份更准确的证明，也承认自己曾把责任压给他。证明帮到了一点，对方没有因此恢复来往；他需要的是迟到的事实，不是替你的醒悟鼓掌。" },
+      { conditions: { all: [C("career.status", "eq", "retired")] }, text: "退休后谈起旧单位，你常说年轻人谁没替人背过锅。那句话把伤害讲成了入行规矩，也让你不必分清，当年自己究竟站在锅的哪一边。" },
+      { conditions: { all: [C("shadow.selfDeception", "gte", 16), C("shadow.hardness", "gte", 10)] }, text: "你仍相信当时只能那样处理，并以自己后来也吃过亏作证。受过伤与伤过别人被你放在同一只篮里晃了晃，仿佛重量相近便能互相抵消。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "旧同事换了单位，系统里的那次评语仍由他自己解释。你没有再参与他的生活，自己的履历也照常更新；数据擅长保存结果，不会主动追问是谁先选择了版本。" },
+      { text: "你继续工作、转行或退休，那次责任分配没有成为大案。被压过的人也过起别的生活，只在有人向他打听你时停一下再回答；普通日子照常向前，判断人的旧经验也一起留下。" },
+    ],
+    effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 2), add("shadow.trustDebt", 3), add("relationships.friendship", -4), add("resources.reputation", -2), { addTag: "shadow_work_blame_remembered" }],
+  }),
+
+  // 15. One relative's availability is treated as a permanent source of unpaid care.
+  shadowEvent({
+    id: "care_capture_seed",
+    title: "顺手再帮一天",
+    category: "family",
+    ageRange: [24, 72],
+    opening: true,
+    conditions: { all: [C("relationships.family", "gte", 30)] },
+    text: [
+      { conditions: { all: [C("relationships.children", "gte", 1)] }, text: "你请一位亲属再替你接送、看护或照料孩子一天，说他反正更有空。帮忙原本有边界，你却把对方没有拒绝，当成下一次也默认答应。" },
+      { conditions: { all: [C("resources.health", "lte", 45)] }, text: "身体不方便时，一位亲属主动接过几件事。困难是真的，你仍把感谢慢慢省成了吩咐；需要帮助不等于帮助者的时间从此没有主人。" },
+      { conditions: { all: [C("meta.currentYear", "lte", 1978)] }, text: "家里总把跑腿、守夜和收拾留给最少开口的那个人，你也顺势多托了一件。大家夸他能干，夸奖既不算工钱，也没有替他少做一趟。" },
+      { text: "一位亲属偶尔帮你处理家事，你很快开始按他一定有空来安排。每次单看都只是搭把手，连起来便成了另一份没有下班时间的生活。" },
+    ],
+    effects: [add("shadow.harmDone", 2), add("shadow.selfDeception", 3), add("shadow.complicity", 3), add("shadow.trustDebt", 3), add("relationships.family", -3), add("resources.freedom", 3), { addTag: "shadow_care_help_captured" }],
+  }),
+  shadowEvent({
+    id: "care_capture_default",
+    title: "全家的时间，只有一个人不用预约",
+    category: "family",
+    ageRange: [26, 79],
+    requiresEvents: ["shadow_private_care_capture_seed"],
+    conditions: { all: [C("shadow.complicity", "gte", 3)] },
+    text: [
+      { conditions: { all: [C("location.migratedTimes", "gte", 1), C("meta.currentYear", "gte", 1990)] }, text: "你在外地用电话把家中几件照护继续交给同一个亲属，偶尔寄钱回去，便觉得自己也承担了一半。路远解释不能到场，却没有解释为何安排和催问仍由最累的人承受。" },
+      { conditions: { all: [C("location.migratedTimes", "gte", 1), C("meta.currentYear", "lte", 1989)] }, text: "你在外地靠书信、捎话或逢年回家，把几件照护继续留给同一个亲属。信里常问家中可好，却很少问那个人还有没有自己的事；路远让安排变慢，没有让分工变得公平。" },
+      { conditions: { all: [C("resources.wealth", "gte", 62)] }, text: "你逢节送礼，也会塞一笔钱给长期帮忙的亲属，却从不先问他下周能否空出来。礼物表达感谢，安排仍默认占用；慷慨没有自动变成尊重。" },
+      { conditions: { all: [C("meta.currentYear", "gte", 2000)] }, text: "家庭日程里，接送、陪诊和临时救急总先填上同一个名字。你转发地址和时间很熟练，唯独很少发一句如果不方便可以拒绝。" },
+      { text: "那位亲属成了全家默认的人手：谁临时有事，谁便先找他。你也说过辛苦了，第二天仍把新的事情直接报给他；感谢若没有拒绝的余地，也会变成另一种催单。" },
+    ],
+    effects: [add("shadow.harmDone", 4), add("shadow.selfDeception", 3), add("shadow.hardness", 2), add("shadow.trustDebt", 5), add("relationships.family", -7), add("resources.freedom", 2), { addTag: "shadow_care_became_default" }],
+  }),
+  shadowEvent({
+    id: "care_capture_boundary",
+    title: "最能帮的人开始不再应声",
+    category: "relationship",
+    ageRange: [28, 86],
+    requiresEvents: ["shadow_private_care_capture_default"],
+    conditions: { all: [C("shadow.trustDebt", "gte", 6)] },
+    text: [
+      { conditions: { all: [C("career.status", "in", ["none", "unemployed", "laid_off", "retired"])] }, text: "你如今有了更多可支配时间，仍习惯先找那位亲属。对方第一次说你可以自己办，你立刻列出过去的难处；旧分工失去借口以后，习惯仍替自己找到了理由。" },
+      { conditions: { all: [C("resources.wealth", "gte", 60)] }, text: "对方明确说不能再随叫随到，你终于花钱请人接下一部分。问题得到实际缓解，亲属却没有因此撤回边界；能买到服务，不等于能买回被长期占用的情分。" },
+      { conditions: { all: [C("shadow.resentment", "gte", 5)] }, text: "那位亲属几次没有应下差事后，你向家人抱怨他变了。没人提醒你，变化也许只是一个人终于把自己的时间从公共物品改回私人所有。" },
+      { text: "最常帮忙的人回应得越来越迟，也不再为每次拒绝写长篇理由。你觉得亲情突然变薄，对方只是把许多年没有说出口的边界，改成了可以执行的做法。" },
+    ],
+    effects: [add("shadow.resentment", 3), add("shadow.selfDeception", 2), add("shadow.trustDebt", 5), add("relationships.family", -8), add("resources.freedom", -2), { addTag: "shadow_caregiver_set_boundary" }],
+  }),
+  shadowEvent({
+    id: "care_capture_end",
+    title: "亲情后来换了安排",
+    category: "family",
+    ageRange: [32, 96],
+    requiresEvents: ["shadow_private_care_capture_boundary"],
+    close: true,
+    conditions: { all: [C("shadow.trustDebt", "gte", 9)] },
+    text: [
+      { conditions: { all: [C("shadow.selfDeception", "gte", 9), C("shadow.hardness", "gte", 8), C("meta.currentYear", "lte", 1949)] }, text: "对方设过几次边界，你仍总能在真正着急时绕过去：先把事情送到门口，再解释只有他最可靠。后来他搬远，也不再回信或接你的口信，家里的活才第一次空在那里，谁也不能继续称作顺手。" },
+      { conditions: { all: [C("shadow.selfDeception", "gte", 9), C("shadow.hardness", "gte", 8), C("meta.currentYear", "gte", 1950)] }, text: "对方设过几次边界，你仍总能在真正着急时绕过去：先把事情送到门口，再解释只有他最可靠。后来他搬远或干脆不接电话，家里的活才第一次空在那里，谁也不能继续称作顺手。" },
+      { conditions: { all: [C("shadow.guilt", "gte", 6)] }, text: "你后来再请帮忙时先问时间，也接受对方说不。几次准时接替比道歉更有用，却仍不足以要求亲密恢复；边界被尊重，是停止继续侵占，不是过去从未发生。" },
+      { conditions: { all: [C("relationships.family", "lte", 25)] }, text: "那位亲属只在必要时出现，提前说明能做哪几件事。你说一家人何必这么客气，对方没有争辩；客气是关系剩下的护栏，不是关系恢复了原样。" },
+      { conditions: { all: [C("meta.age", "gte", 70)] }, text: "晚年需要帮助时，家人按说好的范围轮流来，没有谁再被默认全天候待命。你偶尔怀念从前方便的日子，方便的另一面，则是某个人许多年没有自己的日程。" },
+      { text: "家事后来换了安排：有的花钱解决，有的由你自己承担，有的干脆不再做。那位亲属仍会来往，却不再一进门便自动接手；关系继续存在，免费劳力的位置空了下来。" },
+    ],
+    effects: [add("shadow.guilt", 1), add("shadow.selfDeception", 1), add("shadow.trustDebt", 3), add("relationships.family", -4), add("resources.freedom", -1), { addTag: "shadow_care_help_has_terms" }],
   }),
 ];

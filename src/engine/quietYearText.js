@@ -3,7 +3,7 @@ const RURAL_TIERS = new Set(["village", "town"]);
 export function composeQuietYearText(state, rng) {
   const year = state.meta.currentYear;
   if (state.meta.age <= 3) return composeEarlyChildhoodText(state, rng);
-  const scenes = getEraScenes(year, isRuralSetting(state));
+  const scenes = getEraScenes(year, isRuralSetting(state), state.location.currentProvince);
   const details = getLifeDetails(state);
   const reflections = getQuietYearClosings(state);
   const frames = [
@@ -68,20 +68,43 @@ function getQuietYearClosings(state) {
   if (state.resources.wealth >= 72) options.push(
     "日子宽裕了一些，难处便不再都叫作缺钱；有几件事换了更体面的名字，仍旧需要你拿主意。",
   );
-  if (state.relationships.children > 0) options.push(
-    "孩子又换了一种需要你的方式；你嘴上说早已习惯，真正听见动静时仍会先回头。",
+  if (state.relationships.children > 0 && age <= 74) options.push(
+    age >= 60 || (state.relationships.oldestChildAge ?? 0) >= 35
+      ? "成年子女各有自己的工作、家庭和身体难处；你能帮的方式变了，惦记并没有按年龄退休。"
+      : "孩子又换了一种需要你的方式；你嘴上说早已习惯，真正听见动静时仍会先回头。",
   );
-  if (state.relationships.partnerStatus === "married") options.push(
+  if (state.relationships.children > 0 && age >= 75 && age <= 89) options.push(
+    "孩子也已走进自己的中晚年，你们轮流问对方身体，不再假装照料永远只朝一个方向流。",
+  );
+  if (state.relationships.children > 0 && age >= 90) options.push(
+    "孩子也已经老去，来往多靠一句报平安。谁照看谁不再由辈分决定，只看当天哪双手更稳。",
+  );
+  if (state.relationships.partnerStatus === "married" && age <= 74) options.push(
     "两个人没有把话都说开，却把饭、账和几件麻烦继续分着做了；许多共同生活就靠这种不完整维持。",
+  );
+  if (state.relationships.partnerStatus === "married" && age >= 75 && age <= 89) options.push(
+    "你和伴侣都慢了下来，谁身体好些谁多走一步；旧脾气还在，递药和留灯也还在。",
+  );
+  if (state.relationships.partnerStatus === "married" && age >= 90) options.push(
+    "若当天两个人都精神，就多说几句旧事；若都累了，安静坐在一处也算把日子共同过完。",
   );
   if (["employed", "self_employed", "gig_worker"].includes(state.career.status)) options.push(
     "你做熟了一些活，也看清了一些规矩；前者能换钱，后者多数时候只能换来一声不太响的叹气。",
   );
-  if (state.career.status === "retired" && age >= 50) options.push(
-    year <= 1949 || isRuralSetting(state)
-      ? "最重的活渐渐不再落到你手里，零碎事情却照旧找得到门；人歇下一副担子，日子很快又递来一只篮子。"
-      : "不再按旧钟点出门以后，你才发现家里的活从未办理过退休，只是不发工资。",
-  );
+  if (state.career.status === "retired" && age >= 50) {
+    const retiredYears = yearsSinceEvent(state, "life_retirement_day");
+    if (retiredYears !== null && retiredYears <= 8 && age <= 74) options.push(
+      year <= 1949 || isRuralSetting(state)
+        ? "最重的活渐渐不再落到你手里，零碎事情却照旧找得到门；人歇下一副担子，日子很快又递来一只篮子。"
+        : "不再按旧钟点出门以后，你才发现家里的活从未办理过退休，只是不发工资。",
+    );
+    else if (age >= 90) options.push(
+      "离开原来的活计已经很久，今天的节律只听身体、天气和近处的人；旧工牌属于往事，不再替清晨定时。",
+    );
+    else options.push(
+      "离开岗位已有些年头，日子早长出自己的次序。偶尔有人来问旧行当，你说完门道，也把剩下的下午留给自己。",
+    );
+  }
 
   if (year <= 1911) options.push("县里的消息来过几回，落到家中仍要由柴米、租钱、收成或人情重新解释。纸上的天下很大，眼前能商量的仍是几件具体事。");
   else if (year <= 1949) options.push("局势在外面改换说法，家里先看米缸、药钱和门外的脚步。人们不是不关心天下，只是天下每次都从这些地方进门。");
@@ -97,7 +120,7 @@ function composeEarlyChildhoodText(state, rng) {
   const year = state.meta.currentYear;
   const age = state.meta.age;
   const rural = isRuralSetting(state);
-  const scenes = getEarlyChildhoodScenes(year, rural);
+  const scenes = getEarlyChildhoodScenes(year, rural, state.location.currentProvince);
   const details = age <= 1 ? [
     "你还不会理解大人的话，只认得抱你的手、常闻到的饭香和几种熟悉的脚步声。",
     "你能分辨亲近的声音，却不知道屋外的人为什么忙，也不知道这一年叫什么。",
@@ -130,12 +153,12 @@ function composeEarlyChildhoodText(state, rng) {
   return `${year}年没有留下你的自述。${choose(scenes, rng)}${choose(details, rng)}${choose(closings, rng)}`;
 }
 
-function getEarlyChildhoodScenes(year, rural) {
+function getEarlyChildhoodScenes(year, rural, province) {
   if (year <= 1911) return rural ? [
     "大人按节气做活，米缸和租账决定一家人的声调；你的冷暖夹在这些生计中间，被尽力照看。",
     "鸡鸣、灶烟和田里的忙闲排着家中的日程，远处的政令到了屋里，常只剩粮价的一次变动。",
   ] : [
-    "铺门、街声和煤油灯安排着大人的一天，屋里总有人一边算账，一边腾出手来照看你。",
+    "铺门、街声和油灯安排着大人的一天，屋里总有人一边算账，一边腾出手来照看你。",
     "城里的消息从茶馆和码头传来，落到家中先变成房钱、米价，以及大人压低的一阵说话声。",
   ];
   if (year <= 1949) return rural ? [
@@ -151,6 +174,13 @@ function getEarlyChildhoodScenes(year, rural) {
   ] : [
     "街道、学校和逐渐成形的单位占去大人的许多时间，邻里与家中亲属轮流腾出手照看你。",
     "上班钟与院里的脚步声来回响，家人把有限的布、奶和睡眠重新分配，总要给你留一份。",
+  ];
+  if (year <= 1977 && ["xianggang", "aomen", "taiwan"].includes(province)) return rural ? [
+    "田地、作坊和街市各按本地的规矩忙着，大人谈到岛内或港口的消息时，仍先顾你有没有吃饱睡稳。",
+    "外面的制度与局势有自己的说法，屋里仍靠亲属和邻里轮流照看你，奶、米和药比口号更靠近摇篮。",
+  ] : [
+    "港口、工厂、学校和街市占去大人的许多时间，家人仍从轮班、车程和窄小住处里腾出手照看你。",
+    "报纸与广播带来本地的紧张和繁荣，屋里先核对奶、米、药和谁能早些回家。",
   ];
   if (year <= 1977) return rural ? [
     "队里的活、口粮和灶台安排着大人的一天，你的吃睡由一家人从紧日子里轮流腾出手照看。",
@@ -182,14 +212,14 @@ function getEarlyChildhoodScenes(year, rural) {
   ];
 }
 
-function getEraScenes(year, rural) {
+function getEraScenes(year, rural, province) {
   if (year <= 1911) return rural ? [
     "节气、地租和墟场的价钱依次来到门前，田垄比官府告示更懂得怎样安排一家人的脚步。",
     "村里靠鸡鸣辨早晚，靠天色猜收成；远处的政令走得慢，催租的人却总认得路。",
     "柴垛矮下去又垒起来，衣裳补了又补，家里的算盘把丰歉算得比天气还仔细。",
     "你在井台、田埂和集市之间听见许多天下事，它们最后都被换算成粮价与下一顿饭。",
   ] : [
-    "铺门照旧早开晚关，煤油灯把算盘珠照得发亮；城里的新鲜事不少，赊账仍是最旧的一件。",
+    "铺门照旧早开晚关，灯火把算盘珠照得发亮；城里的新鲜事不少，赊账仍是最旧的一件。",
     "码头、街巷和茶馆轮流送来消息，大事印在报纸上，小事落在房钱与米缸里。",
     "城门内外比往年更热闹，新式招牌挨着旧规矩站立，谁也没有立刻让路。",
     "街面换过告示，生意仍照人情与铜钱运转；人们议论天下，也认真计较少找的一枚钱。",
@@ -226,6 +256,20 @@ function getEraScenes(year, rural) {
     "上班钟、食堂和院里的脚步声组织着一天，闲话则负责补充正式通知没说完的部分。",
     "城市忙着建设新的秩序，供应办法和工资袋把宏大的计划折成了每家每户能看懂的尺寸。",
     "新的规矩逐渐落定，人们在集体的节奏里寻找自己的位置，也保留一点不便登记的心思。",
+  ];
+  if (year <= 1977 && province === "taiwan") return rural ? [
+    "农地、加工活和外出谋生把一年排得很满，岛内的制度与消息走到家里，仍先被换算成收成、工钱和车程。",
+    "乡镇慢慢接上工厂与公路，年轻人谈远处的机会，家里仍认真计算谁留下照看田地和老人。",
+  ] : [
+    "工厂班次、学校和街道把一天排出次序，出口订单带来工钱，许多不能公开说的话则留在家门以内。",
+    "城市沿着制造与贸易加快，报纸上的说法很整齐，饭桌旁的人仍会在要紧名字前停一下。",
+  ];
+  if (year <= 1977 && ["xianggang", "aomen"].includes(province)) return rural ? [
+    "村镇同港口和市区来往频繁，工钱、船期与家中照料互相牵扯，没有一本工分册替人安排日子。",
+    "附近工场和街市带来生计，殖民地的规章落到生活里，常先表现为证件、房租和一趟渡轮。",
+  ] : [
+    "工厂钟、渡轮、街市和拥挤住处轮流安排一天，繁荣写在出口数字上，疲惫留在下班的人身上。",
+    "殖民地的规章、街头的紧张和谋生的班次挤在一起，家里先问谁能平安回来、这个月房租够不够。",
   ];
   if (year <= 1977) return rural ? [
     "队里的钟声、工分本和灶台烟火轮流安排一天，个人心事没有记分员，只能由你自己记着。",
@@ -332,16 +376,25 @@ function getLifeDetails(state) {
     "你做事慢了一些，从前非争不可的几件事，如今提起时只够占饭桌上的半句话。",
     "你把时间多分给身体、旧事和仍有来往的人；一天稳稳做成一件事，晚上便少惦记一件。",
   );
-  else options.push(
+  else if (age <= 89) options.push(
     "身体开始对天气拥有发言权，记忆则擅自重排轻重，把一顿旧饭保存得比许多大事更久。",
-    "你走得慢了，世界没有；两边偶尔互相迁就，偶尔谁也不肯。",
+    "你走得慢了，世界没有停；两边偶尔互相迁就，偶尔谁也不肯。",
+  );
+  else options.push(
+    "一天能容下的事更少，你把力气留给吃饭、说话和一件仍愿意亲手完成的小事。",
+    "许多旧日程已经退出生活，眼前的光线、温度和一段不被催促的谈话，重新替一天划出刻度。",
   );
 
   if (state.resources.health <= 38) options.push("身体把日程削得更短，你学会在有限力气里挑真正要紧的事。");
   if (state.resources.wealth <= 28) options.push("钱在口袋里待得很有原则，通常不肯过夜；你只好把每一笔花销排出先后。");
   if (state.resources.wealth >= 72) options.push("手头比从前宽裕，选择随之增多；一笔钱该不该花，也因此能被讨论得更久了。");
-  if (state.relationships.children > 0) options.push("孩子眼下需要照料的事又换了几样，称呼各不相同，花时间和花钱倒一直很稳定。");
-  if (state.relationships.partnerStatus === "married") options.push("两个人把琐事分着承担，也把脾气轮流带回家；好在多数晚上，饭仍能坐在一起吃。");
+  if (state.relationships.children > 0 && age <= 59) options.push("孩子眼下需要照料的事又换了几样，称呼各不相同，花时间和花钱倒一直很稳定。");
+  if (state.relationships.children > 0 && age >= 60 && age <= 74) options.push("孩子已经成年，遇事仍会来问你；你给的更多是经验和一通电话，不再是替他们把日子全部接过去。");
+  if (state.relationships.children > 0 && age >= 75 && age <= 89) options.push("成年子女也添了白发，你们把看病、探望和各自的难处分开商量，谁都不再假装自己永远只负责照顾别人。");
+  if (state.relationships.children > 0 && age >= 90) options.push("孩子也已年老，彼此能做的事都少了；一声平安、一次到访，便是这一年最实在的互相照看。");
+  if (state.relationships.partnerStatus === "married" && age <= 74) options.push("两个人把琐事分着承担，也把脾气轮流带回家；好在多数晚上，饭仍能坐在一起吃。");
+  if (state.relationships.partnerStatus === "married" && age >= 75 && age <= 89) options.push("你和伴侣都按各自的身体安排一天，谁先起身谁烧水，谁走得稳谁多拿一样；分工不再逞强。");
+  if (state.relationships.partnerStatus === "married" && age >= 90) options.push("两个人都不再追赶从前的速度，能同桌吃完一顿饭、把一句话听完整，已经是共同生活很具体的部分。");
   if (["employed", "self_employed", "gig_worker"].includes(state.career.status)) options.push("活计继续索取你的时间，也给你一份站得住脚的理由，二者谁更重要随月份变化。");
   if (state.education.level !== "none" && age <= 24) options.push("书本替你打开一些远处，也让你更敏锐地看见眼前的门槛。");
   return options;
@@ -358,4 +411,9 @@ function choose(items, rng) {
 
 function normalizeForReuse(text) {
   return text.replace(/[0-9\p{P}\p{S}\s]/gu, "");
+}
+
+function yearsSinceEvent(state, eventId) {
+  const occurred = state.occurredEvents?.[eventId];
+  return occurred ? state.meta.currentYear - occurred.lastYear : null;
 }

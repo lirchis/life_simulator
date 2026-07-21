@@ -74,6 +74,21 @@ const COST = [{ path: "resources.wealth", add: -1 }];
 const FRIEND = [{ path: "relationships.friendship", add: 2 }];
 const FREE = [{ path: "resources.freedom", add: 1 }];
 
+const PREINDUSTRIAL_HEAVY_WORK = ["manual_worker", "apprentice", "farm_work", "rickshaw_puller", "factory"];
+const PREINDUSTRIAL_NON_MANUAL_WORK = ["estate_management", "care_work", "pharmacy", "teacher", "scholar", "clerical"];
+const HEAVY_WORKING_CLASSES = ["landless_laborer", "tenant", "poor_peasant", "smallholder", "craftsman", "shop_clerk"];
+
+function heavyWorkConditions(minHealth = 45) {
+  return {
+    all: [{ path: "resources.health", gte: minHealth }],
+    any: [
+      { path: "career.field", in: PREINDUSTRIAL_HEAVY_WORK },
+      { path: "career.status", in: ["none", "unemployed"] },
+    ],
+    none: [{ path: "career.field", in: PREINDUSTRIAL_NON_MANUAL_WORK }],
+  };
+}
+
 function dense(id, title, yearRange, ageRange, category, cityTiers, condition, conditionalText, fallbackText, effects = H, extra = {}) {
   return {
     id: `era_1840_dense_${id}`,
@@ -97,7 +112,7 @@ function dense(id, title, yearRange, ageRange, category, cityTiers, condition, c
 
 export const expansion1840DenseEvents = [
   // Rural childhood, youth and early adulthood, 1840-1875 (51).
-  dense("rural_midwife_basin", "接生婆带来的铜盆", [1840, 1865], [0, 2], "family", RURAL, poor,
+  dense("rural_midwife_basin", "接生婆带来的铜盆", [1840, 1865], [0, 0], "family", RURAL, poor,
     "接生的人把借来的铜盆反复烫洗，盆沿已有凹痕。你出生后的哭声从里屋传出，家人先松一口气，再商量怎样还这份人情。",
     "接生的人把热水、剪刀和布一件件摆好。你只负责呼吸和哭，屋里其余的人忙着把这两件事守住。", F),
   dense("rural_cradle_sack", "谷袋改成的摇窝", [1840, 1865], [0, 2], "family", RURAL, poor,
@@ -198,7 +213,7 @@ export const expansion1840DenseEvents = [
     "族里长辈把争执双方叫来，各退一步写成字据。和气被重新宣布，心里的界石仍各放一块。", F),
   dense("rural_dowry_chest", "嫁妆箱先装日用", [1850, 1875], [14, 28], "family", RURAL, female,
     "家里替你备嫁妆，箱里先放被面、针线和几件能用的器物。好看的摆上层，真正过日子的压在下面。",
-    "亲族一点点添置出嫁用品，每件都有人评说。箱子尚未合上，你未来怎样做媳妇已被讲了许多遍。", F),
+    "亲族一点点添置出嫁用品，每件都有人评说。箱子尚未合上，你未来怎样做媳妇已被讲了许多遍。", F, { genders: ["female"] }),
   dense("rural_widow_accounts", "寡妇手里的粮钥匙", [1850, 1875], [18, 70], "family", RURAL, female,
     "丈夫不在后，你掌着粮柜和孩子的饭，却仍要请族中男人替你签契。家务全归你，落款不全归你。",
     "家中缺了成年男丁，你把收支记在心里，逢大事再请亲族出面。谁说了算和谁做完，并不是同一个问题。", [{ path: "attrs.mental", add: 1 }]),
@@ -281,13 +296,19 @@ export const expansion1840DenseEvents = [
     "师傅收下礼物与字据，交代铺规。你听见将来能学手艺，也听见眼下先没有工钱。", L),
   dense("urban_apprentice_bunk", "柜台下铺开被褥", [1848, 1875], [10, 24], "work", URBAN, poor,
     "收铺后，你把被褥铺在柜台下。白天卖货的地方夜里睡人，清早再把疲惫卷起来收好。",
-    "学徒们挤在后间睡，最晚收工的人只能靠门。店门挡住了夜风，没挡住师傅清早的喊声。", N),
+    "学徒们挤在后间睡，最晚收工的人只能靠门。店门挡住了夜风，没挡住师傅清早的喊声。", N, {
+      conditions: one("career.field", "in", ["apprentice", "pharmacy"]),
+    }),
   dense("urban_bowl_deposit", "吃完要还的粗瓷碗", [1844, 1875], [6, 70], "wealth", URBAN, poor,
     "街边买吃食要押一枚小钱在碗上，你喝完立刻送回。饭可以端走几步，餐具没有那么信任你。",
     "摊主用粗瓷碗盛热食，缺口都朝外摆。你吃得快，碗还回去时，下一勺已经盛好。", COST),
   dense("urban_water_carrier", "扁担两桶水", [1840, 1875], [12, 65], "work", URBAN, male,
     "你替人挑水上楼，转弯处先喊一声让路。桶里的水一路晃，工钱按送到多少算，不按洒掉多少解释。",
-    "清早你从公井挑水送到几户人家，肩膀很快磨红。住得高些的人多付一点，台阶没有因此变少。", W),
+    "清早你从公井挑水送到几户人家，肩膀很快磨红。住得高些的人多付一点，台阶没有因此变少。", W, {
+      genders: ["male"],
+      birthFamilyClasses: HEAVY_WORKING_CLASSES,
+      conditions: heavyWorkConditions(45),
+    }),
   dense("urban_charcoal_scale", "炭铺里称一小筐", [1840, 1875], [8, 70], "wealth", URBAN, poor,
     "入冬前你去炭铺称一小筐炭，家里只买得起眼前几日。掌柜报的是斤数，寒冷按整个冬天来。",
     "炭块过秤后被装进旧筐，碎末也没有倒掉。炉火里，每一点黑灰都有价。", COST),
@@ -308,10 +329,18 @@ export const expansion1840DenseEvents = [
     "破鞋在摊上补了底，针脚从旧洞旁穿过。走路的人急，修鞋的人只能让线慢些。", COST),
   dense("urban_sedan_porter", "轿杠换肩", [1840, 1875], [15, 60], "work", URBAN, male,
     "你抬轿走过石板街，前后脚步必须合拍。轿里的人嫌颠时敲了一下，没人问哪位轿夫肩上旧伤发作。",
-    "转巷时你喊号换肩，轿身只轻轻一晃。客人要的是平稳，平稳由几个人一起忍住。", W),
+    "转巷时你喊号换肩，轿身只轻轻一晃。客人要的是平稳，平稳由几个人一起忍住。", W, {
+      genders: ["male"],
+      birthFamilyClasses: HEAVY_WORKING_CLASSES,
+      conditions: heavyWorkConditions(48),
+    }),
   dense("urban_wheelbarrow", "独轮车过石坎", [1840, 1875], [14, 65], "work", URBAN, male,
     "你推独轮车过石坎，先让货主扶住两边。货物不能倒，推车人踉跄一步通常不在赔偿之列。",
-    "独轮车轴一路吱响，你凭声音知道哪处该添油。街上人嫌它吵，你靠它吃饭。", W),
+    "独轮车轴一路吱响，你凭声音知道哪处该添油。街上人嫌它吵，你靠它吃饭。", W, {
+      genders: ["male"],
+      birthFamilyClasses: HEAVY_WORKING_CLASSES,
+      conditions: heavyWorkConditions(45),
+    }),
   dense("urban_canal_tally", "平码头数包", [1840, 1875], [12, 65], "work", URBAN, literate,
     "船货卸岸时，你用木筹记下每个脚夫的趟数。货包、工钱都算得清，扭伤只在收工时各自知道。",
     "你站在码头边核对包数，船家报一遍，栈房再数一遍。水路很远，差错常只差一包。", L),
@@ -320,7 +349,11 @@ export const expansion1840DenseEvents = [
     "外地来信寄到熟铺，再由伙计转交。封套沾了灰，家人的字仍完整抵达。", F),
   dense("urban_courier_horse", "驿路旁添草料", [1840, 1875], [12, 65], "work", URBAN, male,
     "公差或商队在客店换马歇脚，你帮着添草、打水、看鞍具。消息走得快，是因为许多人各接一小段。",
-    "客店夜里来了赶路人，你被叫起照料牲口。对方只歇片刻，你的后半夜却已经交出去。", W),
+    "客店夜里来了赶路人，你被叫起照料牲口。对方只歇片刻，你的后半夜却已经交出去。", W, {
+      genders: ["male"],
+      birthFamilyClasses: HEAVY_WORKING_CLASSES,
+      conditions: heavyWorkConditions(38),
+    }),
   dense("urban_ferry_token", "渡口收一枚小钱", [1840, 1875], [7, 75], "wealth", URBAN, poor,
     "你过河时把小钱递给船家，碰上水涨还要加价。河面没有变宽，风险被临时写进船费。",
     "渡船坐满才开，你和担子挤在一处。大家都想早点到岸，只能一起等最后一个客。", COST),
@@ -410,7 +443,17 @@ export const expansion1840DenseEvents = [
     "铺户们凑钱帮同业办一场白事，账目另册记录。情分与制度挨在一起，反而更能落到实处。", FRIEND),
   dense("urban_woman_account", "女掌柜坐到柜后", [1840, 1875], [18, 65], "work", URBAN, female,
     "家中男人病倒后，你坐到柜后理账应客。熟客先称意外，买卖做完几次便不再多问。",
-    "你实际管着铺里的货与钱，对外仍由亲族男人落名。生意认手里的本事，契据认另一套次序。", [{ path: "attrs.intelligence", add: 1 }, { path: "resources.freedom", add: 1 }]),
+    "你实际管着铺里的货与钱，对外仍由亲族男人落名。生意认手里的本事，契据认另一套次序。", [{ path: "attrs.intelligence", add: 1 }, { path: "resources.freedom", add: 1 }], {
+      genders: ["female"],
+      birthFamilyClasses: ["craftsman", "shop_clerk", "merchant", "comprador_merchant"],
+      conditions: {
+        any: [
+          { path: "career.field", in: ["apprentice", "shop_clerk", "small_business", "trade"] },
+          { path: "career.status", in: ["family_labor", "self_employed"] },
+        ],
+        none: [{ path: "career.field", eq: "estate_management" }],
+      },
+    }),
   dense("urban_shop_fire_bucket", "每铺门前一桶水", [1840, 1875], [10, 75], "relationship", URBAN, poor,
     "邻街走水后，几家铺户约定门前常备水桶。桶里先长了蚊虫，火灾仍没有按约出现。",
     "你收铺前把防火水缸添满，第二天又少一截。防大火的水，常先被用来洗地。", N),
@@ -433,7 +476,14 @@ export const expansion1840DenseEvents = [
     "远方家人随商路寄回银钱，村里熟人代为转交。路走了很久，信到手时折痕比字更多。", [{ path: "resources.wealth", add: 2 }, { path: "relationships.family", add: 1 }]),
   dense("late_grandchild_chore", "教孙辈认农具", [1890, 1925], [50, 85], "family", RURAL, closeFamily,
     "你教孙辈分辨农具、种子与天气，孩子最先记住哪件东西不能碰。知识传下去，常从避免挨骂开始。",
-    "孩子跟在你身后问个不停，你一面示范一面嫌他手笨。晚辈后来记住的方法，也记住你的语气。", F),
+    "孩子跟在你身后问个不停，你一面示范一面嫌他手笨。晚辈后来记住的方法，也记住你的语气。", F, {
+      conditions: {
+        all: [
+          { path: "relationships.children", gte: 1 },
+          { path: "relationships.oldestChildAge", gte: 20 },
+        ],
+      },
+    }),
   dense("late_clan_hearing", "祠堂里听漏半句", [1890, 1925], [50, 85], "family", RURAL, weak,
     "族里议事时，你有几句话没听清，只从众人表情判断争到哪一步。轮到你发言，仍先问田界和账。",
     "祠堂里年轻人的声音比从前快，你让人再说一遍。长辈的位置还在，听力已悄悄改变议事方式。", L),
@@ -445,7 +495,10 @@ export const expansion1840DenseEvents = [
     "长辈们商量身后衣物与木料，你听见后只问别花太多。省钱的习惯走到生命末尾，仍没有自动停下。", F),
   dense("late_widow_grainkey", "粮柜钥匙还在腰间", [1885, 1925], [50, 85], "family", RURAL, female,
     "守寡多年后，你仍掌着粮柜钥匙，晚辈遇事先来问数目。名义上的家主另有其人，饭桌知道谁真正算账。",
-    "你把粮食、腌菜和债务记得很清，眼睛花了便让孙辈代写。字在别人手里，决定仍从你口中出来。", [{ path: "attrs.mental", add: 1 }]),
+    "你把粮食、腌菜和债务记得很清，眼睛花了便让识字晚辈代写。字在别人手里，决定仍从你口中出来。", [{ path: "attrs.mental", add: 1 }], {
+      genders: ["female"],
+      conditions: { all: [{ path: "relationships.partnerStatus", eq: "widowed" }] },
+    }),
   dense("late_old_ox_sale", "老牛牵出院门", [1885, 1915], [45, 78], "wealth", RURAL, closeFamily,
     "家里决定卖掉干不动力气活的老牛，你摸了摸它背上的旧伤。账算得没有错，院里仍空得很明显。",
     "老牲口换给别人后，家人重新安排农活。年轻人谈价钱，你记得它曾把多少季节从泥里拉出来。", [{ path: "resources.wealth", add: 1 }, { path: "resources.happiness", add: -1 }]),
@@ -470,7 +523,15 @@ export const expansion1840DenseEvents = [
     "你开始避开硬果和韧肉，仍在桌上说只是今日没胃口。衰老先改变菜单，再慢慢改变说法。", N),
   dense("late_new_schoolbook", "孙辈课本里的新字", [1902, 1925], [62, 88], "education", URBAN, literate,
     "孙辈拿回新学堂课本，里面有你未学过的名词和图。你教他写端正，他反过来解释书上的世界。",
-    "孩子在桌边读新课，你听见熟悉汉字排成不熟悉的句子。教育传到下一代，也把长幼次序轻轻翻了一页。", L),
+    "孩子在桌边读新课，你听见熟悉汉字排成不熟悉的句子。教育传到下一代，也把长幼次序轻轻翻了一页。", L, {
+      conditions: {
+        all: [
+          { path: "education.score", gte: 45 },
+          { path: "relationships.children", gte: 1 },
+          { path: "relationships.oldestChildAge", gte: 20 },
+        ],
+      },
+    }),
   dense("late_old_pawn_ticket", "旧当票再没有赎期", [1885, 1915], [45, 80], "wealth", URBAN, poor,
     "整理箱底时，你翻出一张早已过期的当票，才想起那件再没赎回的首饰。纸仍在，物件已经替家里过完一次难关。",
     "旧当票字迹发淡，你把它放回去又取出来。失去的东西不能赎了，留下这张纸也没有实际用途。", [{ path: "resources.happiness", add: -1 }]),

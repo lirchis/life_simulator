@@ -136,6 +136,7 @@ export const shadowSurvivalArcEvents = [
     requiresEvents: ["grain_hidden"],
     conditions: after("grain_hidden", "neighbor_empty_pot", 5),
     text: [
+      { conditions: { all: [C("location.currentCityTier", "in", ["county", "city", "tier2", "tier1"])] }, text: "迁到城镇以后，同院或邻屋有人断了炊。你送去一点菜，回家又翻出当年藏粮用过的袋子；地方已经换了，先保住自己的算法仍认得你。" },
       "隔壁一天只烧一顿火。你送去一把野菜，回来后又摸了摸柴堆里的粮包。",
       "邻家孩子来借米，你把空瓢递给他看。孩子走后，家里人把藏粮的位置又换了一次。",
       "村里有人饿病，几户人家重新核对存粮。你也站在院里听，鞋底沾着藏粮处的新土。",

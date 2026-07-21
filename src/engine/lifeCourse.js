@@ -29,8 +29,25 @@ export function applyEventLifeCourse(event, outcome, before, state) {
     if (resolution) closeEducation(state, resolution, source);
   }
 
+  normalizeCareerAuthority(event, outcome, before, state);
   updateCareerMetadata(before, state, source);
   updatePrimaryActivity(state);
+}
+
+function normalizeCareerAuthority(event, outcome, before, state) {
+  const effects = [...(event.effects ?? []), ...(outcome?.effects ?? [])];
+  const declaresAuthority = effects.some((effect) => effect.path?.startsWith("career.role")
+    || effect.path?.startsWith("career.authorityScope")
+    || ["career.managesPeople", "career.controlsBudget", "career.writesPolicy", "career.controlsProcurement"].includes(effect.path));
+  const leftActiveWork = hasActiveCareer(before) && !hasActiveCareer(state);
+  const changedFieldWithoutRole = before.career.field !== state.career.field && !declaresAuthority;
+  if (!leftActiveWork && !changedFieldWithoutRole) return;
+  state.career.role = "none";
+  state.career.authorityScope = "none";
+  state.career.managesPeople = false;
+  state.career.controlsBudget = false;
+  state.career.writesPolicy = false;
+  state.career.controlsProcurement = false;
 }
 
 export function applyNaturalLifeCourse(state) {
@@ -96,6 +113,12 @@ export function normalizeLifeCourse(state) {
   state.career.startedYear ??= null;
   state.career.statusSinceYear ??= null;
   state.career.jobsHeld ??= 0;
+  state.career.role ??= "none";
+  state.career.authorityScope ??= "none";
+  state.career.managesPeople ??= false;
+  state.career.controlsBudget ??= false;
+  state.career.writesPolicy ??= false;
+  state.career.controlsProcurement ??= false;
   state.lifeCourse ??= { primaryActivity: "dependent", transitions: [] };
   state.lifeCourse.transitions ??= [];
   syncStudentTag(state);
@@ -167,7 +190,10 @@ function completeLevel(state, level) {
 }
 
 function updateCareerMetadata(before, state, source) {
-  const changed = before.career.status !== state.career.status || before.career.field !== state.career.field;
+  const changed = before.career.status !== state.career.status
+    || before.career.field !== state.career.field
+    || before.career.role !== state.career.role
+    || before.career.authorityScope !== state.career.authorityScope;
   if (!changed) return;
   if (!hasActiveCareer(before) && hasActiveCareer(state)) {
     state.career.startedYear ??= state.meta.currentYear;
@@ -229,5 +255,10 @@ function educationDescriptor(state) {
 }
 
 function careerDescriptor(state) {
-  return { status: state.career.status, field: state.career.field };
+  return {
+    status: state.career.status,
+    field: state.career.field,
+    role: state.career.role,
+    authorityScope: state.career.authorityScope,
+  };
 }

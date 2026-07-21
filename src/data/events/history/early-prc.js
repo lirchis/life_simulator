@@ -694,6 +694,9 @@ export const historyEarlyPrcEvents = [
     "id": "era_sent_down_youth_train",
     "title": "上山下乡",
     "category": "migration",
+    "continuity": {
+      "educationOnCareerStart": "interrupted"
+    },
     "yearRange": [
       1968,
       1978
@@ -730,8 +733,20 @@ export const historyEarlyPrcEvents = [
     ],
     "effects": [
       {
+        "path": "location.currentCityTier",
+        "set": "village"
+      },
+      {
         "path": "location.migratedTimes",
         "add": 1
+      },
+      {
+        "path": "career.status",
+        "set": "family_labor"
+      },
+      {
+        "path": "career.field",
+        "set": "production_team"
       },
       {
         "path": "resources.health",
@@ -1128,6 +1143,15 @@ export const historyEarlyPrcEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 26,
+    "conditions": {
+      "all": [
+        { "path": "education.score", "lte": 48 }
+      ],
+      "none": [
+        { "path": "education.level", "in": ["middle", "high", "vocational", "college", "graduate"] },
+        { "path": "education.completedLevel", "in": ["middle", "high", "vocational", "college", "graduate"] }
+      ]
+    },
     "text": [
       {
         "conditions": {
@@ -2686,3 +2710,158 @@ export const historyEarlyPrcEvents = [
     ]
   }
 ];
+
+const SPECIAL_ADMINISTRATIVE_REGIONS = ["xianggang", "aomen", "taiwan"];
+
+for (const event of historyEarlyPrcEvents) {
+  event.conditions ??= {};
+  event.conditions.none = [
+    ...(event.conditions.none ?? []),
+    { path: "location.currentProvince", in: SPECIAL_ADMINISTRATIVE_REGIONS },
+  ];
+}
+
+historyEarlyPrcEvents.push(
+  {
+    id: "era_hongkong_shek_kip_mei_fire",
+    title: "木屋区烧过一夜",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1953, 1955],
+    ageRange: [0, 85],
+    currentRegions: { provinces: ["xianggang"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    priority: 48,
+    baseWeight: 42,
+    text: "石硖尾木屋区的大火把许多人的住处一夜烧空。救济饭、登记表和新建徙置楼接着出现；屋顶重新有了，几户人共用的走廊也把陌生人的日子挤到一起。",
+    effects: [
+      { path: "resources.wealth", add: -8 },
+      { path: "resources.happiness", add: -6 },
+      { path: "relationships.friendship", add: 4 },
+      { addTag: "hongkong_resettlement_memory" }
+    ]
+  },
+  {
+    id: "era_hongkong_factory_stairwell",
+    title: "唐楼里的机器声",
+    category: "career",
+    yearRange: [1958, 1974],
+    ageRange: [16, 62],
+    currentRegions: { provinces: ["xianggang"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "楼上的塑胶花、制衣或电子零件赶着出口，机器声沿楼梯落到街面。订单带来工钱，也把交货期钉进夜里；殖民地的繁荣先在一双双发酸的手上试运行。",
+    effects: [
+      { path: "resources.wealth", add: 5 },
+      { path: "resources.health", add: -4 },
+      { path: "resources.achievement", add: 3 },
+      { addTag: "hongkong_factory_memory" }
+    ]
+  },
+  {
+    id: "era_hongkong_1967_street_tension",
+    title: "街上的标语与宵禁",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1967, 1968],
+    ageRange: [8, 80],
+    currentRegions: { provinces: ["xianggang"] },
+    maxOccurrences: 1,
+    priority: 46,
+    baseWeight: 38,
+    text: "罢工、标语、警察与真假炸弹把街道切成许多不敢走的路。家里人出门前先约定绕哪里、几点回来；政治立场说得很大，担心最后仍落实为门锁响了没有。",
+    effects: [
+      { path: "resources.freedom", add: -5 },
+      { path: "resources.happiness", add: -5 },
+      { path: "relationships.family", add: 3 },
+      { addTag: "hongkong_1967_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_land_to_tiller",
+    title: "租约重新量过",
+    category: "wealth",
+    narrativeTier: "historical_pressure",
+    yearRange: [1949, 1954],
+    ageRange: [12, 75],
+    currentRegions: { provinces: ["taiwan"], hukou: ["rural"], cityTiers: ["village", "town", "county"] },
+    maxOccurrences: 1,
+    baseWeight: 38,
+    text: "地租减下来，随后田契与补偿又被重新核算。佃农第一次认真想象收成能多留在自家，地主则盯着纸上的债券；同一条田埂，两边都觉得日子被改写。",
+    effects: [
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.freedom", add: 4 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "taiwan_land_reform_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_martial_law_whisper",
+    title: "话到门边停一下",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1949, 1977],
+    ageRange: [12, 80],
+    currentRegions: { provinces: ["taiwan"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    text: "报纸上的词有固定写法，家里谈到一些人和往事时会先看门窗。沉默并不表示没有意见，只表示每句话都在心里先过一道检查。",
+    effects: [
+      { path: "resources.freedom", add: -5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "taiwan_martial_law_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_export_factory_shift",
+    title: "出口箱上的远方地名",
+    category: "career",
+    yearRange: [1965, 1977],
+    ageRange: [16, 58],
+    currentRegions: { provinces: ["taiwan"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "工厂赶制成衣、鞋和电子零件，纸箱外印着你没去过的港口。薪水使家里第一次能添几样耐用品，流水线也把手腕的酸痛按件计数。",
+    effects: [
+      { path: "resources.wealth", add: 6 },
+      { path: "resources.health", add: -3 },
+      { path: "resources.achievement", add: 3 },
+      { addTag: "taiwan_export_factory_memory" }
+    ]
+  },
+  {
+    id: "era_macau_firecracker_workshop",
+    title: "爆竹纸沾在袖口",
+    category: "career",
+    yearRange: [1950, 1972],
+    ageRange: [14, 62],
+    currentRegions: { provinces: ["aomen"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 26,
+    text: "爆竹、神香或火柴作坊里，纸屑与药粉黏在衣袖上。工钱把一家人的饭接住，危险则被老板说成大家小心一点；这句话不占账本，也不减少一星火。",
+    effects: [
+      { path: "resources.wealth", add: 4 },
+      { path: "resources.health", add: -4 },
+      { path: "resources.happiness", add: -2 },
+      { addTag: "macau_workshop_memory" }
+    ]
+  },
+  {
+    id: "era_macau_1966_standoff",
+    title: "城里忽然多了队伍",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1966, 1967],
+    ageRange: [8, 80],
+    currentRegions: { provinces: ["aomen"] },
+    maxOccurrences: 1,
+    baseWeight: 34,
+    text: "冲突以后，游行、停工与谈判把小城塞得很满。葡萄牙当局仍在，许多实际权力却换了走法；你只知道哪条街暂时别去，米和药要趁早买。",
+    effects: [
+      { path: "resources.freedom", add: -4 },
+      { path: "resources.happiness", add: -4 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "macau_1966_memory" }
+    ]
+  }
+);

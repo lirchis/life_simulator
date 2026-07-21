@@ -412,9 +412,14 @@ const lateMoney = ageArc("late_money", {
 
 const reducedWork = ageArc("reduced_work", {
   category: "career",
-  ageRange: [50, 104],
+  ageRange: [50, 89],
   lifetimeProbability: 0.34,
-  conditions: { all: [C("career.status", "eq", "retired")] },
+  conditions: {
+    all: [
+      C("career.status", "eq", "retired"),
+      between("life_retirement_day", 1, 5),
+    ],
+  },
   steps: [
     {
       id: "old_clock_stops",
@@ -423,7 +428,7 @@ const reducedWork = ageArc("reduced_work", {
         variant([early], "最重的活渐渐不再由你做，清早醒来的时辰却没有跟着改变。你在屋里多坐一会儿，手总想先去找从前那件工具。"),
         variant([rural], "家里把重活分给别人，你仍按旧时辰醒来。院里总有零碎事情，所谓歇下，不过是担子换成了几只篮子。"),
         variant([C("meta.currentYear", "gte", 1950), C("meta.currentYear", "lte", 1977), C("career.field", "neq", "")], "不再按上班钟点出门后，你仍会在原来的时辰醒。广播、买菜和家务接过一天，没人给这些事登记工龄。"),
-        variant([connected, C("career.field", "neq", "")], "工作日程从屏幕上消失，身体仍按旧点醒来。你删掉几次提醒，最后留下一条，专门提示自己今天没有会。"),
+        variant([connected, C("career.field", "neq", "")], "办完退休后的头几年，工作日程已经从屏幕上消失，身体仍按旧点醒来。你删掉几次提醒，最后留下一条，专门提示自己今天没有会。"),
         fallback("把最重、最急的事情交出去以后，一天忽然空出一块。你起初总想把它立刻填满，像空着便算浪费。"),
       ],
       effects: [add("resources.freedom", 4), add("resources.happiness", -1), add("relationships.family", 1)],

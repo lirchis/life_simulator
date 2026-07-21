@@ -42,13 +42,34 @@ export const historyPre1949Events = [
     "text": "你到了该谋生的年纪。那时没有“找工作”的说法，更多是托人、拜师、下地，或者跟着亲戚去城里讨一口饭。",
     "outcomes": [
       {
+        "id": "landed_household_duties",
+        "text": "跟长辈学管田契、租账和家业",
+        "baseWeight": 12,
+        "resultText": "长辈把田契、租账和几处界址交给你认。你很早知道家里账上的安稳，要等佃户把各自的收成报进来；同一场雨，在账簿两边分量不同。",
+        "conditions": {
+          "all": [
+            { "path": "birth.familyClass", "in": ["landlord", "rich_peasant"] }
+          ]
+        },
+        "effects": [
+          { "path": "career.status", "set": "family_labor" },
+          { "path": "career.field", "set": "estate_management" },
+          { "path": "career.income", "add": 7 },
+          { "path": "resources.achievement", "add": 4 },
+          { "path": "resources.reputation", "add": 3 },
+          { "addTag": "early_livelihood" },
+          { "addTrait": "practical_skill" }
+        ]
+      },
+      {
         "id": "farm_work",
         "text": "留在田里，先帮家里扛活",
         "resultText": "你留在田里。土地给不了太多想象，但每天都要人把腰弯下去。",
         "conditions": {
           "all": [
             { "path": "birth.hukou", "eq": "rural" },
-            { "path": "location.currentCityTier", "in": ["village", "town", "county"] }
+            { "path": "location.currentCityTier", "in": ["village", "town", "county"] },
+            { "path": "birth.familyClass", "notIn": ["landlord"] }
           ]
         },
         "effects": [
@@ -86,7 +107,8 @@ export const historyPre1949Events = [
         "resultText": "你进了铺子。师傅的话比钟还准，手艺和委屈都要一点点熬出来。",
         "conditions": {
           "all": [
-            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] }
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] },
+            { "path": "birth.familyClass", "notIn": ["landlord"] }
           ]
         },
         "effects": [
@@ -119,12 +141,35 @@ export const historyPre1949Events = [
         ]
       },
       {
+        "id": "pharmacy_apprentice",
+        "text": "进药铺学抓药、制丸和记账",
+        "baseWeight": 0.45,
+        "resultText": "你进了药铺，从扫药屑、认抽屉和称分量做起。柜台后气味很苦，师傅说错一钱也可能比少一文更麻烦。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] },
+            { "path": "education.score", "gte": 25 }
+          ]
+        },
+        "effects": [
+          { "path": "career.status", "set": "employed" },
+          { "path": "career.field", "set": "pharmacy" },
+          { "path": "career.income", "add": 6 },
+          { "path": "career.level", "add": 2 },
+          { "path": "resources.achievement", "add": 4 },
+          { "path": "resources.freedom", "add": -4 },
+          { "addTag": "pharmacy_worker" },
+          { "addTrait": "practical_skill" }
+        ]
+      },
+      {
         "id": "dock_or_factory",
         "text": "去码头、矿场或工场做工",
         "resultText": "你跟着人去了码头、矿场或工场。活重、钱少，但另一种谋生的门缝从此露出一点光。",
         "conditions": {
           "all": [
-            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] }
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] },
+            { "path": "birth.familyClass", "notIn": ["landlord", "rich_peasant"] }
           ]
         },
         "effects": [
@@ -260,6 +305,28 @@ export const historyPre1949Events = [
           {
             "addTrait": "self_reliant"
           }
+        ]
+      },
+      {
+        "id": "pharmacy_helper",
+        "text": "去药铺帮工，学称药和制丸",
+        "baseWeight": 0.4,
+        "resultText": "你到药铺帮工，先认抽屉、晒药材、搓药丸。柜台上的人叫你手脚快些，秤杆却不肯跟着着急。",
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["town", "county", "city", "tier2", "tier1"] },
+            { "path": "education.score", "gte": 24 }
+          ]
+        },
+        "effects": [
+          { "path": "career.status", "set": "employed" },
+          { "path": "career.field", "set": "pharmacy" },
+          { "path": "career.income", "add": 5 },
+          { "path": "career.level", "add": 2 },
+          { "path": "resources.achievement", "add": 4 },
+          { "path": "resources.freedom", "add": -5 },
+          { "addTag": "pharmacy_worker" },
+          { "addTrait": "practical_skill" }
         ]
       },
       {
@@ -459,7 +526,7 @@ export const historyPre1949Events = [
   },
   {
     "id": "era_revolution_1911_hear_cannon",
-    "title": "城头炮声",
+    "title": "改朝换代的风声",
     "category": "family",
     "yearRange": [
       1911,
@@ -479,7 +546,69 @@ export const historyPre1949Events = [
     },
     "maxOccurrences": 1,
     "baseWeight": 32,
-    "text": "城里传来炮声，茶馆里人人压低嗓子。大人说朝代要换了，你只记得那天街上的风很乱。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "eq": "xianggang"
+            }
+          ]
+        },
+        "text": "武昌起事和各省响应的消息很快到了香港。报馆早替革命者印过文章，码头也替他们藏过行踪；如今茶楼争论的是清廷还能撑几日。港督衙门和英国旗仍在原处，改朝换代隔着一道边界发生，却并不遥远。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "eq": "taiwan"
+            }
+          ]
+        },
+        "text": "武昌起事的消息随日文、汉文报纸传到台湾。清廷将亡，岛上却仍在日本总督府统治之下；街谈里的中国改了国号，眼前的警署、税单和旗帜没有随之更换。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "eq": "aomen"
+            }
+          ]
+        },
+        "text": "香山与广州的革命消息不断传入澳门，报馆和熟人把清廷将亡说得又近又远。城里仍由葡萄牙当局管辖，换旗发生在关闸另一边；茶楼里的称呼和算盘却先乱了几日。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "eq": "hubei"
+            }
+          ]
+        },
+        "text": "武昌城里真的响起枪炮，关门、传信和逃路的人挤在一处。有人说清兵就要打回来，有人已经剪去辫子；一个朝代怎样结束，先表现为谁也说不准明早由谁守城。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "in": [
+                "sichuan",
+                "chongqing"
+              ]
+            }
+          ]
+        },
+        "text": "四川保路风潮先把街面和乡路绷紧，随后武昌起事、各省响应的消息又传来。茶馆里有人谈路权，有人谈共和，更多人只问关门以后米价还会不会认旧账。"
+      },
+      {
+        "text": "武昌起事和各省易帜的消息沿报馆、驿路和码头传来。茶馆里有人说清廷要完了，也有人先问明天该用哪一种年号；炮声未必在本城，改朝换代的风声已经进门。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.happiness",
@@ -1442,6 +1571,20 @@ export const historyPre1949Events = [
       45
     ],
     "maxOccurrences": 1,
+    "birthFamilyClasses": [
+      "landless_laborer",
+      "tenant",
+      "poor_peasant",
+      "smallholder",
+      "craftsman",
+      "shop_clerk"
+    ],
+    "conditions": {
+      "none": [
+        { "path": "career.field", "eq": "estate_management" },
+        { "path": "career.status", "eq": "retired" }
+      ]
+    },
     "currentRegions": {
       "provinces": [
         "shanghai",
@@ -2602,5 +2745,131 @@ export const historyPre1949Events = [
       { path: "resources.happiness", add: -6 },
       { path: "resources.freedom", add: -2 },
     ],
+  },
+  {
+    id: "era_hongkong_1925_strike_harbor",
+    title: "码头忽然安静",
+    category: "career",
+    narrativeTier: "historical_pressure",
+    yearRange: [1925, 1926],
+    ageRange: [8, 75],
+    currentRegions: { provinces: ["xianggang"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 32,
+    text: "省港大罢工使码头和店铺换了节奏。有人步行回广州，有人守着突然少下来的生意；殖民地的旗仍在，工钱、米价和立场却一起进了每户人的账。",
+    effects: [
+      { path: "resources.wealth", add: -5 },
+      { path: "resources.happiness", add: -3 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "hongkong_strike_memory" }
+    ]
+  },
+  {
+    id: "era_hongkong_japanese_occupation_ration",
+    title: "军票买不到一顿饭",
+    category: "wealth",
+    narrativeTier: "historical_pressure",
+    yearRange: [1941, 1945],
+    ageRange: [5, 85],
+    currentRegions: { provinces: ["xianggang"] },
+    maxOccurrences: 1,
+    priority: 54,
+    baseWeight: 48,
+    text: "香港沦陷后，街名、钟点和货币都被重新规定。军票越印越多，米却越见越少；一家人学会把能吃的东西分得极细，也学会哪些话不能在排队时说。",
+    effects: [
+      { path: "resources.wealth", add: -10 },
+      { path: "resources.health", add: -6 },
+      { path: "resources.happiness", add: -7 },
+      { addTag: "hongkong_occupation_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_colonial_household_register",
+    title: "名字写进保甲簿",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1898, 1936],
+    ageRange: [6, 75],
+    currentRegions: { provinces: ["taiwan"] },
+    maxOccurrences: 1,
+    baseWeight: 30,
+    text: "警察和保甲把户口、住处与出行一项项写进簿册。纸上记录得很整齐，家里说话却更留神；统治最具体的时候，常是一名陌生人知道你家有几口人。",
+    effects: [
+      { path: "resources.freedom", add: -5 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "taiwan_colonial_register_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_wartime_japanization",
+    title: "收音机里的帝国战事",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1937, 1945],
+    ageRange: [8, 80],
+    currentRegions: { provinces: ["taiwan"] },
+    maxOccurrences: 1,
+    priority: 48,
+    baseWeight: 40,
+    text: "学校、街坊和收音机反复讲帝国的战争，家中熟悉的姓名与语言却被要求换一种写法。远方战线不断索取粮食、金属与青年，岛上的日常也被一层层编进动员。",
+    effects: [
+      { path: "resources.freedom", add: -7 },
+      { path: "resources.wealth", add: -5 },
+      { path: "resources.happiness", add: -5 },
+      { addTag: "taiwan_wartime_mobilization_memory" }
+    ]
+  },
+  {
+    id: "era_macau_wartime_refuge_queue",
+    title: "中立城里的长队",
+    category: "wealth",
+    narrativeTier: "historical_pressure",
+    yearRange: [1941, 1945],
+    ageRange: [5, 85],
+    currentRegions: { provinces: ["aomen"] },
+    maxOccurrences: 1,
+    baseWeight: 34,
+    text: "澳门没有像周边城市那样正式陷落，逃难者、商人和粮价却一同涌来。街道仍挂着原来的旗，米铺前的队伍越来越长；所谓中立，落到饭桌上也要按口数分。",
+    effects: [
+      { path: "resources.wealth", add: -7 },
+      { path: "resources.happiness", add: -4 },
+      { path: "relationships.friendship", add: 2 },
+      { addTag: "macau_wartime_refuge_memory" }
+    ]
   }
 ];
+
+const SPECIAL_ADMINISTRATIVE_REGIONS = ["xianggang", "aomen", "taiwan"];
+const mainlandLocalEventIds = new Set([
+  "era_warlord_tax_grain",
+  "era_may_fourth_city_leaflet_memory",
+  "era_soviet_area_red_tax",
+  "era_red_army_join_march",
+  "era_xiangjiang_last_stand",
+  "era_long_march_survivor",
+  "era_anti_japanese_refugee_train",
+  "era_anti_japanese_guerrilla",
+  "era_civil_war_conscription",
+  "era_republic_market_tax",
+  "era_1911_queue_cut_city",
+  "era_may_fourth_leaflet",
+  "era_1948_student_prices",
+  "era_republic_railway_strike_1923",
+  "era_republic_may_thirtieth_crowd",
+  "era_republic_northern_expedition_passes",
+  "era_republic_1927_city_searches",
+  "era_civil_war_inflation_money",
+  "era_postwar_demobilized_return",
+  "era_civil_war_land_meeting",
+  "era_civil_war_teacher_paid_in_rice",
+  "era_civil_war_gold_yuan_coupon",
+]);
+
+for (const event of historyPre1949Events) {
+  if (!mainlandLocalEventIds.has(event.id)) continue;
+  event.conditions ??= {};
+  event.conditions.none = [
+    ...(event.conditions.none ?? []),
+    { path: "location.currentProvince", in: SPECIAL_ADMINISTRATIVE_REGIONS },
+  ];
+}

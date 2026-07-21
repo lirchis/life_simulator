@@ -860,6 +860,18 @@ export const coreLifecycleEvents = [
     "priority": 85,
     "maxOccurrences": 1,
     "baseWeight": 100,
+    "conditions": {
+      "none": [
+        {
+          "path": "location.currentProvince",
+          "in": [
+            "taiwan",
+            "xianggang",
+            "aomen"
+          ]
+        }
+      ]
+    },
     "text": [
       {
         "conditions": {
@@ -1174,6 +1186,14 @@ export const coreLifecycleEvents = [
       {
         "id": "provincial_center",
         "baseWeight": 8,
+        "conditions": {
+          "all": [
+            {
+              "path": "location.currentProvince",
+              "notIn": ["xianggang", "aomen"]
+            }
+          ]
+        },
         "resultText": "你先在本省较大的城市落脚。口音还熟，生活规矩已经换了一套。",
         "effects": [
           {
@@ -1340,7 +1360,7 @@ export const coreLifecycleEvents = [
     "category": "career",
     "yearRange": [
       1992,
-      2035
+      2120
     ],
     "ageRange": [
       21,
@@ -1403,6 +1423,36 @@ export const coreLifecycleEvents = [
         "text": "你拿到了几份方向不同的工作机会。别人默认你该扛起收入、房子和以后的一家人，成年人世界的第一张门票很快变重。"
       },
       {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            },
+            {
+              "path": "location.currentCityTier",
+              "in": [
+                "village",
+                "town",
+                "county"
+              ]
+            }
+          ]
+        },
+        "text": "你到了该靠一份活计站住的时候。招聘平台把岗位写得很新，县城、园区和村镇里的工作仍各有旧脾气：先问能不能做，再慢慢告诉你这份工算不算稳定。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            }
+          ]
+        },
+        "text": "你开始找第一份能持续一阵的工作。许多岗位由系统先读一遍简历，人仍要在面试桌前说明自己；成年人世界换了入口，背面的价格没有消失。"
+      },
+      {
         "text": "你拿到了几份方向不同的工作机会。成年人世界的第一张门票，背面写着价格。"
       }
     ],
@@ -1410,6 +1460,15 @@ export const coreLifecycleEvents = [
       {
         "id": "stable_company",
         "text": "去大公司，先求稳定",
+        "baseWeight": 4,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 2035
+            }
+          ]
+        },
         "resultText": "你进入大公司，学会了会议、周报和假装不困。",
         "effects": [
           {
@@ -1425,6 +1484,10 @@ export const coreLifecycleEvents = [
             "add": 12
           },
           {
+            "path": "career.level",
+            "add": 4
+          },
+          {
             "path": "resources.wealth",
             "add": 8
           },
@@ -1436,6 +1499,15 @@ export const coreLifecycleEvents = [
       {
         "id": "startup_company",
         "text": "加入创业公司，赌一把",
+        "baseWeight": 2,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 2035
+            }
+          ]
+        },
         "resultText": "你加入创业公司。空气里都是机会，也都是加班味。",
         "effects": [
           {
@@ -1455,6 +1527,10 @@ export const coreLifecycleEvents = [
             "add": 10
           },
           {
+            "path": "career.level",
+            "add": 5
+          },
+          {
             "addTag": "startup_path"
           },
           {
@@ -1472,6 +1548,15 @@ export const coreLifecycleEvents = [
       {
         "id": "public_sector",
         "text": "考进体制，换一份确定性",
+        "baseWeight": 3,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 2035
+            }
+          ]
+        },
         "resultText": "你进入一个更讲规则和资历的系统。速度慢了点，但风也小了点。",
         "effects": [
           {
@@ -1495,11 +1580,397 @@ export const coreLifecycleEvents = [
             "add": 3
           },
           {
+            "path": "career.level",
+            "add": 4
+          },
+          {
             "addTag": "public_sector_worker"
           },
           {
             "addTrait": "institutional_adapted"
           }
+        ]
+      },
+      {
+        "id": "future_platform_shift",
+        "text": "先接平台和流动岗位",
+        "baseWeight": 5,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            }
+          ],
+          "any": [
+            {
+              "path": "resources.wealth",
+              "lte": 52
+            },
+            {
+              "path": "education.score",
+              "lte": 55
+            },
+            {
+              "path": "location.migratedTimes",
+              "gte": 1
+            }
+          ]
+        },
+        "resultText": "你从按单、按班次或按项目结算的活开始。工牌在手机里，今天能挣多少，要等系统把明天分给你。",
+        "effects": [
+          {
+            "path": "career.status",
+            "set": "gig_worker"
+          },
+          {
+            "path": "career.field",
+            "set": "logistics"
+          },
+          {
+            "path": "career.income",
+            "add": 7
+          },
+          {
+            "path": "career.level",
+            "add": 3
+          },
+          {
+            "path": "resources.wealth",
+            "add": 3
+          },
+          {
+            "path": "resources.freedom",
+            "add": -3
+          },
+          {
+            "addTag": "platform_worker"
+          }
+        ]
+      },
+      {
+        "id": "future_rural_service",
+        "text": "留在县域做技术和服务",
+        "baseWeight": 6,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            },
+            {
+              "path": "location.currentCityTier",
+              "in": [
+                "village",
+                "town",
+                "county"
+              ]
+            }
+          ]
+        },
+        "resultText": "你在县域的设备维护、物流或公共服务里找到位置。新机器不少，真正难替代的仍是认路、认人，并知道谁家那扇门要多敲两遍。",
+        "effects": [
+          {
+            "path": "career.status",
+            "set": "employed"
+          },
+          {
+            "path": "career.field",
+            "set": "logistics"
+          },
+          {
+            "path": "career.income",
+            "add": 8
+          },
+          {
+            "path": "career.level",
+            "add": 4
+          },
+          {
+            "path": "resources.wealth",
+            "add": 4
+          },
+          {
+            "addTag": "county_service_worker"
+          }
+        ]
+      },
+      {
+        "id": "future_care_work",
+        "text": "进入照护与健康服务",
+        "baseWeight": 3,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            },
+            {
+              "path": "education.score",
+              "gte": 38
+            }
+          ]
+        },
+        "resultText": "你进入照护或健康服务。设备会提醒药量和风险，人仍会在疼痛时抓住一只具体的手；这份工作同时计时，又总有无法按分钟结束的部分。",
+        "effects": [
+          {
+            "path": "career.status",
+            "set": "employed"
+          },
+          {
+            "path": "career.field",
+            "set": "care_work"
+          },
+          {
+            "path": "career.income",
+            "add": 8
+          },
+          {
+            "path": "career.level",
+            "add": 5
+          },
+          {
+            "path": "resources.achievement",
+            "add": 4
+          },
+          {
+            "path": "resources.health",
+            "add": -2
+          },
+          {
+            "addTag": "care_worker"
+          }
+        ]
+      },
+      {
+        "id": "future_technical_operations",
+        "text": "去做系统背后的维护者",
+        "baseWeight": 4,
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 2036
+            },
+            {
+              "path": "education.score",
+              "gte": 50
+            }
+          ]
+        },
+        "resultText": "你进了技术运营岗位，替自动流程处理它不认识的例外。宣传片里系统自己运转，值班表知道每次顺畅背后都有几个人没睡好。",
+        "effects": [
+          {
+            "path": "career.status",
+            "set": "employed"
+          },
+          {
+            "path": "career.field",
+            "set": "technology"
+          },
+          {
+            "path": "career.income",
+            "add": 11
+          },
+          {
+            "path": "career.level",
+            "add": 6
+          },
+          {
+            "path": "resources.wealth",
+            "add": 6
+          },
+          {
+            "path": "resources.freedom",
+            "add": -4
+          },
+          {
+            "addTag": "technical_operations_worker"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "life_midcareer_authority_scope",
+    "title": "你开始替别人安排工作",
+    "category": "career",
+    "yearRange": [
+      1978,
+      2120
+    ],
+    "ageRange": [
+      28,
+      58
+    ],
+    "priority": 58,
+    "maxOccurrences": 1,
+    "baseWeight": 92,
+    "conditions": {
+      "all": [
+        {
+          "path": "career.status",
+          "eq": "employed"
+        },
+        {
+          "path": "career.jobsHeld",
+          "gte": 1
+        },
+        {
+          "path": "career.level",
+          "gte": 8
+        }
+      ],
+      "any": [
+        {
+          "path": "career.field",
+          "in": ["corporate", "startup", "ecommerce", "internet", "technology", "logistics"]
+        },
+        {
+          "path": "career.field",
+          "in": ["public_sector", "grassroots_post"]
+        },
+        {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["care_work", "healthcare", "doctor", "nurse"]
+            },
+            {
+              "path": "career.level",
+              "gte": 10
+            }
+          ]
+        },
+        {
+          "path": "career.field",
+          "eq": "finance"
+        },
+        {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["construction", "factory", "mine"]
+            },
+            {
+              "path": "career.level",
+              "gte": 12
+            }
+          ]
+        }
+      ]
+    },
+    "text": "你不再只对自己的那一小段工作负责。排班、预算、流程或审核开始经过你手里，几行字便能改变别人明天几点出门、有没有工具，以及出了问题先找谁。",
+    "outcomes": [
+      {
+        "id": "digital_operations_manager",
+        "conditions": {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["corporate", "startup", "ecommerce", "internet", "technology", "logistics"]
+            }
+          ]
+        },
+        "resultText": "你开始管理一段数字化流程和执行它的人。屏幕上的参数很整齐，参数落到人身上时却总会多出天气、病痛和一句没来得及说明的话。",
+        "effects": [
+          { "path": "career.role", "set": "digital_operations_manager" },
+          { "path": "career.authorityScope", "set": "workflow" },
+          { "path": "career.managesPeople", "set": true },
+          { "path": "career.controlsBudget", "set": true },
+          { "path": "career.writesPolicy", "set": true },
+          { "path": "career.level", "add": 3 },
+          { "path": "resources.achievement", "add": 3 }
+        ]
+      },
+      {
+        "id": "public_program_manager",
+        "conditions": {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["public_sector", "grassroots_post"]
+            }
+          ]
+        },
+        "resultText": "你开始负责一个具体项目的名额、预算或执行口径。文件仍要逐级签字，但哪一种情况先被看见，已经有一部分由你决定。",
+        "effects": [
+          { "path": "career.role", "set": "public_program_manager" },
+          { "path": "career.authorityScope", "set": "public_program" },
+          { "path": "career.managesPeople", "set": true },
+          { "path": "career.controlsBudget", "set": true },
+          { "path": "career.writesPolicy", "set": true },
+          { "path": "career.level", "add": 3 },
+          { "path": "resources.reputation", "add": 3 }
+        ]
+      },
+      {
+        "id": "care_service_supervisor",
+        "conditions": {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["care_work", "healthcare", "doctor", "nurse"]
+            },
+            {
+              "path": "career.level",
+              "gte": 10
+            }
+          ]
+        },
+        "resultText": "你开始排照护班次、核服务时长，也替缺人和突发状况作决定。床边的问题依旧具体，表格只允许每格写一种答案。",
+        "effects": [
+          { "path": "career.role", "set": "care_service_supervisor" },
+          { "path": "career.authorityScope", "set": "care_allocation" },
+          { "path": "career.managesPeople", "set": true },
+          { "path": "career.controlsBudget", "set": true },
+          { "path": "career.level", "add": 3 },
+          { "path": "resources.reputation", "add": 2 }
+        ]
+      },
+      {
+        "id": "finance_risk_manager",
+        "conditions": {
+          "all": [
+            {
+              "path": "career.field",
+              "eq": "finance"
+            }
+          ]
+        },
+        "resultText": "你开始审核风险规则、额度和例外。数字越大越像客观事实，会议开久以后，大家偶尔会忘记每个小数点后面仍住着一家人。",
+        "effects": [
+          { "path": "career.role", "set": "finance_risk_manager" },
+          { "path": "career.authorityScope", "set": "financial_risk" },
+          { "path": "career.controlsBudget", "set": true },
+          { "path": "career.writesPolicy", "set": true },
+          { "path": "career.level", "add": 3 },
+          { "path": "resources.achievement", "add": 3 }
+        ]
+      },
+      {
+        "id": "industrial_project_manager",
+        "conditions": {
+          "all": [
+            {
+              "path": "career.field",
+              "in": ["construction", "factory", "mine"]
+            },
+            {
+              "path": "career.level",
+              "gte": 12
+            }
+          ]
+        },
+        "resultText": "你开始安排班组、设备和外包环节。安全帽仍是一人一顶，工期和责任却可以沿着几层表格来回移动。",
+        "effects": [
+          { "path": "career.role", "set": "industrial_project_manager" },
+          { "path": "career.authorityScope", "set": "project_procurement" },
+          { "path": "career.managesPeople", "set": true },
+          { "path": "career.controlsBudget", "set": true },
+          { "path": "career.controlsProcurement", "set": true },
+          { "path": "career.level", "add": 3 },
+          { "path": "resources.achievement", "add": 3 }
         ]
       }
     ]
@@ -1759,7 +2230,7 @@ export const coreLifecycleEvents = [
             },
             {
               "path": "meta.currentYear",
-              "gte": 1949
+              "gte": 1995
             },
             {
               "path": "relationships.children",
@@ -1768,6 +2239,29 @@ export const coreLifecycleEvents = [
           ]
         },
         "text": "工作、孩子、父母和家务一起挤过来。你像同时开着几个窗口的人，深夜才想起自己也需要喘口气。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "birth.gender",
+              "eq": "female"
+            },
+            {
+              "path": "meta.currentYear",
+              "gte": 1949
+            },
+            {
+              "path": "meta.currentYear",
+              "lte": 1994
+            },
+            {
+              "path": "relationships.children",
+              "gte": 1
+            }
+          ]
+        },
+        "text": "工作、孩子、父母和家务一起挤过来。你把几本看不见的账同时记在心里，深夜才想起自己也需要喘口气。"
       },
       {
         "conditions": {
@@ -1819,6 +2313,12 @@ export const coreLifecycleEvents = [
     "maxOccurrences": 1,
     "baseWeight": 100,
     "conditions": {
+      "all": [
+        {
+          "path": "career.jobsHeld",
+          "gte": 1
+        }
+      ],
       "none": [
         {
           "path": "career.status",

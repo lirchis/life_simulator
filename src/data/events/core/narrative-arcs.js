@@ -7,6 +7,34 @@ const add = (path, value) => ({ path, add: value });
 const set = (path, value) => ({ path, set: value });
 const has = (path, operator, value) => ({ path, [operator]: value });
 const within = (eventId, years = 7) => ({ eventOccurredWithin: { eventId, years } });
+const betweenEvent = (eventId, minYears, maxYears = 120) => ({
+  eventOccurredBetween: { eventId, minYears, maxYears },
+});
+
+const ACTIVE_CAREER_STATUSES = ["employed", "self_employed", "gig_worker", "family_labor", "entrepreneur"];
+const MIGRATION_EVENT_IDS = [
+  "life_leave_for_bigger_city",
+  "dramatic_climate_roster_one_name_removed",
+  "era_late_qing_yellow_river_flood_1887",
+  "era_late_qing_1900_capital_flight",
+  "era_anti_japanese_refugee_train",
+  "era_republic_yangtze_flood_1931",
+  "era_wartime_lower_yangtze_night_crossing",
+  "era_wartime_yellow_river_flood_1938",
+  "era_wartime_ichigo_flight",
+  "struct_pre49_famine_migration_opening",
+  "struct_pre49_wartime_evacuation_opening",
+  "struct_pre49_postwar_return_opening",
+  "era_sent_down_youth_train",
+  "era_coastal_factory_work",
+  "era_reform_labor_broker_departure",
+  "era_return_to_county_job",
+  "spec_high_ground_neighborhood",
+  "spec_second_permanent_move",
+  "struct_post78_mobility_return_away_work",
+  "struct_post78_climate_relocation_new_ground_old_routes",
+  "elder_republic_last_threshold_lost",
+];
 
 function arc(id, title, category, ageRange, text, extra = {}) {
   return {
@@ -130,10 +158,17 @@ export const narrativeArcEvents = [
   }),
 
   arc("migration_address_sticks", "地址终于写熟了", "migration", [18, 62], [
-    { conditions: { all: [has("meta.currentYear", "lte", 1948)] }, text: "离乡几年后，你终于能不问路写下现住的街巷。口音仍会暴露来处，赊账和借工具的人却已知道到哪里找你。异乡不是突然变成家，只是生活先在那里留下了固定地址。" },
-    { text: "搬来几年后，你填表时不再犹豫现住址怎么写。熟悉的店、能托付钥匙的人和一条闭眼也走得回去的路，慢慢把‘暂住’改成了生活。" },
+    { conditions: { all: [has("meta.currentYear", "lte", 1948)] }, text: "离乡一阵以后，你终于能不问路写下现住的街巷。口音仍会暴露来处，赊账和借工具的人却已知道到哪里找你。异乡不是突然变成家，只是生活先在那里留下了固定地址。" },
+    { conditions: { any: MIGRATION_EVENT_IDS.map((eventId) => betweenEvent(eventId, 2, 6)) }, text: "搬来两三年后，你填表时不再犹豫现住址怎么写。熟悉的店、能托付钥匙的人和一条闭眼也走得回去的路，慢慢把‘暂住’改成了生活。" },
+    { text: "在这里住下很久以后，现住址早已不再是临时答案。熟悉的店、能托付钥匙的人和一条闭眼也走得回去的路，替这个地址积出了日常。" },
   ], {
-    conditions: { all: [has("location.migratedTimes", "gte", 1)], none: [{ hasTag: "arc_settled_away" }] },
+    conditions: {
+      all: [has("location.migratedTimes", "gte", 1)],
+      none: [
+        { hasTag: "arc_settled_away" },
+        ...MIGRATION_EVENT_IDS.map((eventId) => within(eventId, 1)),
+      ],
+    },
     effects: [add("resources.freedom", 4), add("relationships.friendship", 4), add("relationships.family", -2), { addTag: "arc_settled_away" }],
     narrativeTier: "turning_point",
     narrativeDomain: "migration",
@@ -241,7 +276,10 @@ export const narrativeArcEvents = [
   }),
 
   arc("family_pillar_missing", "家里少了一根支柱", "family", [12, 55], [
-    { conditions: { all: [has("meta.age", "lte", 18)] }, text: "家里一个能挣钱或主事的人忽然长期缺席，可能是病、远行，也可能是再也补不上的变故。大人仍说‘你只管读书’，分给你的活却一件件多了起来。" },
+    { conditions: { all: [has("education.status", "eq", "enrolled")] }, text: "家里一个能挣钱或主事的人忽然长期缺席，可能是病、远行，也可能是再也补不上的变故。大人仍说‘先把书读下去’，分给你的活却一件件多了起来。" },
+    { conditions: { all: [has("education.status", "neq", "enrolled"), has("career.status", "in", ACTIVE_CAREER_STATUSES), has("meta.age", "lte", 22)] }, text: "家里一个撑事的人退到后面时，你已经在外谋生。工资、跑腿和家里的决定一同来找你；别人说你长大了，账单比这句话更早相信。" },
+    { conditions: { all: [has("education.status", "neq", "enrolled"), has("career.status", "notIn", ACTIVE_CAREER_STATUSES), has("meta.age", "lte", 15)] }, text: "家里一个能挣钱或主事的人忽然长期缺席。大人叫你先顾好自己，原本由他们挡住的活和担心却仍一件件来到你面前。" },
+    { conditions: { all: [has("education.status", "neq", "enrolled"), has("career.status", "notIn", ACTIVE_CAREER_STATUSES), has("meta.age", "gte", 16), has("meta.age", "lte", 20)] }, text: "家里忽然少了一个撑事的人。你还没有完全站稳，跑腿、账目和需要当场回答的话却先把你推到大人中间。" },
     { text: "家里一个原本撑事的人因病、离开或生计失败退到了后面。许多决定开始等你开口，你并没有准备好，只是别人已经没有更合适的人可等。" },
   ], {
     conditions: { all: [has("resources.wealth", "lte", 52)], none: [{ hasTag: "arc_family_pillar_missing" }] },
@@ -251,7 +289,9 @@ export const narrativeArcEvents = [
     lifetimeProbability: 0.43,
   }),
   arc("family_steps_forward", "你被推到前面", "family", [13, 60], [
-    { conditions: { all: [has("meta.age", "lte", 20)] }, text: "你开始替家里跑更远的路、听更难的话，也学会在大人面前装作不慌。所谓懂事，常常只是一个孩子发现哭完以后事情仍要有人做。" },
+    { conditions: { all: [has("education.status", "eq", "enrolled"), has("meta.age", "lte", 20)] }, text: "你开始替家里跑更远的路、听更难的话，也学会在大人面前装作不慌。所谓懂事，常常只是一个仍在读书的人发现哭完以后事情仍要有人做。" },
+    { conditions: { all: [has("education.status", "neq", "enrolled"), has("career.status", "in", ACTIVE_CAREER_STATUSES), has("meta.age", "lte", 22)] }, text: "你把工资、时间和几项家里的决定一起接过来。刚开始谋生的人本该先学会站稳，你却还要腾出一只手扶住身后。" },
+    { conditions: { all: [has("education.status", "neq", "enrolled"), has("career.status", "notIn", ACTIVE_CAREER_STATUSES), has("meta.age", "lte", 17)] }, text: "你开始替家里跑更远的路、听更难的话，也学会在大人面前装作不慌。年纪没有因此突然变大，责任只是先到了。" },
     { text: "你接过账目、联络和那些没人愿意作的决定。亲戚夸你能扛事，夸奖很轻，责任却不会因为被说得体面而少一件。" },
   ], {
     requiresEvents: ["arc_family_pillar_missing"],
@@ -311,14 +351,23 @@ export const narrativeArcEvents = [
   }),
 
   arc("work_becomes_skilled", "手上的活开始认你", "career", [21, 58], [
+    { conditions: { all: [has("career.field", "eq", "estate_management")] }, text: "田契、租账和各处来往看久了，你已能从一处含糊的数目看出麻烦会落到谁身上。管产业不等于亲自下地；你的熟练在账页、契据和人情交界处，也同样会把难题引到桌前。" },
+    { conditions: { all: [has("career.field", "in", ["farm_work", "agriculture", "rural_work", "production_team", "seasonal_farm_labor"])] }, text: "节气、土性和地里的活没有说明书，你却已知道哪阵风后该先收什么、哪件农具响一声便要停手。熟练没有奖状，只在坏天气来前替一家人多留下一点余地。" },
+    { conditions: { all: [has("career.field", "in", ["apprentice", "arsenal_worker", "construction", "factory", "family_workshop", "manual_worker", "mine", "mine_worker", "pharmacy", "seafood_processing", "silk_mill_worker", "wartime_factory"])] }, text: "同样的工具和工序做过许多年，哪里会卡、哪一声响不对，你往往比说明更早知道。别人看见的是动作越来越短，你记得的是每一次返工怎样从手上退成经验。" },
+    { conditions: { all: [has("career.field", "in", ["corporate", "cross_border_trade", "delivery", "ecommerce", "internet", "logistics", "ride_hailing", "rural_ecommerce", "small_business", "startup", "technology", "township_business", "trade"])] }, text: "订单、客户、系统和几种永远更新不完的规则做久了，你已能提前看出哪一步会拖垮全局。所谓熟手，并非背得出每个菜单，而是知道屏幕说顺利时还该去问哪一个人。" },
+    { conditions: { all: [has("career.field", "in", ["care_work", "domestic_helper", "domestic_work", "grassroots_post", "professional", "public_sector", "state_unit", "teacher", "education", "healthcare", "doctor", "nurse", "township_accounting"])] }, text: "你做熟了流程，也逐渐认出流程照顾不到的例外。新人来问该填哪一栏，你先告诉他规矩，再告诉他哪些人的难处不能只剩一栏。" },
     { conditions: { all: [has("meta.currentYear", "lte", 1948)] }, text: "你做这门活久了，手比嘴更早知道哪里不对。东家未必肯多给工钱，同行遇到难处却开始先来问你；熟练替你挣到位置，也让人更放心把麻烦推来。" },
-    { conditions: { all: [has("career.status", "eq", "family_labor")] }, text: "节气、牲口和地里的活没有说明书，你却已知道哪阵风后该先收什么、哪件农具响一声便要停手。家里人渐渐先来问你，熟练也因此多背了一份操心。" },
-    { conditions: { all: [has("career.status", "in", ["self_employed", "gig_worker"])] }, text: "同一种活做得多了，你开始在动手前便看出最费工的地方。顾客未必知道这份分寸从哪来，只知道难办的事渐渐会点名找你。" },
     "几年做下来，你成了别人嘴里的熟手。许多问题不再需要请示便能处理，代价是出了差错时，大家也会很自然地先来找你。",
     "你终于能靠经验提前看出事情会在哪里出错。技能没有颁奖仪式，只是新人把工具递给你时，开始默认你知道下一步。",
     "工作渐渐长进到手里，别人看你做得轻松，只有你知道那是许多次返工叠出来的。熟练最会伪装成天生如此。",
   ], {
-    conditions: { all: [has("career.status", "in", ["employed", "self_employed", "family_labor", "gig_worker"])] , none: [{ hasTag: "arc_work_skilled" }] },
+    conditions: {
+      all: [
+        has("career.status", "in", ACTIVE_CAREER_STATUSES),
+        has("career.startedYear", "yearsSinceGte", 3),
+      ],
+      none: [{ hasTag: "arc_work_skilled" }],
+    },
     effects: [add("career.level", 8), add("resources.achievement", 6), add("resources.reputation", 4), { addTag: "arc_work_skilled" }],
     narrativeTier: "turning_point",
     narrativeDomain: "career",
@@ -356,7 +405,14 @@ export const narrativeArcEvents = [
     "你终于有了一处相对稳定的住处，也第一次为押金、修缮或长期付款认真算账。关上门的那刻很安静，未来许多年的钱却已经在门外排队。",
     "住址终于不再像临时答案。你把常用东西从箱子里拿出来，挂到固定的位置；安居并非从此没有负担，只是负担第一次有了门牌。",
   ], {
-    conditions: { all: [has("resources.wealth", "gte", 43)], none: [{ hasTag: "arc_stable_home" }] },
+    conditions: {
+      all: [has("resources.wealth", "gte", 43)],
+      any: [
+        has("birth.familyClass", "notIn", ["landlord"]),
+        has("location.migratedTimes", "gte", 1),
+      ],
+      none: [{ hasTag: "arc_stable_home" }],
+    },
     effects: [add("resources.wealth", -10), add("resources.freedom", 6), add("resources.happiness", 6), { addTag: "arc_stable_home" }],
     narrativeTier: "turning_point",
     narrativeDomain: "livelihood",
@@ -529,10 +585,22 @@ export const narrativeArcEvents = [
     narrativeDomain: "health",
   }),
   arc("deep_old_age_order", "把身后事放回生活里", "health", [80, 108], [
-    "几件要紧的安排终于有了着落。你们收好纸张，接着讨论晚饭；终点没有吞掉这一天，反而让剩下的时间重新回到吃饭、晒太阳和等一个电话。",
-    "该交代的事写清后，你明显轻松了一点，又为一件旧物究竟算不算值钱和家人争了几句。死亡很庄重，生活坚持夹带琐碎。",
-    "你把物件和心愿分得尽量明白，也允许晚辈以后作不同决定。安排身后不是控制未来，而是替最爱的人少留几道互相猜测的题。",
-    "文件收进固定抽屉后，全家一度不知道说什么。你先问水果还有没有，谈话便回到日常；能从终点话题平安走回来，也是一种准备。",
+    {
+      conditions: {
+        all: [has("meta.currentYear", "lte", 1979)],
+        any: [
+          has("location.currentCityTier", "in", ["village", "town"]),
+          has("location.currentProvince", "in", ["gansu", "qinghai", "xinjiang", "xizang"]),
+        ],
+      },
+      text: "几件要紧的安排终于有了着落。你们收好纸张，接着讨论晚饭；终点没有吞掉这一天，剩下的时间仍用来吃饭、晒太阳，等远路的一封信或过路人捎回一句话。",
+    },
+    { conditions: { all: [has("meta.currentYear", "lte", 1979)] }, text: "几件要紧的安排终于有了着落。你们收好纸张，接着讨论晚饭；终点没有吞掉这一天，剩下的时间仍用来吃饭、晒太阳，等一封信或家人捎回一句话。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 1980), has("meta.currentYear", "lte", 2004)] }, text: "几件要紧的安排终于有了着落。你们收好纸张，接着讨论晚饭；终点没有吞掉这一天，反而让剩下的时间重新回到吃饭、晒太阳和等一个电话。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 2005)] }, text: "几件要紧的安排终于有了着落。你们收好纸张，接着讨论晚饭；终点没有吞掉这一天，剩下的时间仍用来吃饭、晒太阳，等家人群里那声不紧不慢的回复。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "该交代的事写清后，你明显轻松了一点，又为一件旧物究竟算不算值钱和家人争了几句。死亡很庄重，生活坚持夹带琐碎。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "你把物件和心愿分得尽量明白，也允许晚辈以后作不同决定。安排身后不是控制未来，而是替最爱的人少留几道互相猜测的题。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "文件收进固定抽屉后，全家一度不知道说什么。你先问水果还有没有，谈话便回到日常；能从终点话题平安走回来，也是一种准备。" },
   ], {
     requiresEvents: ["arc_deep_old_age_wishes"],
     conditions: { all: [within("arc_deep_old_age_wishes", 9), { hasTag: "arc_deep_old_age" }] },
@@ -566,10 +634,22 @@ export const narrativeArcEvents = [
     narrativeDomain: "self",
   }),
   arc("very_old_tomorrow", "明天还有一件小事", "self", [90, 112], [
-    "睡前，你仍替明天留下一件小事：回一个电话、晒一件衣服，或看一眼天气。人生到了很晚，意义没有变得宏大，只是更诚实地使用这些微小的将来。",
-    "你嘱咐家人明天记得叫醒你，有件并不紧急的事要做。对方答应得很认真；被明天需要一点，是今晚最安稳的理由。",
-    "桌边放着明天要处理的一样东西。它普通得不值得写进遗嘱，却使这一夜仍与下一天相连。",
-    "你说明天再把一个故事讲完。晚辈没有催结局，只把椅子往近处挪了挪；未完待续是一种很朴素的生命力。",
+    {
+      conditions: {
+        all: [has("meta.currentYear", "lte", 1979)],
+        any: [
+          has("location.currentCityTier", "in", ["village", "town"]),
+          has("location.currentProvince", "in", ["gansu", "qinghai", "xinjiang", "xizang"]),
+        ],
+      },
+      text: "睡前，你仍替明天留下一件小事：托赶集的人带一句回话、晒一件衣服，或看一眼天气。人生到了很晚，意义没有变得宏大，只是更诚实地使用这些微小的将来。",
+    },
+    { conditions: { all: [has("meta.currentYear", "lte", 1979)] }, text: "睡前，你仍替明天留下一件小事：写一封回信、托家人捎一句话，或看一眼天气。人生到了很晚，意义没有变得宏大，只是更诚实地使用这些微小的将来。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 1980), has("meta.currentYear", "lte", 2004)] }, text: "睡前，你仍替明天留下一件小事：回一个电话、晒一件衣服，或看一眼天气。人生到了很晚，意义没有变得宏大，只是更诚实地使用这些微小的将来。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 2005)] }, text: "睡前，你仍替明天留下一件小事：在群聊里回一句话、晒一件衣服，或看一眼天气。人生到了很晚，意义没有变得宏大，只是更诚实地使用这些微小的将来。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "你嘱咐家人明天记得叫醒你，有件并不紧急的事要做。对方答应得很认真；被明天需要一点，是今晚最安稳的理由。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "桌边放着明天要处理的一样东西。它普通得不值得写进遗嘱，却使这一夜仍与下一天相连。" },
+    { conditions: { all: [has("meta.age", "gte", 0)] }, text: "你说明天再把一个故事讲完。晚辈没有催结局，只把椅子往近处挪了挪；未完待续是一种很朴素的生命力。" },
   ], {
     requiresEvents: ["arc_very_old_last_gift"],
     conditions: { all: [within("arc_very_old_last_gift", 8), { hasTag: "arc_future_tense" }] },

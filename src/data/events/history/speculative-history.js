@@ -1,4 +1,4 @@
-// A fictional future history for 2036—2120.
+// A fictional future history for 2036—2132.
 //
 // These events are literary hypotheses, not factual forecasts. They deliberately
 // make institutions, conflicts and collective memory visible, so the future is
@@ -24,6 +24,7 @@ function futureHistory({
   lifetimeProbability,
   baseWeight = 44,
   close = false,
+  narrativeSafetyNet = false,
 }) {
   const inferredProbability = narrativeTier === "historical_pressure" ? 0.72 : undefined;
   const probability = lifetimeProbability === null ? undefined : lifetimeProbability ?? inferredProbability;
@@ -43,6 +44,7 @@ function futureHistory({
     effects,
     narrativeTier,
     narrativeDomain,
+    ...(narrativeSafetyNet ? { narrativeSafetyNet: true } : {}),
     ...(close ? { narrativeThread: { close: true } } : {}),
   };
 }
@@ -66,7 +68,7 @@ export const speculativeHistoryEvents = [
       { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"])] }, text: "企业和公共部门开始逐项公布哪些任务交给机器、哪些责任仍由人承担。你的岗位说明忽然被重写得很长，像一份工作第一次被迫承认自己到底在做什么。" },
       "一轮自动化审计席卷各行业。会上不再只问能省多少人，还要说明出了错由谁签字；效率第一次被迫带着责任一起上台。",
       { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"])] }, text: "单位要求所有流程标出‘人类负责点’。一些熟悉的活消失了，另一些过去不被计价的判断、安慰和善后，终于获得了正式名称。" },
-      { conditions: { all: [C("education.status", "eq", "student")] }, text: "学校和培训机构开始公布哪些专业任务已被自动化、哪些责任仍必须由人承担。你发现所谓‘学会使用工具’只解决一半问题，另一半是工具出错时还能不能说明白。" },
+      { conditions: { all: [C("education.status", "eq", "enrolled")] }, text: "学校和培训机构开始公布哪些专业任务已被自动化、哪些责任仍必须由人承担。你发现所谓‘学会使用工具’只解决一半问题，另一半是工具出错时还能不能说明白。" },
       { conditions: { all: [C("career.status", "in", ["none", "unemployed"]), C("meta.age", "lte", 28)] }, text: "招聘启事开始标注岗位中的自动化比例和人工责任。入门工作少了，要求解释、复核和善后的职位多了；年轻人找的已不只是工作，而是机器尚未封住的入口。" },
     ],
     effects: [add("resources.freedom", -3), add("resources.achievement", 3), add("attrs.intelligence", 1), { addTag: "spec_ai_labor_audit" }],
@@ -318,7 +320,7 @@ export const speculativeHistoryEvents = [
       "你所在的沿海地区公布长期退让图。补偿按面积计算，记忆却没有统一单价；家家都在争论什么能搬走，什么只能告别。",
       "海水并非一夜吞下城市，决定撤退的文件却在一个下午生效。推土机还没来，房价、婚事和人心已经先搬动。",
     ],
-    effects: [add("resources.wealth", -10), add("resources.happiness", -8), add("location.migratedTimes", 1), { addTag: "spec_coastal_retreat" }],
+    effects: [add("resources.wealth", -10), add("resources.happiness", -8), { addTag: "spec_coastal_retreat" }],
     lifetimeProbability: 0.82,
   }),
   consequence({
@@ -348,7 +350,14 @@ export const speculativeHistoryEvents = [
       "新居更安全，也更陌生。你和旧邻居约定每月一起吃饭，后来才发现最难迁移的不是家具，而是下楼就能遇见谁。",
       "重建规划把原社区尽量安排在相近街区。设计师称为社会网络保留，你们仍叫它别把老邻居拆散。",
     ],
-    effects: [add("resources.wealth", 6), add("resources.freedom", 5), add("relationships.friendship", 5), { addTag: "spec_high_ground_home" }],
+    effects: [
+      add("resources.wealth", 6),
+      add("resources.freedom", 5),
+      add("relationships.friendship", 5),
+      add("location.migratedTimes", 1),
+      { addTag: "spec_high_ground_home" },
+      { addTag: "climate_resettled" },
+    ],
     close: true,
   }),
 
@@ -448,7 +457,7 @@ export const speculativeHistoryEvents = [
     ageRange: [18, 78],
     text: [
       "近地轨道能源与制造设施进入长期轮班阶段。真正上天的人仍很少，地面却多出庞大的控制、维修和供应岗位；太空时代先表现为新的夜班表。",
-      { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"])] }, text: "新闻播出第一批长期轨道班组，你所在的地面供应系统也随之改班。宏大的工程落到普通人手里，是不能迟到的交接和一颗螺丝的追溯编号。" },
+      { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"]), C("career.field", "in", ["technology", "logistics", "factory", "transport", "manufacturing", "engineering", "aerospace"])] }, text: "新闻播出第一批长期轨道班组，你所在的地面供应系统也随之改班。宏大的工程落到普通人手里，是不能迟到的交接和一颗螺丝的追溯编号。" },
       "轨道产业开始稳定雇人，招募广告不再只写探索，而是工资、辐射风险和多久能回家。浪漫终于被劳动合同校正。",
     ],
     effects: [add("resources.wealth", 2), add("resources.achievement", 2), add("attrs.intelligence", 1), { addTag: "spec_orbital_shift" }],
@@ -520,12 +529,41 @@ export const speculativeHistoryEvents = [
     ageRange: [18, 112],
     requiresEvents: ["century_budget"],
     text: [
-      "多次气候迁移后，公共地图开始保存已消失街区的口音、路线与居民讲述。旧地方不再只是一个坐标，而是可以被后来人听见的生活层。",
-      "你在地图上补录一段已经改变的河岸或街巷。系统问准确年份，你答不清，只能说明那家店的汤很咸；档案决定把两种信息都留下。",
-      "迁移者可以把旧地名带入新社区的公共地址。地图因此出现许多重名，邮政抱怨了几年，记忆赢得一点不够高效的空间。",
+      { conditions: { all: [{ hasTag: "climate_resettled" }] }, text: "经历过气候安置的人开始补录已改变街区的口音、路线与居民讲述。你在地图上标出旧家附近的一段路；系统问准确年份，你答不清，只能说明那家店的汤很咸，档案决定把两种信息都留下。" },
+      { conditions: { all: [{ hasTag: "climate_resettled" }] }, text: "迁移者可以把旧地名带入新社区的公共地址。你补上一处已经从现行地图消失的称呼；邮政抱怨重名，记忆则终于获得一点不够高效的空间。" },
+      "公共地图开始保存因气候变化而消失或改造的街区：居民的口音、路线和讲述同坐标放在一起。旧地方不再只是一块空白，而成为后来人可以听见的生活层。",
+      "一批迁移者为旧社区补录店铺、渡口和方言名称。你在公共地图上听他们争论同一条巷子的两种叫法；档案保留分歧，没有替记忆投票。",
     ],
     effects: [add("relationships.family", 4), add("resources.reputation", 5), add("resources.happiness", 2), { addTag: "spec_living_archive" }],
     close: true,
+  }),
+
+  H({
+    id: "elder_consent_renewal",
+    title: "代理不能替你说最后一句话",
+    category: "society",
+    yearRange: [2074, 2120],
+    ageRange: [94, 112],
+    conditions: {
+      any: [
+        C("narrative.textureStreak", "gte", 4),
+        C("narrative.yearsSinceStructural", "gte", 5),
+      ],
+    },
+    text: [
+      { conditions: { all: [C("resources.health", "lte", 42)] }, text: "长期照护系统建议把服药、转院和日常支出交给自动代理。新规要求它隔一段时间重新向本人确认，并允许停顿、改口和回答不知道。机器最不喜欢含糊，人的晚年却终于可以合法地含糊。" },
+      { conditions: { all: [C("resources.wealth", "lte", 35)] }, text: "过去，便宜的公共代理只会沿用上一次同意，细致复核要另付费。新规要求免费服务也把每项默认决定念明白；平等先表现为一段谁都嫌长、但不能替穷人跳过的说明。" },
+      { conditions: { all: [C("relationships.partnerStatus", "in", ["none", "widowed"])] }, text: "系统找不到默认的共同签字人，原本准备把决定顺延给机构。新规要求另找熟人或公共见证，却仍把最后一句留给你；没有伴侣不再等于没有意见。" },
+      { conditions: { all: [C("relationships.children", "gte", 1)] }, text: "孩子可以帮你听懂医疗、财务和居住授权，却不能一次替你同意余生。新规把家属协助和本人决定分成两栏；表格又长了一页，亲情反而少背了一点越俎代庖的债。" },
+      "高龄者使用的自动代理开始每年重新确认医疗、财务和居住授权，不再把多年前的一次点击当作终身意愿。窗口排得更慢了，许多人的不愿意却第一次没有被系统自动补成同意。",
+    ],
+    effects: [add("resources.freedom", 3), add("attrs.mental", 1), { addTag: "spec_elder_consent_renewed" }],
+    // This is a structural backstop, not another date-stamped spectacle: it
+    // enters only after a long texture run, so very old lives receive one
+    // consequential future institution without every centenarian seeing it.
+    lifetimeProbability: 0,
+    baseWeight: 62,
+    narrativeSafetyNet: true,
   }),
 
   H({
@@ -543,6 +581,7 @@ export const speculativeHistoryEvents = [
     ],
     effects: [add("resources.health", 6), add("resources.freedom", 6), add("resources.happiness", 3), { addTag: "spec_centenarian_city" }],
     lifetimeProbability: 0.8,
+    narrativeSafetyNet: true,
   }),
   consequence({
     id: "four_generation_household",
@@ -551,6 +590,7 @@ export const speculativeHistoryEvents = [
     yearRange: [2113, 2117],
     ageRange: [48, 112],
     requiresEvents: ["centenarian_city"],
+    conditions: { all: [C("relationships.children", "gte", 1)] },
     text: [
       "寿命延长使四代家庭变得常见，照护方向也不再只是年轻人指向老人。百岁长辈照看植物，七十岁的人接孩子，四十岁的人仍在加班，墙上的排班像一部家庭宪法。",
       { conditions: { all: [C("relationships.children", "gte", 1)] }, text: "家里同时有人上学、工作、退休和接受照护。传统称谓仍在，责任却必须重新谈判；辈分解决不了谁今天有空。" },
@@ -571,6 +611,79 @@ export const speculativeHistoryEvents = [
       "面向下一世纪的仪式没有埋下豪言，只留下一套可修改的图纸和一间空屋。未来终于不再被要求按今天的想象入住。",
     ],
     effects: [add("resources.achievement", 5), add("resources.freedom", 5), add("resources.happiness", 4), { addTag: "spec_future_room" }],
+    close: true,
+  }),
+
+  H({
+    id: "century_promise_due",
+    title: "一百年前的承诺到了交账日",
+    category: "society",
+    yearRange: [2121, 2123],
+    ageRange: [30, 112],
+    text: [
+      { conditions: { all: [{ hasTag: "climate_resettled" }] }, text: "一批写于百年前的气候、住房和迁居承诺集中到期。你在安置前后的两处地址之间核对兑现了什么；当年的签字人都已不在，真正搬过家的人却仍能指出哪一句只兑现了标题。" },
+      { conditions: { all: [C("resources.wealth", "lte", 38)] }, text: "百年基础设施账第一次公开清算，最便宜的旧方案留下最贵的维护费。你住的地方又被列入补修名单；一百年前省下的钱没有消失，只是改来向没有参与决定的人收取。" },
+      { conditions: { all: [C("meta.age", "gte", 95)] }, text: "百年前写下的公共承诺到期审计，你虽不记得签字那天，却记得这些承诺怎样陪一代人变老。年轻审计员请你确认旧宣传片里的街道，你先认出一家早已关门的面馆；制度想核对宏图，记忆先交出一碗汤。" },
+      "一批以百年为期限的堤坝、碳封存、养老和迁居计划同时接受审计。收益早已分过，维修与失约却活到了期限；公共账本第一次不得不用一个世纪作完整句号。",
+    ],
+    effects: [
+      add("resources.wealth", -3), add("resources.freedom", -2), add("attrs.mental", 1),
+      { addTag: "spec_century_promise_due" },
+      { scheduleEvent: { eventId: "spec_living_witness_hearing", delayYears: [2, 4], weightMultiplier: 24 } },
+    ],
+    lifetimeProbability: 0.86,
+    baseWeight: 58,
+    narrativeSafetyNet: true,
+  }),
+  consequence({
+    id: "living_witness_hearing",
+    title: "百岁证词和档案坐在同一张桌前",
+    category: "society",
+    yearRange: [2123, 2127],
+    ageRange: [32, 112],
+    requiresEvents: ["century_promise_due"],
+    text: [
+      { conditions: { all: [C("meta.age", "gte", 100), { hasTag: "climate_resettled" }] }, text: "听证会请百岁以上的安置亲历者说明旧工程怎样改变过日常。档案说迁居自愿，你记得车票由谁发、哪扇门来不及锁；主持人把两种说法都记入记录，屏幕第一次承认完整资料也可能不完整。" },
+      { conditions: { all: [{ hasTag: "climate_resettled" }, C("location.migratedTimes", "gte", 2)] }, text: "你讲起气候安置与后来迁居之间丢失的墓地、口音和邻里关系，算法把证词拆成可核验片段。能核验的进入赔偿，不能核验的仍是真的，只是暂时没有对应的表格。" },
+      { conditions: { all: [{ hasTag: "climate_resettled" }, C("resources.wealth", "gte", 68)] }, text: "你保存的安置合同与影像使一段证词获得采信，另一户只有口述，仍被标成证据不足。长寿让你成为制度证人，也让你看见记得同一件事的人并不因此拥有同样的证明能力。" },
+      "长期项目听证会第一次把百岁居民、维护工和旧数据库放在同一张桌前。机器提供准确日期，老人补上当时谁不敢说话；两种记录互相纠正，也互相嫌弃。",
+    ],
+    effects: [
+      add("resources.reputation", 3), add("resources.happiness", -2), add("relationships.family", 2),
+      { addTag: "spec_living_witness_heard" },
+    ],
+    outcomes: [
+      {
+        id: "resettlement_map_reopened",
+        conditions: { all: [{ hasTag: "climate_resettled" }] },
+        text: "安置地的风险图被重新打开",
+        resultText: "听证尚未散场，屏幕上的新风险线已经压到安置区边缘。工作人员没有说还要搬，只把下一次复审日期提前了；你认得这种语气，它总比纸箱先来几年。",
+        effects: [{ scheduleEvent: { eventId: "spec_second_permanent_move", delayYears: [3, 5], weightMultiplier: 24 } }],
+      },
+      {
+        id: "archive_receives_correction",
+        conditions: { all: [{ missingTag: "climate_resettled" }] },
+        text: "证词补进了公共档案",
+        resultText: "听证会把几处过分整齐的旧结论改成了仍有争议。档案没有因此变得公正，只终于承认：保存得最完整的材料，往往来自当年最有能力留下材料的人。",
+        effects: [add("attrs.mental", 1)],
+      },
+    ],
+  }),
+  consequence({
+    id: "second_permanent_move",
+    title: "永久安置地又要搬一次",
+    category: "migration",
+    yearRange: [2126, 2132],
+    ageRange: [35, 112],
+    requiresEvents: ["living_witness_hearing"],
+    conditions: { all: [{ hasTag: "climate_resettled" }] },
+    text: [
+      { conditions: { all: [C("location.migratedTimes", "gte", 2)] }, text: "曾写着永久安置的新城又进入风险区。你已经搬过不止一次，听见动员者说这是最后一次时，先问最后二字的保修期有几年；会场有人笑，登记表没有这一栏。" },
+      { conditions: { all: [C("location.currentCityTier", "in", ["village", "town", "county"])] }, text: "水线和热浪改变以后，部分县乡聚落要再次合并。祠堂、卫生站和新修不久的安置房都在名单上；人们争的已不只是往哪走，也是谁有权把刚安下来的生活再次称作过渡。" },
+      { conditions: { all: [C("resources.wealth", "lte", 42)] }, text: "第二次迁居补助按旧房评估，没能积下房产的人获得最少。你看着文件把无物可赔写成损失较小；穷人失去的东西不容易估价，并不等于更轻。" },
+      "几十年前被称为永久安置的地方再次面临迁移。居民要求新协议取消永久二字，改写下一次复审日期；他们不再相信没有期限的保证，却仍得在有期限的身体里重新打包。",
+    ],
+    effects: [add("location.migratedTimes", 1), add("resources.wealth", -6), add("resources.freedom", -5), add("resources.happiness", -5), { addTag: "spec_second_permanent_move" }],
     close: true,
   }),
 ];

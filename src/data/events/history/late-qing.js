@@ -7,6 +7,11 @@ export const historyLateQingEvents = [
     yearRange: [1840, 1911],
     ageRange: [14, 70],
     currentRegions: { hukou: ["rural"], cityTiers: ["village", "town", "county"] },
+    conditions: {
+      none: [
+        { path: "location.currentProvince", in: ["xianggang", "aomen", "taiwan"] },
+      ],
+    },
     maxOccurrences: 1,
     cooldown: 15,
     baseWeight: 20,

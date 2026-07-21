@@ -751,6 +751,38 @@ export const historyReformEraEvents = [
         "text": "你带着孩子挤上春运列车，行李架塞满，热水口前也排队。孩子问还有多久到家，你看一眼表，又看一眼窗外，知道老人已经把这班车的时刻念了许多遍。"
       },
       {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 2002 }
+          ]
+        },
+        "text": "售票窗口外的队伍拐过几道弯，你把车次和日期抄在纸上，轮到时只剩一张慢车票。回家的路没有因多转几次车变短，家里却一直按你报过的日子留着饭。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 30 }
+          ]
+        },
+        "text": "你第一次独自挤春运，包里塞着不贵却占地方的年货。检票一开，人群把你向前推；真正坐稳以后，你才敢给家里捎一句已经上车。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 46 }
+          ]
+        },
+        "text": "这些年你已经熟悉怎样少带一件行李、早到一会儿，仍不熟悉人群怎样把腰和耐心一起挤薄。车开以后，你把座位让给更老的人，自己扶着椅背站了一段。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 38 }
+          ]
+        },
+        "text": "你算过几种车次，最后选了最便宜也最慢的一张票。候车室里，行李既是年货也是枕头；回家这件事很贵，人们仍一年年想办法支付。"
+      },
+      {
         "text": "你几次托人、排队，终于攥住一张回家的车票。候车室里的人睡在行李旁，广播一响便同时起身；这一年走过很多方向，到春节才有一个方向被直接叫作回去。"
       }
     ],
@@ -2315,3 +2347,123 @@ export const historyReformEraEvents = [
     ]
   }
 ];
+
+const SPECIAL_ADMINISTRATIVE_REGIONS = ["xianggang", "aomen", "taiwan"];
+
+for (const event of historyReformEraEvents) {
+  event.conditions ??= {};
+  event.conditions.none = [
+    ...(event.conditions.none ?? []),
+    { path: "location.currentProvince", in: SPECIAL_ADMINISTRATIVE_REGIONS },
+  ];
+}
+
+historyReformEraEvents.push(
+  {
+    id: "era_hongkong_factory_moves_north",
+    title: "机器过了关口",
+    category: "career",
+    yearRange: [1980, 1996],
+    ageRange: [18, 65],
+    currentRegions: { provinces: ["xianggang"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "珠江对岸的厂房越来越多，香港的机器、订单和师傅陆续北移。老板说成本降了，旧车间的人先问自己的工位还在不在；一条边界让货更快，也把同一份工作拆成两种工资。",
+    effects: [
+      { path: "resources.wealth", add: 3 },
+      { path: "resources.happiness", add: -3 },
+      { path: "attrs.mental", add: 1 },
+      { addTag: "hongkong_factory_relocation_memory" }
+    ]
+  },
+  {
+    id: "era_hongkong_handover_1997",
+    title: "雨里的交接",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1997, 1998],
+    ageRange: [5, 90],
+    currentRegions: { provinces: ["xianggang"] },
+    maxOccurrences: 1,
+    priority: 56,
+    baseWeight: 52,
+    text: "交接仪式在雨里进行，旗帜、证件与新闻称呼一夜换了次序。街坊有人期待，有人盘算去留，也有人第二天照常赶早班；历史翻页时，巴士仍按站收费。",
+    effects: [
+      { path: "attrs.mental", add: 1 },
+      { path: "resources.happiness", add: 2 },
+      { path: "resources.freedom", add: 1 },
+      { addTag: "hongkong_handover_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_martial_law_lifted",
+    title: "报纸忽然多了说法",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1987, 1989],
+    ageRange: [12, 90],
+    currentRegions: { provinces: ["taiwan"] },
+    maxOccurrences: 1,
+    priority: 48,
+    baseWeight: 42,
+    text: "戒严解除以后，报纸与街头忽然多出彼此争吵的说法。你起初嫌声音太杂，后来才明白，能公开争论本身就是过去没有的一种日常。",
+    effects: [
+      { path: "resources.freedom", add: 7 },
+      { path: "attrs.mental", add: 1 },
+      { path: "relationships.friendship", add: 2 },
+      { addTag: "taiwan_martial_law_lifted_memory" }
+    ]
+  },
+  {
+    id: "era_taiwan_electronics_export_line",
+    title: "电路板经过许多双手",
+    category: "career",
+    yearRange: [1980, 1999],
+    ageRange: [16, 62],
+    currentRegions: { provinces: ["taiwan"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 28,
+    text: "电子厂的电路板沿流水线经过许多双手，最后装箱去往海外。新闻把它叫产业升级，你更熟悉的是无尘衣里的汗、加班表和月底那笔确实增加的工资。",
+    effects: [
+      { path: "resources.wealth", add: 6 },
+      { path: "resources.health", add: -3 },
+      { path: "resources.achievement", add: 4 },
+      { addTag: "taiwan_electronics_memory" }
+    ]
+  },
+  {
+    id: "era_macau_tourism_shift",
+    title: "旧街转向游客",
+    category: "career",
+    yearRange: [1980, 1998],
+    ageRange: [18, 70],
+    currentRegions: { provinces: ["aomen"], cityTiers: ["town", "county", "city", "tier2", "tier1"] },
+    maxOccurrences: 1,
+    baseWeight: 25,
+    text: "酒店、赌场与游客把小城的班次拖到深夜。有人靠小费和加班把家用撑宽，也有人发现旧邻居的店面先学会说价钱，再学会说欢迎。",
+    effects: [
+      { path: "resources.wealth", add: 5 },
+      { path: "resources.health", add: -2 },
+      { path: "relationships.friendship", add: 1 },
+      { addTag: "macau_tourism_shift_memory" }
+    ]
+  },
+  {
+    id: "era_macau_handover_1999",
+    title: "关闸两边都在倒数",
+    category: "family",
+    narrativeTier: "historical_pressure",
+    yearRange: [1999, 2000],
+    ageRange: [5, 95],
+    currentRegions: { provinces: ["aomen"] },
+    maxOccurrences: 1,
+    priority: 54,
+    baseWeight: 50,
+    text: "交接前后，街上换旗、换称呼，也反复解释哪些制度暂时不换。你收好旧证件，又去办新的手续；宏大的归属最后总要落到一张照片尺寸是否合格。",
+    effects: [
+      { path: "attrs.mental", add: 1 },
+      { path: "resources.happiness", add: 2 },
+      { addTag: "macau_handover_memory" }
+    ]
+  }
+);

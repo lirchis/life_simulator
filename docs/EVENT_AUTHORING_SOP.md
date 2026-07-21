@@ -12,7 +12,7 @@
 批次：daily-school-001
 目标：补 80 条学校日常
 年龄：6-22
-年份：1840-2120
+年份：1840-2132
 重点条件：时代、城乡、性别、家境、教育压力、考试特质
 涉及文件：src/data/events/daily/school.js 或新拆文件
 ```
@@ -174,6 +174,8 @@ continuity: {
 - 已就业人物返校必须由离职、停薪学习、转为非全日制等桥接事件解释，不能让普通“新学期”直接覆盖职业状态。
 - 从求学转入谋生且文案已经解释离校时，使用 `continuity.educationOnCareerStart: "completed"` 或 `"interrupted"`。
 - “第一份工作”必须同时检查 `career.jobsHeld === 0`；`career.status === "unemployed"` 只能说明现在没有工作，不能证明从未工作。
+- 成绩单、青春期冲突、成年子女疏远等文案要分别检查 `relationships.oldestChildAge` / `youngestChildAge`；只有 `children >= 1` 不足以证明孩子已经会读写或独立生活。
+- 写“你制定规则、压缩班次、分配床位、设计分包链”时，必须检查 `career.role`、`authorityScope` 或 `managesPeople` / `controlsBudget` / `writesPolicy` / `controlsProcurement`。财富、行业和资历不能替代权限。
 - 引擎会记录每次教育/职业转移的年份、年龄与来源事件；分层批测把无解释的全日制/在职重叠列为阻断错误。
 
 ## 9. 自动结果设计

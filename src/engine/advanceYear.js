@@ -2,12 +2,12 @@ import { weightedPick } from "./random.js";
 import { calculateEnvironment } from "./environment.js";
 import { getEventCount, getLifeStage } from "./stage.js";
 import { clone } from "./path.js";
-import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=shadow-1";
-import { matchConditions } from "./conditions.js?v=shadow-1";
-import { applyNaturalChanges } from "./naturalChanges.js?v=shadow-1";
+import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=future-history-3";
+import { matchConditions } from "./conditions.js?v=future-history-3";
+import { applyNaturalChanges } from "./naturalChanges.js?v=future-history-3";
 import { getHistoricalLife } from "./historicalLives.js?v=shadow-1";
-import { composeQuietYearText } from "./quietYearText.js?v=content-cycle-1";
-import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { composeQuietYearText } from "./quietYearText.js?v=future-history-3";
+import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=future-history-3";
 import {
   beginNarrativeYear,
   getNarrativeDomain,
@@ -134,6 +134,12 @@ function lifeCourseSnapshot(state) {
       status: state.career.status,
       field: state.career.field,
       jobsHeld: state.career.jobsHeld,
+      role: state.career.role,
+      authorityScope: state.career.authorityScope,
+      managesPeople: state.career.managesPeople,
+      controlsBudget: state.career.controlsBudget,
+      writesPolicy: state.career.writesPolicy,
+      controlsProcurement: state.career.controlsProcurement,
     },
     primaryActivity: state.lifeCourse.primaryActivity,
   };

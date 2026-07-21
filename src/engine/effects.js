@@ -1,7 +1,7 @@
 import { clamp, clone, getPath, setPath } from "./path.js";
-import { normalizeLifeCourse } from "./lifeCourse.js?v=continuity-1";
+import { normalizeLifeCourse } from "./lifeCourse.js?v=future-history-3";
 import { normalizeNarrativeState } from "./narrative.js?v=shadow-1";
-import { evolveShadowFromEffects, normalizeShadowState } from "./shadow.js?v=shadow-1";
+import { evolveShadowFromEffects, normalizeShadowState } from "./shadow.js?v=future-history-3";
 
 export function applyEffects(effects = [], state, sourceEvent) {
   const beforeShadowEvolution = {
@@ -24,6 +24,8 @@ export function applyEffects(effects = [], state, sourceEvent) {
     if (effect.cooldown) state.cooldowns[effect.cooldown] = effect.years;
     if (effect.scheduleEvent) scheduleEvent(effect.scheduleEvent, state, sourceEvent);
     if (effect.addTimedModifier) addTimedModifier(effect.addTimedModifier, state, sourceEvent);
+    if (effect.initializeShadowThread) initializeShadowThread(state, effect.initializeShadowThread);
+    if (effect.recordChildBirth) (state.relationships.childBirthYears ??= []).push(state.meta.currentYear);
     if (effect.die) {
       state.meta.isAlive = false;
       state.meta.deathReason = effect.die;
@@ -33,6 +35,22 @@ export function applyEffects(effects = [], state, sourceEvent) {
   evolveShadowFromEffects(beforeShadowEvolution, state);
   normalizeState(state);
   normalizeLifeCourse(state);
+}
+
+function initializeShadowThread(state, id) {
+  const threads = (state.shadow.threads ??= {});
+  if (threads[id]) return;
+  const reflectivePressure = state.attrs.mental * 2
+    + state.resources.happiness / 20
+    - state.shadow.hardness
+    - state.shadow.selfDeception;
+  threads[id] = {
+    guilt: reflectivePressure >= 5 ? 3 : 0,
+    justification: reflectivePressure >= 5 ? 1 : 3,
+    benefitRetained: 0,
+    responsibilityAccepted: 0,
+    victimContact: 0,
+  };
 }
 
 function cloneSetValue(value) {
@@ -104,6 +122,14 @@ export function normalizeState(state) {
     state.relationships[key] = clamp(Math.round(state.relationships[key]), 0, 100);
   }
   state.relationships.children = Math.max(0, Math.round(state.relationships.children));
+  state.relationships.childBirthYears ??= [];
+  state.relationships.childBirthYears = state.relationships.childBirthYears
+    .map(Number)
+    .filter((year) => Number.isFinite(year) && year <= state.meta.currentYear)
+    .sort((left, right) => left - right);
+  const childAges = state.relationships.childBirthYears.map((year) => Math.max(0, state.meta.currentYear - year));
+  state.relationships.oldestChildAge = childAges.length ? Math.max(...childAges) : null;
+  state.relationships.youngestChildAge = childAges.length ? Math.min(...childAges) : null;
   state.education.score = clamp(Math.round(state.education.score), 0, 100);
   state.career.level = clamp(Math.round(state.career.level), 0, 100);
   state.career.income = clamp(Math.round(state.career.income), 0, 100);

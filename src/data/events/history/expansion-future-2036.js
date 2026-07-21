@@ -288,7 +288,20 @@ const far = [
   ["memory_garden", "一株替人长着的树", "family", [20, 95], "你们为一位逝者种下一株适合本地的树。树不负责像谁，只在往后的夏天提供一点阴影。", [add("resources.happiness", 1), add("relationships.family", 2)], ["rural", "树种在村边，浇水的人轮流来。多年后大家未必记得每次祭日，树根却把时间记进土里。"]],
   ["heat_night_watch", "夜里互相报平安", "health", [18, 95], "持续高温的夜里，邻里约好互相报个平安。消息很短，多是‘没事’，正因为有人在等，才显得不是敷衍。", [add("relationships.friendship", 3), add("resources.health", 1)], ["elder", "你夜里醒来，按约回了一句平安。隔壁很快发来应答，两扇关着的门之间仍有一条看不见的走廊。"]],
   ["storm_memory", "记得上次水到哪里", "daily", [25, 95], "大雨将至，老人指出上次积水到哪一级台阶。新的监测提供数字，旧记忆提供一条墙上的水痕。", [add("attrs.intelligence", 1), add("resources.wealth", 1)], ["rural", "你记得哪条沟最先满，便提醒大家先清那一段。地方经验不精确到小数，却知道水的脾气。"]],
-  ["relocation_anniversary", "搬来整整十年", "family", [20, 92], "搬到新地方十年后，你同旧邻居仍偶尔联系。两边都已变样，乡愁终于不再坚持某处必须永远原封不动。", [add("attrs.mental", 2), add("relationships.friendship", 2)], ["migrated", "你在新住处种的树已经高过窗台。根扎下去不等于忘记来处，只说明人可以同时属于几段土地。"]],
+  ["relocation_anniversary", "搬来整整十年", "family", [20, 92], "搬到新地方十年后，你同旧邻居仍偶尔联系。两边都已变样，乡愁终于不再坚持某处必须永远原封不动。", [add("attrs.mental", 2), add("relationships.friendship", 2)], ["migrated", "你在新住处种的树已经高过窗台。根扎下去不等于忘记来处，只说明人可以同时属于几段土地。"], {
+    conditions: {
+      any: [
+        "life_leave_for_bigger_city",
+        "era_sent_down_youth_train",
+        "era_sea_business_choice",
+        "future36_move_inland",
+        "future36_last_move",
+        "spec_high_ground_neighborhood",
+        "struct_post78_climate_relocation_new_ground_old_routes",
+        "spec_second_permanent_move",
+      ].map((eventId) => ({ eventOccurredBetween: { eventId, minYears: 9, maxYears: 11 } })),
+    },
+  }],
   ["cooling_credit", "先把凉快留给老人", "family", [18, 88], "家里讨论有限的用能预算，先保证老人、孩子和病人的房间。舒适不能完全平均，关心便负责说明为什么。", [add("resources.health", 2), add("relationships.family", 2)], ["poor", "你们把最凉的一间屋留给最怕热的人，其余人轮流进去坐会儿。贫穷使温度也要排班，玩笑让排班少一点难堪。"]],
   ["water_memory", "旧井不再取水", "daily", [12, 90], "村边旧井已经不再日常取水，井台仍被保留下来。老人讲从前排队打水，孩子只觉得井绳上的结很有趣。", [add("education.score", 1), add("resources.happiness", 1)], ["young", "大人牵着你看旧井，不许靠得太近。你没听完故事，只记住井口回声会把自己的声音还回来。"]],
   ["reused_bricks", "旧砖砌进新墙", "wealth", [18, 82], "修屋时，一批完好的旧砖被清理后重新使用。新墙颜色不齐，却像把拆下来的年份一层层砌回生活。", [add("resources.wealth", 2), add("resources.happiness", 1)], ["poor", "你舍不得把旧砖全运走，逐块敲净灰浆。省下的钱不多，手上的茧替每块砖开了收据。"]],

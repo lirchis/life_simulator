@@ -251,6 +251,9 @@ type RelationshipState = {
   partnerStatus: "none" | "dating" | "married" | "divorced" | "widowed";
   partnerQuality: number;
   children: number;
+  childBirthYears: number[];
+  oldestChildAge: number | null;
+  youngestChildAge: number | null;
 };
 
 type EducationState = {
@@ -274,6 +277,12 @@ type CareerState = {
   field?: string;
   level: number;
   income: number;
+  role: string; // 具体角色；不能用行业或财富替代真实权限
+  authorityScope: "none" | "workflow" | "public_program" | "care_allocation" | "financial_risk" | "project_procurement" | string;
+  managesPeople: boolean;
+  controlsBudget: boolean;
+  writesPolicy: boolean;
+  controlsProcurement: boolean;
   startedYear: number | null;
   statusSinceYear: number | null;
   jobsHeld: number;
@@ -292,7 +301,7 @@ type LifeCourseState = {
 };
 ```
 
-`education.level` 不再单独承担“当前是否在读”的含义。事件要判断课堂身份，应检查 `education.status` 与 `education.currentLevel`；要判断既往学历，应检查 `education.completedLevel`。首次就业还必须检查 `career.jobsHeld === 0`，不能仅凭当前处于待业状态再次触发“第一份工作”。
+`education.level` 不再单独承担“当前是否在读”的含义。事件要判断课堂身份，应检查 `education.status` 与 `education.currentLevel`；要判断既往学历，应检查 `education.completedLevel`。首次就业还必须检查 `career.jobsHeld === 0`，不能仅凭当前处于待业状态再次触发“第一份工作”。孩子进入学龄、青春期或成年后的文案应读取派生年龄，不得用主角年龄猜孩子年龄。涉及名额、预算、排班、政策或采购权的事件必须检查对应 `career.role` / authority 字段，不能用“有钱”“在某行业”或较高 `career.level` 代替权力。
 
 ### 3.8 标签、计数器和历史
 

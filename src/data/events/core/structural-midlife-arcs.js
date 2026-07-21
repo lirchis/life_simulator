@@ -21,6 +21,7 @@ const V = (conditions, text, weight = 1) => ({ conditions: { all: conditions }, 
 const F = (text) => ({ text });
 
 const before1949 = C("meta.currentYear", "lte", 1949);
+const after1949 = C("meta.currentYear", "gte", 1950);
 const plannedYears = [C("meta.currentYear", "gte", 1950), C("meta.currentYear", "lte", 1977)];
 const reformYears = [C("meta.currentYear", "gte", 1978), C("meta.currentYear", "lte", 2011)];
 const connectedYears = C("meta.currentYear", "gte", 2012);
@@ -35,6 +36,25 @@ const formalWorker = C("career.field", "in", [
   "education", "healthcare", "doctor", "nurse", "grassroots_post",
 ]);
 const informalWorker = C("career.status", "in", ["self_employed", "gig_worker", "family_labor"]);
+const estateCareer = C("career.field", "eq", "estate_management");
+const agriculturalCareer = C("career.field", "in", [
+  "farm_work", "agriculture", "rural_work", "production_team", "seasonal_farm_labor",
+]);
+const manualCraftCareer = C("career.field", "in", [
+  "apprentice", "arsenal_worker", "construction", "factory", "family_workshop",
+  "manual_worker", "manufacturing", "mine", "mine_worker", "pharmacy",
+  "seafood_processing", "silk_mill_worker", "wartime_factory",
+]);
+const digitalCommerceCareer = C("career.field", "in", [
+  "corporate", "cross_border_trade", "delivery", "ecommerce", "finance", "internet",
+  "logistics", "media", "office", "ride_hailing", "rural_ecommerce", "sales",
+  "small_business", "startup", "technology", "township_business", "trade", "transport",
+]);
+const serviceInstitutionCareer = C("career.field", "in", [
+  "care_work", "domestic_helper", "domestic_work", "doctor", "education", "engineering",
+  "grassroots_post", "healthcare", "nurse", "professional", "public_sector", "service",
+  "state_unit", "teacher", "township_accounting",
+]);
 const hasChildren = C("relationships.children", "gte", 1);
 const noChildren = C("relationships.children", "lte", 0);
 const partnered = C("relationships.partnerStatus", "in", ["partnered", "married"]);
@@ -217,11 +237,12 @@ const skillAndToolChange = midlifeArc("tool_change", {
       id: "new_tool",
       title: "旧手艺碰上了新工具",
       text: [
-        V([before1949, rural], "附近添了一件改过的农具或加工器具，做法同你熟悉的不完全一样。它省下一段蛮力，也要求先承认手里的老办法并非处处最好。"),
-        V([before1949, urban], "铺里或工场换来一件新器具，齿轮、标尺或踏板同旧活接在一起。老师傅先嫌它娇气，开工后又最先听出哪里响得不对。"),
-        V([...plannedYears, formalWorker], "岗位添了新设备或新流程，说明贴在墙上，真正开动时仍围着几个人。机器按统一规格来，旧经验负责指出统一规格漏掉的那一声怪响。"),
-        V([...reformYears, informalWorker], "进货、记账或接活换了新工具，你先借别人的试用。它确实省事，也顺便发明了几种从前没有的新差错。"),
-        V([connectedYears], "常做的活换了软件、设备或一套新步骤。界面说上手容易，你在第三层菜单里第一次认真怀念一把有柄的工具。"),
+        V([before1949, working], "铺子、作坊或雇主家换了一件器具或做法。新东西未必精巧，却足以让旧动作重新排次序；你先看别人做一遍，再用手上的经验找出最容易误事的地方。"),
+        V([after1949, working, estateCareer], "管产业的账册、契据和收支换了一套登记办法。新表格把田亩写得很整齐，人情和歉收仍挤不进格子；你先学会新算法，也保留对旧账来路的追问。"),
+        V([after1949, working, agriculturalCareer], "田里添了新农具、设备或种植办法。它省下一段蛮力，也要求你重新判断天时、土性和什么时候不能照说明书硬来。"),
+        V([after1949, working, manualCraftCareer], "工场、作坊或工地换了一件关键工具。齿轮、标尺、机器或新材料同旧活接在一起，说明写着标准步骤，手上的经验先听出那一声不对。"),
+        V([after1949, working, digitalCommerceCareer], "订单、记账、调度或客户往来换了软件和新流程。界面说上手容易，你在第三层菜单里第一次认真怀念一张摊开的纸。"),
+        V([after1949, working, serviceInstitutionCareer], "岗位换了设备、表格或一套新流程。新规程擅长把事情排齐，你很快发现真正需要经验的，是认出哪一个人并不符合默认情形。"),
         F("你熟悉的活换了一件关键工具。手上的经验没有失效，却忽然需要翻译成另一套动作；做得越久的人，第一天反而越像新手。"),
       ],
       effects: [add("career.level", -1), add("resources.achievement", -1), add("resources.health", -1), add("attrs.intelligence", 1)],
@@ -232,11 +253,14 @@ const skillAndToolChange = midlifeArc("tool_change", {
       minYears: 1,
       maxYears: 3,
       text: [
-        V([before1949, rural], "新器具第二次卡住时，你不再只怪它不中用，蹲下把每处接合重新摸过。旁边年轻人力气足，你知道哪一声意味着再使劲就要赔钱。"),
-        V([before1949, urban], "你照旧手势做错一回，只得拆开返工。学徒想笑又忍住，后来轮到他装反零件，你们便都有了保持体面的理由。"),
-        V([lowMoney], "学新工具要耗材料和停工，你舍不得专门练，只能在每单活的边角试一点。贫穷使学习没有草稿纸，错误直接写在成本上。"),
+        V([before1949], "第一次照新办法做，你把一处次序弄反，只得拆开重来。师傅、同伴或东家没有替难堪折价；你把每一步重新问清，才发现旧熟练也需要肯承认一时不会。"),
         V([inactive], "原来的工作已经停下，工具的变化却没有等你。再碰这门活时，你先承认有几步不会；旧熟练放低身段以后，反而留下能接回去的地方。"),
-        V([formalWorker], "培训讲得很快，考核表填得更快。真正回到岗位，你同几位同事把最容易出错的步骤另写一张纸，贴得比正式说明更低，也更常被看见。"),
+        V([after1949, working, estateCareer], "新登记把一处旧账判成异常，你沿着契据、收条和几次口头约定重新核对。机器算得快，你第一次清楚看见自己从前凭熟人关系省略了多少说明。"),
+        V([after1949, working, agriculturalCareer], "新设备第二次卡住时，你不再只怪它不中用，停下来把土、湿度和每处接合重新看过。旁边年轻人会操作，你知道再硬开一段会赔掉什么。"),
+        V([after1949, working, manualCraftCareer], "你照旧手势做错一回，只得拆开返工。年轻同事想笑又忍住，后来轮到他把零件装反，你们便都有了保持体面的理由。"),
+        V([after1949, working, digitalCommerceCareer], "新系统把一笔熟悉的业务卡在陌生步骤，你只得逐栏追查。学软件不耗木料，却照样耗时间；平台还很体贴地把你的迟疑记成效率下降。"),
+        V([after1949, working, serviceInstitutionCareer], "新办法讲得很快，考核表填得更快。真正回到岗位，你同几位同事把最容易漏掉的人和情形另写一张纸，贴得比正式说明更低，也更常被看见。"),
+        V([lowMoney], "学新工具要耗材料或停工，你舍不得专门练，只能在每单活的边角试一点。贫穷使学习没有草稿纸，错误直接写在成本上。"),
         F("你有一阵做得比从前慢，还犯了一个年轻时不会犯的错。难堪没有提供技术帮助，只逼你把每一步重新问明白。"),
       ],
       effects: [add("career.level", 2), add("resources.achievement", 2), add("resources.happiness", -1), add("resources.health", -1)],
@@ -247,11 +271,13 @@ const skillAndToolChange = midlifeArc("tool_change", {
       minYears: 2,
       maxYears: 5,
       text: [
-        V([before1949], "后来你已能把新器具同旧手艺接起来。别人问诀窍，你没有说全凭手感，而是把哪处要听、哪处要慢，一项项指出。"),
-        V([rural], "新工具替你省下一些力气，地里的判断仍要看天、看土、看一季留下的毛病。机器学会走直线，你负责知道什么时候不该直走。"),
-        V([urban], "你把旧经验改成新流程能用的次序，也保留一两步人工复核。效率涨了，返工少了；唯一失业的是从前那句我一直这么做。"),
+        V([before1949], "后来你把新器具同旧经验接了起来，也能告诉后来的人哪处要慢、哪处要听声音。东西换过，手艺留下来的不是一个固定姿势，而是知道什么地方仍不能马虎。"),
         V([inactive], "你未必回到原来的岗位，却把新旧两套做法讲给后来的人。职业可以中断，做过多年才有的分寸不必跟着工牌一起失效。"),
-        V([connectedYears], "你终于不再同新工具争谁更聪明，只把它擅长的交给它，把需要判断的留给人。合作谈不上浪漫，至少错误开始各有负责人。"),
+        V([after1949, working, estateCareer], "后来你能让新登记接住旧契据，也知道哪一笔不能因为登记显示正常便算清楚。产业仍由账和人共同维持；办法更新以后，推诿倒也获得了更整齐的栏目。"),
+        V([after1949, working, agriculturalCareer], "新工具替你省下一些力气，地里的判断仍要看天、看土、看一季留下的毛病。机器学会走直线，你负责知道什么时候不该直走。"),
+        V([after1949, working, manualCraftCareer], "你把旧经验改成新工序能用的次序，也保留一两步亲手复核。效率涨了，返工少了；唯一失业的是从前那句我一直这么做。"),
+        V([after1949, working, digitalCommerceCareer], "你终于不再同新系统争谁更聪明，只把计算、归档和重复步骤交给它，把客户、风险与例外留给人。合作谈不上浪漫，至少错误开始各有负责人。"),
+        V([after1949, working, serviceInstitutionCareer], "你学会借新工具省下重复劳动，也坚持在关键处让一个具体的人重新看一遍。流程更快了，经验留下来的方式，是知道哪一次慢下来并不算落后。"),
         F("几年后，新工具已经用熟，旧手艺也没有被整件丢掉。你留下的本事不再是某个固定动作，而是知道工具换了以后，哪一处仍不能马虎。"),
       ],
       effects: [add("career.level", 4), add("resources.achievement", 5), add("resources.reputation", 2), add("resources.freedom", 1)],

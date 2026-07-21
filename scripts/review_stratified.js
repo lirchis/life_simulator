@@ -47,6 +47,9 @@ function review(batch, output) {
   addFinding(output, "warning", "PLACE_TEXTURE_RISK", `地点纹理与触发所在地疑似冲突 ${consistency.place.length} 处`, consistency.place);
   addFinding(output, "warning", "CLASS_TEXTURE_RISK", `家庭资源层级与文案生活纹理疑似冲突 ${consistency.classTexture.length} 处`, consistency.classTexture);
 
+  const careerCoverage = reviewCareerCoverage(batch);
+  addFinding(output, "warning", "MODERN_CAREER_VOID", `现代及未来世代活到30岁仍从未进入任何职业状态 ${careerCoverage.void_lives}/${careerCoverage.eligible_lives} 局`, careerCoverage.problem_samples);
+
   const anachronism = reviewAnachronisms(batch.events);
   addFinding(output, "error", "OBSERVED_ANACHRONISM", `样本正文出现早于合理使用年份的高置信词汇 ${anachronism.length} 处`, anachronism);
   const contextualAnachronism = reviewContextualAnachronisms(batch.events);
@@ -66,6 +69,9 @@ function review(batch, output) {
   const shadow = reviewShadowNarrative(batch);
   addFinding(output, "warning", "SHADOW_HARM_WITHOUT_TRACE", `主动伤害叙述后十五年内没有责任、关系或内在痕迹 ${shadow.harmWithoutTrace.length} 处；这不要求人物受到惩罚`, shadow.harmWithoutTrace);
   addFinding(output, "warning", "SHADOW_REPENTANCE_ONLY_CLOSURE", `人生末尾疑似用一次悔悟替代此前持续后果 ${shadow.repentanceOnlyClosures.length} 局`, shadow.repentanceOnlyClosures);
+  addFinding(output, "warning", "SHADOW_REDEMPTION_BIAS", `阴影结构结局中过多落到道歉、归还或补偿 ${shadow.closure_balance.reparative}/${shadow.closure_balance.total} 条`, shadow.closure_balance.reparative_rate > 0.55 ? shadow.closure_balance.reparative_samples : []);
+  addFinding(output, "warning", "SHADOW_MORAL_SETTLEMENT_BIAS", `阴影结构结局中过多被修复或惩罚明确结清 ${shadow.closure_balance.settled}/${shadow.closure_balance.total} 条`, shadow.closure_balance.settled_rate > 0.75 ? shadow.closure_balance.settled_samples : []);
+  addFinding(output, "warning", "SHADOW_CLOSURE_SUBGROUP_BIAS", `某类阴影或年代的结局明显单向修复/结清 ${shadow.closure_balance.subgroup_biases.length} 组`, shadow.closure_balance.subgroup_biases);
   addFinding(output, "warning", "SHADOW_STATE_JUMP", `单个事件的阴影状态变化超过25点 ${shadow.stateJumps.length} 处`, shadow.stateJumps);
   addFinding(output, "warning", "SHADOW_LIFE_CONTRADICTION", `累计伤害倒退、无修复的大额信任债清零或同年状态断裂 ${shadow.contradictions.length} 处`, shadow.contradictions);
   addFinding(output, "warning", "SHADOW_OVERCONCENTRATION", `同一人生阴影事件过度集中 ${shadow.overconcentratedLives.length} 局`, shadow.overconcentratedLives);
@@ -102,12 +108,55 @@ function review(batch, output) {
       observed_anachronisms: anachronism.length,
       missing_scheduled_continuations: missingContinuations.length,
     },
+    career_coverage: careerCoverage,
     frequency,
     narrative,
     shadow,
     future_history: futureHistory,
     subgroups,
     mortality,
+  };
+}
+
+function reviewCareerCoverage(batch) {
+  const summaries = new Map(batch.summary.map((row) => [row.run_id, row]));
+  const activeCareer = new Set(["employed", "self_employed", "gig_worker", "family_labor", "entrepreneur"]);
+  const cohorts = {};
+  const allVoidSamples = [];
+  let eligibleLives = 0;
+  let voidLives = 0;
+
+  for (const [runId, rows] of groupByMap(batch.years.filter((row) => !row.chronicle_id), (row) => row.run_id)) {
+    const summary = summaries.get(runId);
+    if (!summary || num(summary.birth_year) < 1990) continue;
+    const throughThirty = rows.filter((row) => num(row.age) <= 30);
+    if (!throughThirty.some((row) => num(row.age) >= 30)) continue;
+    eligibleLives += 1;
+    const cohort = summary.cohort;
+    const bucket = cohorts[cohort] ?? { eligible_lives: 0, career_void_lives: 0, career_void_rate: 0 };
+    bucket.eligible_lives += 1;
+    const enteredCareer = throughThirty.some((row) => num(row.career_jobs_held) >= 1 || activeCareer.has(row.career_status));
+    if (!enteredCareer) {
+      voidLives += 1;
+      bucket.career_void_lives += 1;
+      allVoidSamples.push(`${runId}: ${cohort}/${summary.gender}/${summary.settlement}/${summary.class_tier}，活到30岁仍无职业经历`);
+    }
+    cohorts[cohort] = bucket;
+  }
+
+  for (const bucket of Object.values(cohorts)) {
+    bucket.career_void_rate = ratio(bucket.career_void_lives, bucket.eligible_lives);
+  }
+  const biasedCohorts = Object.entries(cohorts)
+    .filter(([, bucket]) => bucket.eligible_lives >= 20 && bucket.career_void_rate > 0.35)
+    .map(([cohort, bucket]) => `${cohort}: ${bucket.career_void_lives}/${bucket.eligible_lives}（${percent(bucket.career_void_rate)}）`);
+  return {
+    eligible_lives: eligibleLives,
+    void_lives: voidLives,
+    void_rate: ratio(voidLives, eligibleLives),
+    cohorts,
+    biased_cohorts: biasedCohorts,
+    problem_samples: biasedCohorts.length ? [...biasedCohorts, ...allVoidSamples] : [],
   };
 }
 
@@ -264,6 +313,63 @@ function reviewShadowNarrative(batch) {
     };
   }
 
+  const completedClosureRows = authoredRows.filter((row) => definitions.get(row.event_id)?.narrativeThread?.close);
+  const closureBalance = {
+    total: completedClosureRows.length,
+    reparative: 0,
+    punitive: 0,
+    hardened_or_escaped: 0,
+    unsettled: 0,
+    settled: 0,
+    reparative_samples: [],
+    settled_samples: [],
+    by_family: {},
+    by_era: {},
+    subgroup_biases: [],
+  };
+  for (const row of completedClosureRows) {
+    const copy = `${row.title}。${row.final_text}${row.final_result_text ?? ""}`;
+    const before = readShadow(row, "before");
+    const after = readShadow(row, "after");
+    const reparative = SHADOW_REPARATIVE_CLOSURE.test(copy) && !SHADOW_REPAIR_NEGATION.test(copy);
+    const punitive = SHADOW_PUNITIVE_CLOSURE.test(copy);
+    const hardenedOrEscaped = after.hardness > before.hardness
+      || after.selfDeception > before.selfDeception
+      || after.guilt < before.guilt
+      || SHADOW_ESCAPE_CLOSURE.test(copy);
+    const settled = reparative || punitive;
+    if (reparative) {
+      closureBalance.reparative += 1;
+      closureBalance.reparative_samples.push(`${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}: “${excerpt(copy)}”`);
+    }
+    if (punitive) closureBalance.punitive += 1;
+    if (hardenedOrEscaped) closureBalance.hardened_or_escaped += 1;
+    if (!settled) closureBalance.unsettled += 1;
+    if (settled) {
+      closureBalance.settled += 1;
+      closureBalance.settled_samples.push(`${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}: “${excerpt(copy)}”`);
+    }
+    const family = shadowFamily(row.event_id);
+    const year = num(row.year);
+    const era = year <= 1949 ? "1840-1949" : year <= 1977 ? "1950-1977" : year <= 2035 ? "1978-2035" : "2036-2132";
+    recordClosureBucket(closureBalance.by_family, family, { reparative, punitive, hardenedOrEscaped, settled });
+    recordClosureBucket(closureBalance.by_era, era, { reparative, punitive, hardenedOrEscaped, settled });
+  }
+  closureBalance.reparative_rate = ratio(closureBalance.reparative, closureBalance.total);
+  closureBalance.punitive_rate = ratio(closureBalance.punitive, closureBalance.total);
+  closureBalance.hardened_or_escaped_rate = ratio(closureBalance.hardened_or_escaped, closureBalance.total);
+  closureBalance.unsettled_rate = ratio(closureBalance.unsettled, closureBalance.total);
+  closureBalance.settled_rate = ratio(closureBalance.settled, closureBalance.total);
+  for (const [dimension, table] of [["family", closureBalance.by_family], ["era", closureBalance.by_era]]) {
+    for (const [key, bucket] of Object.entries(table)) {
+      finalizeClosureBucket(bucket);
+      if (bucket.total < 20) continue;
+      if (bucket.reparative_rate > 0.7 || bucket.settled_rate > 0.85) {
+        closureBalance.subgroup_biases.push(`${dimension}=${key}: ${bucket.total}条结局，修复${percent(bucket.reparative_rate)}，明确结清${percent(bucket.settled_rate)}，未结清${percent(bucket.unsettled_rate)}`);
+      }
+    }
+  }
+
   return {
     authored_event_count: authoredRows.length,
     authored_event_rate: ratio(authoredRows.length, batch.events.length),
@@ -276,7 +382,7 @@ function reviewShadowNarrative(batch) {
     authored_events_per_affected_life_mean: average(authoredCounts),
     authored_events_per_affected_life_p90: quantile(authoredCounts, 0.9),
     authored_events_per_affected_life_max: maximum(authoredCounts),
-    authored_by_family: countBy(authoredRows, (row) => row.event_id.startsWith("shadow_public_") ? "public" : row.event_id.startsWith("shadow_private_") ? "private" : "survival"),
+    authored_by_family: countBy(authoredRows, (row) => shadowFamily(row.event_id)),
     shadow_change_events: changedEvents.length,
     shadow_change_event_rate: ratio(changedEvents.length, batch.events.length),
     lives_with_shadow_change: changedRuns.size,
@@ -295,12 +401,13 @@ function reviewShadowNarrative(batch) {
     overconcentratedLives,
     subgroup_distribution: subgroupDistribution,
     subgroupSkews,
+    closure_balance: closureBalance,
   };
 }
 
 function reviewFutureHistory(batch) {
   const definitions = data.events.filter((event) => event.id.startsWith("spec_"));
-  const futureRows = batch.events.filter((row) => row.chronicle_id === "" && num(row.year) >= 2036 && num(row.year) <= 2120);
+  const futureRows = batch.events.filter((row) => row.chronicle_id === "" && num(row.year) >= 2036 && num(row.year) <= 2132);
   const speculativeRows = futureRows.filter((row) => row.event_id.startsWith("spec_"));
   const observedIds = new Set(speculativeRows.map((row) => row.event_id));
   const windows = [
@@ -310,6 +417,7 @@ function reviewFutureHistory(batch) {
     [2080, 2094],
     [2095, 2109],
     [2110, 2120],
+    [2121, 2132],
   ];
   const eras = {};
   const holes = [];
@@ -349,7 +457,7 @@ function reviewFutureHistory(batch) {
   }
   return {
     start_year: 2036,
-    end_year: 2120,
+    end_year: 2132,
     person_years: futureRows.length,
     historical_events: speculativeRows.length,
     historical_event_rate: ratio(speculativeRows.length, futureRows.length),
@@ -566,10 +674,42 @@ function reviewConsistency(batch) {
     if (/孩子出生|生下(?:一个|了)|添了(?:一个|个)?孩子|有了第一个孩子/.test(copy) && num(row.children_after) < 1) {
       state.push(`${prefix}: 叙述生育但 children=${row.children_after}`);
     }
+    if (row.event_id.startsWith("daily_child_born_") && num(row.children_after) === 1
+      && /又(?:一个|添|来到)|比上次|从前少/.test(copy)) {
+      state.push(`${prefix}: 首胎文案虚构了此前生育经历；“${excerpt(copy)}”`);
+    }
     if (num(row.children_after) < 1 && OWN_CHILD_TEXT.test(copy)) {
       state.push(`${prefix}: 正文把孩子写成人物自己的家庭成员，但 children=${row.children_after || 0}；“${excerpt(copy)}”`);
     } else if (num(row.children_after) < 1 && AMBIGUOUS_CHILD_TEXT.test(copy)) {
       kinshipAmbiguity.push(`${prefix}: children=${row.children_after || 0}，儿童称谓需确认亲属关系；“${excerpt(copy)}”`);
+    }
+    if (row.oldest_child_age_after !== "" && /成绩单|藏起成绩|补习班|学校作业|删掉消息/.test(copy) && num(row.oldest_child_age_after) < 6) {
+      state.push(`${prefix}: 孩子相关文案需要学龄，oldest_child_age=${row.oldest_child_age_after}；“${excerpt(copy)}”`);
+    }
+    if (row.oldest_child_age_after !== "" && /成年孩子|孩子成年|已经成年的孩子/.test(copy) && num(row.oldest_child_age_after) < 18) {
+      state.push(`${prefix}: 正文写成年子女，但 oldest_child_age=${row.oldest_child_age_after}；“${excerpt(copy)}”`);
+    }
+    if (/孙辈|孙子|孙女|外孙/.test(copy)
+      && (num(row.children_after) < 1 || num(row.oldest_child_age_after) < 16)) {
+      state.push(`${prefix}: 孙辈叙述缺少足龄子女前史，children=${row.children_after || 0} / oldest_child_age=${row.oldest_child_age_after || 0}`);
+    }
+    const establishesPartnerState = [
+      ...(event?.effects ?? []),
+      ...(event?.outcomes ?? []).flatMap((outcome) => outcome.effects ?? []),
+    ].some((effect) => effect.path === "relationships.partnerStatus"
+      && ["partnered", "married"].includes(effect.set));
+    if (establishesPartnerState
+      && !["partnered", "married"].includes(row.partner_status_after)) {
+      state.push(`${prefix}: 伴侣/婚姻事件发生时 partner_status=${row.partner_status_after || "空"}`);
+    }
+    if (["none", ""].includes(row.education_level_after)
+      && /你的作业|你(?:只管|一直在)读书|课前你|谈(?:到|起)升学/.test(copy)) {
+      state.push(`${prefix}: 未入学人物出现当前在读语义；“${excerpt(copy)}”`);
+    }
+    if (row.event_id.startsWith("shadow_systemic_")
+      && !event?.requiresEvents?.length
+      && row.career_authority_scope_before === "none") {
+      state.push(`${prefix}: 制度性权力事件发生前 authority_scope=none，role=${row.career_role_before || "none"}`);
     }
     if (/你(?:办了)?退休|你办了退养|你开始领退休金/.test(copy) && ["employed", "self_employed", "gig_worker"].includes(row.career_status_after)) {
       state.push(`${prefix}: 叙述退休但 career_status=${row.career_status_after}`);
@@ -588,6 +728,9 @@ function reviewConsistency(batch) {
     for (const rule of PLACE_RULES) {
       if (!rule.pattern.test(copy) || rule.provinces.includes(row.trigger_province)) continue;
       place.push(`${prefix}: ${row.trigger_province}/${row.trigger_city_tier} 出现“${rule.label}”`);
+    }
+    if (SPECIAL_TERRITORY_PROVINCES.has(row.trigger_province) && MAINLAND_REGIME_EVENT_IDS.has(row.event_id)) {
+      place.push(`${prefix}: ${row.trigger_province} 触发大陆特定制度事件 ${row.event_id}`);
     }
     if (["city", "tier2", "tier1"].includes(row.trigger_city_tier) && /你(?:下地|下田|赶着牛)|你家的(?:田|庄稼)|村里分工分/.test(copy)) {
       place.push(`${prefix}: 城市所在地叙述为直接务农“${excerpt(copy)}”`);
@@ -640,6 +783,23 @@ function reviewLifeCourseRows(batch, definitions, output) {
     }
     if (activeCareer.has(row.career_status) && num(row.career_jobs_held) < 1) {
       output.push(`${prefix}: career_status=${row.career_status} 但 jobs_held=${row.career_jobs_held}`);
+    }
+    if (splitList(row.event_ids).includes("arc_work_becomes_skilled")
+      && Number.isFinite(Number(row.career_started_year))
+      && num(row.year) - num(row.career_started_year) < 3) {
+      output.push(`${prefix}: 入行不足三年便叙述“几年做下来”，career_started_year=${row.career_started_year}`);
+    }
+    const rowEventIds = splitList(row.event_ids);
+    const yearsRetired = num(row.year) - num(row.career_status_since_year);
+    if (row.career_status === "retired"
+      && rowEventIds.includes("life_retirement_day")
+      && num(row.career_status_since_year) < num(row.year)) {
+      output.push(`${prefix}: 已于${row.career_status_since_year}年退休，又触发正式退休事件`);
+    }
+    if (row.career_status === "retired"
+      && rowEventIds.includes("age_arc_reduced_work_old_clock_stops")
+      && (yearsRetired < 1 || yearsRetired > 5)) {
+      output.push(`${prefix}: 退休${yearsRetired}年后才出现“退休头几年”的节律变化`);
     }
     const expectedActivity = row.alive_after_year === "no"
       ? "deceased"
@@ -973,7 +1133,10 @@ function evaluateGates(metrics, allFindings) {
     min_future_history_rate: numericArg(args["min-future-history-rate"], 0.08),
     min_future_history_coverage_rate: numericArg(args["min-future-history-coverage"], 0.45),
     max_shadow_untraced_rate: numericArg(args["max-shadow-untraced-rate"], 0.12),
+    max_shadow_reparative_closure_rate: numericArg(args["max-shadow-reparative-closure-rate"], 0.55),
+    max_shadow_settled_closure_rate: numericArg(args["max-shadow-settled-closure-rate"], 0.75),
     max_shadow_overconcentrated_life_rate: numericArg(args["max-shadow-overconcentrated-rate"], 0.05),
+    max_modern_career_void_rate: numericArg(args["max-modern-career-void-rate"], 0.35),
     max_long_texture_streak_life_rate: numericArg(args["max-long-texture-streak-life-rate"], 0.2),
     max_overpenetrating_events: nonnegativeInteger(args["max-overpenetrating-events"], 0, "--max-overpenetrating-events"),
     max_copy_monoculture_events: nonnegativeInteger(args["max-copy-monoculture-events"], 0, "--max-copy-monoculture-events"),
@@ -992,9 +1155,17 @@ function evaluateGates(metrics, allFindings) {
     gate("future_history_rate", !hasFutureSample || metrics.future_history.historical_event_rate >= thresholds.min_future_history_rate, hasFutureSample ? `${percent(metrics.future_history.historical_event_rate)} >= ${percent(thresholds.min_future_history_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
     gate("future_history_definition_coverage", !hasFutureSample || metrics.future_history.definition_coverage_rate >= thresholds.min_future_history_coverage_rate, hasFutureSample ? `${percent(metrics.future_history.definition_coverage_rate)} >= ${percent(thresholds.min_future_history_coverage_rate)}` : `跳过：仅${metrics.future_history.person_years}个未来个人年`),
     gate("shadow_harm_trace", !hasShadowSample || metrics.shadow.harm_without_trace_rate <= thresholds.max_shadow_untraced_rate, hasShadowSample ? `${percent(metrics.shadow.harm_without_trace_rate)} <= ${percent(thresholds.max_shadow_untraced_rate)}` : `跳过：仅${metrics.shadow.harm_narrative_events}个主动伤害开端`),
+    gate("shadow_reparative_closure_rate", metrics.shadow.closure_balance.total < 20 || metrics.shadow.closure_balance.reparative_rate <= thresholds.max_shadow_reparative_closure_rate, metrics.shadow.closure_balance.total < 20 ? `跳过：仅${metrics.shadow.closure_balance.total}个阴影链结局` : `${percent(metrics.shadow.closure_balance.reparative_rate)} <= ${percent(thresholds.max_shadow_reparative_closure_rate)}`),
+    gate("shadow_settled_closure_rate", metrics.shadow.closure_balance.total < 20 || metrics.shadow.closure_balance.settled_rate <= thresholds.max_shadow_settled_closure_rate, metrics.shadow.closure_balance.total < 20 ? `跳过：仅${metrics.shadow.closure_balance.total}个阴影链结局` : `${percent(metrics.shadow.closure_balance.settled_rate)} <= ${percent(thresholds.max_shadow_settled_closure_rate)}`),
+    gate("shadow_closure_subgroup_balance", metrics.counts.runs < 100 || metrics.shadow.closure_balance.subgroup_biases.length === 0, metrics.counts.runs < 100 ? `跳过：仅${metrics.counts.runs}局` : `${metrics.shadow.closure_balance.subgroup_biases.length}组单向结局`),
     gate("shadow_state_integrity", metrics.shadow.state_jump_count === 0 && metrics.shadow.contradiction_count === 0, `跳变${metrics.shadow.state_jump_count} / 矛盾${metrics.shadow.contradiction_count}`),
     gate("shadow_overconcentration", ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs) <= thresholds.max_shadow_overconcentrated_life_rate, `${percent(ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs))} <= ${percent(thresholds.max_shadow_overconcentrated_life_rate)}`),
     gate("shadow_identity_skew", metrics.counts.runs < 100 || metrics.shadow.subgroupSkews.length === 0, metrics.counts.runs < 100 ? `跳过：仅${metrics.counts.runs}局` : `${metrics.shadow.subgroupSkews.length}组显著偏差`),
+    gate(
+      "modern_career_coverage",
+      Object.values(metrics.career_coverage.cohorts).every((bucket) => bucket.eligible_lives < 20 || bucket.career_void_rate <= thresholds.max_modern_career_void_rate),
+      Object.entries(metrics.career_coverage.cohorts).map(([cohort, bucket]) => `${cohort} ${percent(bucket.career_void_rate)}`).join(" / ") || "无30岁样本",
+    ),
     gate("long_texture_streak_life_rate", metrics.narrative.lives_with_texture_streak_over_5_rate <= thresholds.max_long_texture_streak_life_rate, `${percent(metrics.narrative.lives_with_texture_streak_over_5_rate)} <= ${percent(thresholds.max_long_texture_streak_life_rate)}`),
     gate("overpenetrating_event_count", metrics.frequency.overpenetrating.length <= thresholds.max_overpenetrating_events, `${metrics.frequency.overpenetrating.length} <= ${thresholds.max_overpenetrating_events}`),
     gate("copy_monoculture_event_count", metrics.frequency.copyMonoculture.length <= thresholds.max_copy_monoculture_events, `${metrics.frequency.copyMonoculture.length} <= ${thresholds.max_copy_monoculture_events}`),
@@ -1021,10 +1192,12 @@ function formatReport(result) {
     `- 结构性事件：${percent(metrics.narrative.structural_event_rate)}（转折 ${percent(metrics.narrative.turning_point_rate)} / 后果 ${percent(metrics.narrative.consequence_rate)} / 历史压力 ${percent(metrics.narrative.historical_pressure_rate)}）`,
     `- 日常纹理：${percent(metrics.narrative.texture_event_rate)}；最长纹理超过5年的生命 ${metrics.narrative.lives_with_texture_streak_over_5} 局`,
     `- 长纹理起点：${formatCounts(metrics.narrative.gap_start_decade_distribution, 5)}；年龄段 ${formatCounts(metrics.narrative.gap_start_age_band_distribution, 5)}`,
-    `- 阴影人生：${metrics.shadow.authored_lives}/${metrics.counts.runs}局触发 ${metrics.shadow.authored_event_count} 条（公共 ${metrics.shadow.authored_by_family.public ?? 0} / 私人 ${metrics.shadow.authored_by_family.private ?? 0} / 生存 ${metrics.shadow.authored_by_family.survival ?? 0}）；定义覆盖 ${metrics.shadow.observed_authored_definitions}/${metrics.shadow.authored_definitions}（${percent(metrics.shadow.authored_definition_coverage_rate)}）`,
+    `- 阴影人生：${metrics.shadow.authored_lives}/${metrics.counts.runs}局触发 ${metrics.shadow.authored_event_count} 条（公共 ${metrics.shadow.authored_by_family.public ?? 0} / 私人 ${metrics.shadow.authored_by_family.private ?? 0} / 历史 ${metrics.shadow.authored_by_family.historical ?? 0} / 制度 ${metrics.shadow.authored_by_family.systemic ?? 0} / 生存 ${metrics.shadow.authored_by_family.survival ?? 0}）；定义覆盖 ${metrics.shadow.observed_authored_definitions}/${metrics.shadow.authored_definitions}（${percent(metrics.shadow.authored_definition_coverage_rate)}）`,
     `- 阴影连续性：主动伤害开端 ${metrics.shadow.harm_narrative_events} 条，其中十五年内缺少后续痕迹 ${metrics.shadow.harm_without_trace_count} 条；状态跳变 ${metrics.shadow.state_jump_count} 条，矛盾 ${metrics.shadow.contradiction_count} 条`,
+    `- 阴影结局：修复/补偿 ${metrics.shadow.closure_balance.reparative}/${metrics.shadow.closure_balance.total}（${percent(metrics.shadow.closure_balance.reparative_rate)}）；惩罚 ${metrics.shadow.closure_balance.punitive}（${percent(metrics.shadow.closure_balance.punitive_rate)}）；未结清 ${metrics.shadow.closure_balance.unsettled}（${percent(metrics.shadow.closure_balance.unsettled_rate)}）；硬化或逃脱 ${metrics.shadow.closure_balance.hardened_or_escaped}（${percent(metrics.shadow.closure_balance.hardened_or_escaped_rate)}）`,
     `- 阴影身份偏差：性别、阶层、城乡显著失衡 ${metrics.shadow.subgroupSkews.length} 组（允许处境不同，不允许身份直接等于恶）`,
-    `- 未来历史（2036—2120）：${metrics.future_history.historical_events}/${metrics.future_history.person_years}个人年（${percent(metrics.future_history.historical_event_rate)}）；事件定义覆盖 ${metrics.future_history.observed_definitions}/${metrics.future_history.definitions}（${percent(metrics.future_history.definition_coverage_rate)}）`,
+    `- 未来历史（2036—2132）：${metrics.future_history.historical_events}/${metrics.future_history.person_years}个人年（${percent(metrics.future_history.historical_event_rate)}）；事件定义覆盖 ${metrics.future_history.observed_definitions}/${metrics.future_history.definitions}（${percent(metrics.future_history.definition_coverage_rate)}）`,
+    `- 现代职业连续性：活到30岁仍无任何职业经历 ${metrics.career_coverage.void_lives}/${metrics.career_coverage.eligible_lives}（${percent(metrics.career_coverage.void_rate)}）；分世代 ${Object.entries(metrics.career_coverage.cohorts).map(([cohort, bucket]) => `${cohort}=${percent(bucket.career_void_rate)}`).join(" / ") || "无样本"}`,
     `- 同局重复事件：${metrics.frequency.repeated_event_excess}（${percent(metrics.frequency.repeated_event_rate)}）；排除平常年后 ${metrics.frequency.repeated_nonquiet_event_excess}`,
     `- 同局重复可见文案：${metrics.frequency.repeated_visible_copy_excess}（${percent(metrics.frequency.repeated_visible_copy_rate)}）`,
     `- 头部10事件占比：${percent(metrics.frequency.top_10_event_share)}；HHI ${metrics.frequency.event_hhi.toFixed(4)}`,
@@ -1070,7 +1243,10 @@ function loadBatch(inputFiles) {
     years: parseCsv(readFileSync(inputFiles.years, "utf8"), new Set([
       "run_id", "year_id", "birth_year", "chronicle_id", "age", "year", "event_count", "event_ids",
       "education_status", "education_current_level", "education_completed_level", "education_mode",
-      "education_concurrent_career", "career_status", "career_jobs_held", "primary_activity",
+      "education_concurrent_career", "career_status", "career_jobs_held", "career_role", "career_authority_scope",
+      "career_started_year", "career_status_since_year",
+      "career_manages_people", "career_controls_budget", "career_writes_policy", "career_controls_procurement",
+      "oldest_child_age", "youngest_child_age", "primary_activity",
       "life_course_transition_count", "alive_after_year", "tags",
       "narrative_last_tier", "narrative_last_domain", "narrative_years_since_structural",
       "narrative_texture_streak", "narrative_structural_count", "narrative_active_threads",
@@ -1080,11 +1256,12 @@ function loadBatch(inputFiles) {
       "run_id", "event_row_id", "year_id", "event_order", "cohort", "region_group", "settlement",
       "class_tier", "attribute_tier", "birth_year", "gender", "birth_province", "birth_city_tier",
       "hukou", "family_class", "age", "year", "trigger_province", "trigger_city_tier",
-      "chronicle_id", "partner_status_after", "children_after", "education_level_after",
+      "chronicle_id", "partner_status_after", "children_after", "oldest_child_age_after", "youngest_child_age_after", "education_level_after",
       "education_status_before", "education_status_after", "education_current_level_after",
       "education_completed_level_after", "education_mode_after", "education_concurrent_career_after",
       "career_status_before", "career_field_before", "career_status_after", "career_field_after",
-      "career_jobs_held_after", "primary_activity_after",
+      "career_jobs_held_after", "career_role_before", "career_role_after", "career_authority_scope_before", "career_authority_scope_after",
+      "career_manages_people_after", "career_controls_budget_after", "career_writes_policy_after", "career_controls_procurement_after", "primary_activity_after",
       "event_id", "title", "category", "final_text", "final_result_text", "death",
       "narrative_tier", "narrative_domain", "narrative_texture_streak_before",
       "narrative_texture_streak_after", "narrative_years_since_structural_before",
@@ -1231,6 +1408,15 @@ function shadowColumn(field, suffix) {
   return `shadow_${name}_${suffix}`;
 }
 
+function shadowFamily(eventId) {
+  if (eventId.startsWith("shadow_public_")) return "public";
+  if (eventId.startsWith("shadow_private_")) return "private";
+  if (eventId.startsWith("shadow_pre49_dark_")) return "historical";
+  if (eventId.startsWith("shadow_midcentury_")) return "historical";
+  if (eventId.startsWith("shadow_systemic_")) return "systemic";
+  return "survival";
+}
+
 function signed(value) {
   return `${value > 0 ? "+" : ""}${value}`;
 }
@@ -1257,6 +1443,32 @@ function num(value) {
 
 function ratio(numerator, denominator) {
   return denominator ? numerator / denominator : 0;
+}
+
+function recordClosureBucket(table, key, outcome) {
+  const bucket = table[key] ?? {
+    total: 0,
+    reparative: 0,
+    punitive: 0,
+    hardened_or_escaped: 0,
+    settled: 0,
+    unsettled: 0,
+  };
+  bucket.total += 1;
+  if (outcome.reparative) bucket.reparative += 1;
+  if (outcome.punitive) bucket.punitive += 1;
+  if (outcome.hardenedOrEscaped) bucket.hardened_or_escaped += 1;
+  if (outcome.settled) bucket.settled += 1;
+  else bucket.unsettled += 1;
+  table[key] = bucket;
+}
+
+function finalizeClosureBucket(bucket) {
+  bucket.reparative_rate = ratio(bucket.reparative, bucket.total);
+  bucket.punitive_rate = ratio(bucket.punitive, bucket.total);
+  bucket.hardened_or_escaped_rate = ratio(bucket.hardened_or_escaped, bucket.total);
+  bucket.settled_rate = ratio(bucket.settled, bucket.total);
+  bucket.unsettled_rate = ratio(bucket.unsettled, bucket.total);
 }
 
 function average(values) {
@@ -1333,10 +1545,14 @@ const SHADOW_CONSEQUENCE_TEXT = /内疚|愧疚|噩梦|失去信任|不再信任|
 const SHADOW_REPAIR_TEXT = /道歉|坦白|赔偿|补偿|归还|修复|重建信任|承担责任|弥补/;
 const SHADOW_REFLECTION_TEXT = /反思|承认|面对|承担|坦白|道歉|赎罪|悔|愧疚|内疚|理解了自己的/;
 const SHADOW_REPENTANCE_CLOSURE = /(?:晚年|临终|最后|终于).{0,20}(?:悔|认错|道歉|赎罪|获得原谅|得到原谅|放下)|(?:一切|过往).{0,12}(?:释然|洗清|得到原谅|获得原谅)/;
+const SHADOW_REPARATIVE_CLOSURE = /道歉|坦白|赔偿|补偿|归还|补回|补发|退回|交还|还清|修复|重建信任|承担责任|弥补|恢复.{0,8}顺序|把.{0,12}说清/;
+const SHADOW_REPAIR_NEGATION = /没有道歉|没有坦白|没有赔偿|没有补偿|没有归还|没有修复|并未道歉|拒绝道歉|不肯道歉|不足以.{0,8}(?:弥补|修复)|不能要求.{0,8}原谅/;
+const SHADOW_PUNITIVE_CLOSURE = /伏法|被捕|坐牢|判刑|开除|革职|解职|撤职|降职|受罚|受到处罚|被处分|被追责|退赔|破产|失去.{0,8}(?:职位|工作|生意|资格|机会|权力)|不再掌握.{0,8}(?:权力|名单|钥匙)|被调查|被清查/;
+const SHADOW_ESCAPE_CLOSURE = /没有受罚|无人追究|没人追究|没有追究|没有被追究|仍旧|仍然|继续升迁|保住.{0,8}(?:职位|生意|名声)|换成.{0,8}说法|讲成|说成|归为.{0,8}(?:惯例|旧账|时代)|责任.{0,8}(?:散在|无人负责)/;
 
 const AGE_RULES = [
   { label: "襁褓/吃奶/学步", pattern: /你(?:还|仍)?(?:在)?襁褓|你(?:开始)?吃奶|你(?:开始)?学步|你咿呀学语/, max: 4 },
-  { label: "幼儿园", pattern: /你.{0,8}(?:幼儿园|托儿所)|把你送进(?:幼儿园|托儿所)/, min: 0, max: 9 },
+  { label: "幼儿园", pattern: /你(?:在|上|进了?|被送进|去)(?:幼儿园|托儿所)|把你送进(?:幼儿园|托儿所)/, min: 0, max: 9 },
   { label: "小学", pattern: /小学生|读小学|小学课堂|小学毕业/, min: 5, max: 17 },
   { label: "中学", pattern: /中学生|读初中|读高中|初中毕业|高中毕业/, min: 10, max: 24 },
   { label: "高考", pattern: /参加高考|高考到了|走进高考考场/, min: 14, max: 35 },
@@ -1353,6 +1569,7 @@ const ERA_TERMS = [
   { term: "电报", since: 1871 },
   { term: "电话", since: 1882 },
   { term: "电影", since: 1896 },
+  { term: "现代岗位工具语汇", pattern: /系统(?:默认|显示正常|擅长)|软件|界面|平台还很体贴|培训讲得|考核表填得/, since: 1950 },
   { term: "收音机", since: 1923 },
   { term: "供销店/供销社", pattern: /供销店|供销社/, since: 1950 },
   { term: "单位制高置信语汇", pattern: /单位(?:分房|宿舍|食堂|医务室|托儿所|福利|大院|介绍信)|组织介绍信|凭介绍信(?:分房|住宿|就医)|办(?:理)?退休/, since: 1949 },
@@ -1399,6 +1616,35 @@ const ERA_TERMS = [
   { term: "生成式AI", since: 2022 },
   { term: "大模型", since: 2022 },
 ];
+
+// These narratives describe institutions whose jurisdiction was mainland China.
+// A current-location check belongs in the event definitions; this observed-run
+// guard keeps later content expansion from silently leaking them into the
+// historically distinct Hong Kong, Macao, or Taiwan timelines.
+const SPECIAL_TERRITORY_PROVINCES = new Set(["xianggang", "aomen", "taiwan"]);
+const MAINLAND_REGIME_EVENT_IDS = new Set([
+  "era_1911_queue_cut_city",
+  "era_republic_market_tax",
+  "era_warlord_tax_grain",
+  "era_landlord_class_label",
+  "era_planned_assignment_first_work",
+  "era_sent_down_youth_train",
+  "era_barefoot_doctor",
+  "exp49_rural_workpoint_notch",
+  "era_collective_canteen",
+  "era_famine_hungry_spring",
+  "era_private_plot_recovery",
+  "era_production_team_night_accounting",
+  "era_cultural_revolution_family_swept",
+  "era_commune_winter_waterworks",
+  "era_rural_cooperative_medical_fee",
+  "era_household_responsibility",
+  "era_reform_field_contract_thumbprint",
+  "era_rural_surplus_to_market",
+  "era_reform_fertilizer_queue",
+  "texture_lost_ration_coupon",
+  "life_gaokao_crossroads",
+]);
 
 const PLACE_RULES = [
   { label: "弄堂/石库门", pattern: /弄堂|石库门/, provinces: ["shanghai"] },
