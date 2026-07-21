@@ -1,8 +1,8 @@
 import { createAggregateRegistry } from "./engine/aggregates.js";
-import { advanceYear } from "./engine/advanceYear.js?v=shadow-1";
+import { advanceYear } from "./engine/advanceYear.js?v=content-cycle-1";
 import { createRng, pick, randomSeed } from "./engine/random.js";
 import { createInitialState } from "./engine/state.js?v=shadow-1";
-import { data } from "./data/index.js?v=shadow-1";
+import { data } from "./data/index.js?v=content-cycle-1";
 
 const app = document.querySelector("#app");
 const aggregateRegistry = createAggregateRegistry(data.aggregates);
@@ -325,7 +325,7 @@ function flowCard(change) {
   return `
     <div class="year-flow">
       <b>自然流变</b>
-      <div class="effects">${change.effectsSummary.map((item) => `<span>${formatEffectSummary(item)}</span>`).join("")}</div>
+      <div class="effects">${visibleEffectSummaries(change.effectsSummary).map((item) => `<span>${formatEffectSummary(item)}</span>`).join("")}</div>
     </div>
   `;
 }
@@ -337,7 +337,7 @@ function eventCard(log) {
       <header><b>${log.title}</b><span>${categoryLabel(log.category)}</span></header>
       <p>${log.text}</p>
       ${log.resultText ? `<p class="result">${log.resultText}</p>` : ""}
-      <div class="effects">${log.effectsSummary.map((item) => `<span>${formatEffectSummary(item)}</span>`).join("")}</div>
+      <div class="effects">${visibleEffectSummaries(log.effectsSummary).map((item) => `<span>${formatEffectSummary(item)}</span>`).join("")}</div>
     </article>
   `;
 }
@@ -795,7 +795,14 @@ function tagLabel(tag) {
 }
 
 function visibleTags(tags = []) {
-  return tags.filter((tag) => !tag.startsWith("shadow_"));
+  return tags.filter((tag) => Boolean(labels.tag[tag]));
+}
+
+function visibleEffectSummaries(items = []) {
+  return items.filter((item) => {
+    const match = item.match(/^(?:获得|失去) (.+)$/);
+    return !match || Boolean(labels.tag[match[1]]);
+  });
 }
 
 function formatEffectSummary(item) {

@@ -279,16 +279,32 @@ export const historyFutureEvents = [
             { "path": "location.migratedTimes", "gte": 1 }
           ]
         },
-        "text": "老人需要长期照护后，你同兄弟姐妹在群里排班。离家最远的人多出钱，离得最近的人多出时间；高铁缩短了路程，却没有缩短一次请假的手续。"
+        "text": "老人需要长期照护后，你同能出力的亲属在群里排班。离家最远的人多出钱，离得最近的人多出时间；高铁缩短了路程，却没有缩短一次陪诊。"
       },
       {
         "conditions": {
-          "any": [
+          "all": [
             { "path": "relationships.children", "gte": 1 },
-            { "path": "resources.wealth", "lte": 40 }
+            { "path": "career.status", "in": ["employed", "self_employed", "gig_worker", "family_labor"] }
           ]
         },
         "text": "你把老人的复诊、孩子的接送和自己的工作排进同一张日历。请护工的钱和请假的损失各占一栏，亲情没有标价，照护的每个小时却都有成本。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "relationships.children", "gte": 1 }
+          ]
+        },
+        "text": "老人复诊与孩子的日程常在同一周撞到一起，你把接送、陪诊和家务逐项写下。夹在两代之间不是一种气质，是几处同时需要有人到场。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 40 }
+          ]
+        },
+        "text": "老人需要长期照护，家里把陪诊、守夜和费用摊开来算。能请人的时数有限，亲属便用自己的时间补上；时间没有发票，也照样会用完。"
       },
       {
         "text": "家里开始讨论老人照护排班，谁陪诊、谁夜里守、谁负责买药都写进表格。大家仍会争执，但表格至少让那句含糊的‘有空去看看’变成了具体日期。"
@@ -658,10 +674,18 @@ export const historyFutureEvents = [
     yearRange: [2021, 2035],
     ageRange: [38, 62],
     genders: ["female"],
-    conditions: { any: [{ path: "career.status", eq: "employed" }, { path: "career.status", eq: "self_employed" }, { hasTag: "eldercare_schedule_memory" }] },
+    conditions: { any: [{ path: "career.status", eq: "employed" }, { path: "career.status", eq: "self_employed" }] },
     maxOccurrences: 1,
     baseWeight: 20,
-    text: "下班后你又赶去陪老人看病、取药、做饭，兄弟姐妹在群里说辛苦了，真正能到场的仍常是你。照护没有工牌，却把一天排成了两班。",
+    text: [
+      {
+        conditions: { all: [{ path: "career.status", eq: "self_employed" }] },
+        text: "收工后你又赶去陪老人看病、取药、做饭，兄弟姐妹在群里说辛苦了，真正能到场的仍常是你。照护没有工牌，却把一天排成了两班。"
+      },
+      {
+        text: "下班后你又赶去陪老人看病、取药、做饭，兄弟姐妹在群里说辛苦了，真正能到场的仍常是你。照护没有工牌，却把一天排成了两班。"
+      }
+    ],
     effects: [
       { path: "resources.health", add: -4 },
       { path: "resources.freedom", add: -5 },

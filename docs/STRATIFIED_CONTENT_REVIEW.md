@@ -41,9 +41,20 @@
 
 ## 人工通读抽样
 
+先用审查结果生成完整人生抽样：
+
+```bash
+npm run sample:lives -- \
+  --summary reports/stratified-baseline.csv \
+  --review reports/stratified-baseline.review.json \
+  --out reports/stratified-baseline.samples.md
+```
+
+该文件收集各出生世代、性别、城乡、家庭资源、地区与属性档位的中位寿命样本，以及最早死亡、最长寿、连续纹理最长、平常年最多、阴影最多等极端局，保留逐年正文和状态，作为本轮人工审稿底稿。
+
 每轮至少从审查 JSON 的以下分群各抽一局完整通读：
 
-- 八个出生世代。
+- 各个出生世代。
 - 男女、城乡、低中高家庭资源。
 - 华北/东北/沿海/中部/西南/西北/边疆与特殊历史地区。
 - 脆弱、均衡、韧性属性。

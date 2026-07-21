@@ -165,7 +165,7 @@ export const narrativeArcEvents = [
   }),
 
   arc("marriage_silence", "两个人之间的沉默变长", "relationship", [25, 62], [
-    "你们说的多是钱、孩子、家务和第二天几点出门，很少再问彼此最近过得怎样。婚姻没有发生一场足够响亮的事故，只是沉默一点点占了更多位置。",
+    "你们说的多是钱、家务和第二天几点出门，很少再问彼此最近过得怎样。婚姻没有发生一场足够响亮的事故，只是沉默一点点占了更多位置。",
     "同住一个屋檐下，你们却各自在心里过完许多事。真正的争吵反而少了，因为连解释都开始嫌费力。",
     "饭桌上的安排越来越准确，别的话越来越短。生活像一台运转正常的机器，只有两个人都知道里面某个零件已经很久没有上油。",
     "你们并没有不关心彼此，只是每次想开口，总有账单、家务或疲惫先坐下来。久而久之，关心也学会了保持沉默。",
@@ -312,6 +312,8 @@ export const narrativeArcEvents = [
 
   arc("work_becomes_skilled", "手上的活开始认你", "career", [21, 58], [
     { conditions: { all: [has("meta.currentYear", "lte", 1948)] }, text: "你做这门活久了，手比嘴更早知道哪里不对。东家未必肯多给工钱，同行遇到难处却开始先来问你；熟练替你挣到位置，也让人更放心把麻烦推来。" },
+    { conditions: { all: [has("career.status", "eq", "family_labor")] }, text: "节气、牲口和地里的活没有说明书，你却已知道哪阵风后该先收什么、哪件农具响一声便要停手。家里人渐渐先来问你，熟练也因此多背了一份操心。" },
+    { conditions: { all: [has("career.status", "in", ["self_employed", "gig_worker"])] }, text: "同一种活做得多了，你开始在动手前便看出最费工的地方。顾客未必知道这份分寸从哪来，只知道难办的事渐渐会点名找你。" },
     "几年做下来，你成了别人嘴里的熟手。许多问题不再需要请示便能处理，代价是出了差错时，大家也会很自然地先来找你。",
     "你终于能靠经验提前看出事情会在哪里出错。技能没有颁奖仪式，只是新人把工具递给你时，开始默认你知道下一步。",
     "工作渐渐长进到手里，别人看你做得轻松，只有你知道那是许多次返工叠出来的。熟练最会伪装成天生如此。",
@@ -320,7 +322,7 @@ export const narrativeArcEvents = [
     effects: [add("career.level", 8), add("resources.achievement", 6), add("resources.reputation", 4), { addTag: "arc_work_skilled" }],
     narrativeTier: "turning_point",
     narrativeDomain: "career",
-    lifetimeProbability: 0.82,
+    lifetimeProbability: 0.70,
   }),
   arc("work_skill_cost", "能者总被多派一件事", "career", [22, 62], [
     "你因为做得快，得到的奖励是更多的活。拒绝显得不够仗义，答应又把自己的时间一点点吃掉；能力若没有边界，很容易被当成公共财产。",
@@ -426,20 +428,23 @@ export const narrativeArcEvents = [
 
   arc("old_age_keys_change_hands", "钥匙换到了另一双手里", "family", [62, 94], [
     { conditions: { all: [has("birth.hukou", "eq", "rural"), has("meta.currentYear", "lte", 1978)] }, text: "腿脚慢下来后，你把粮柜、工具或家中要紧处的钥匙交给晚辈。钥匙很轻，递出去时却像把许多不肯承认的衰老也一并放到了对方手里。" },
-    "身体渐渐不便，家里的缴费、取药和几件要紧事开始由晚辈经手。你把钥匙交出去，又忍不住反复说明每样东西放在哪里；被照顾和被取代，中间只隔着一串很轻的金属声。",
-    "有些事终于不再由你亲自去办。晚辈接过证件和钥匙，你一连嘱咐几遍；他们嫌你重复，又把每句话都认真记下。",
-    "你把家中一串钥匙分给晚辈，嘴上说省得丢，心里明白是生活在换班。金属碰在一起很响，大家却都装作这只是一次普通交接。",
+    { conditions: { all: [has("relationships.children", "gte", 1), has("resources.health", "lte", 45)] }, text: "取药、缴费和几件要紧事开始由孩子经手。你把钥匙递过去，又把抽屉次序讲了三遍；对方说记住了，第二天仍照你的老办法找，算是给交接留一点面子。" },
+    { conditions: { all: [has("relationships.children", "lte", 0), has("relationships.family", "gte", 35)] }, text: "身体慢下来后，你把备用钥匙交给一位可信的亲属。没有哪种称谓自动附带照护义务，你们把能代办什么逐项说清，连备用钥匙放哪里也另外写了一张纸。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 2000), has("resources.wealth", "gte", 55)] }, text: "家里的门卡、证件和缴费账号开始由家人协助保管。你先交出一串密码，又立即叮嘱不要乱点；数字时代没有让交接变轻，只让钥匙忽然多得记不住。" },
+    { text: "有些事终于不再由你亲自去办。你把证件和钥匙交给可信的人，一连嘱咐几遍；对方没有催，只在纸上把每句话认真记下。" },
   ], {
     conditions: { all: [has("resources.health", "lte", 75)], none: [{ hasTag: "arc_old_age_handoff" }] },
     effects: [add("resources.freedom", -7), add("relationships.family", 4), add("resources.happiness", -3), { addTag: "arc_old_age_handoff" }],
     narrativeTier: "turning_point",
     narrativeDomain: "family",
+    lifetimeProbability: 0.68,
   }),
   arc("old_age_boundary", "替你办，不替你决定", "family", [63, 96], [
-    "一次小冲突后，你把话说清：腿脚慢不等于没有主意。家人仍替你跑手续、搬重物，却开始在作决定前先问一句；照护若不保留人的意愿，很容易只剩效率。",
-    "晚辈替你把事情办得很快，也替你作了一个你并不赞成的决定。你发了脾气，最后双方约定：可以代办，不能代替你点头。",
-    "家人怕你劳累，渐渐什么都不让你管。你说自己需要的是扶手，不是撤职；这句带火气的话，反而把照护的边界说清了。",
-    "你承认有些手续已经应付不来，也要求每个结果都讲给你听。依赖别人不等于退出自己的人生，这件事全家学得比想象中慢。",
+    { conditions: { all: [has("relationships.children", "lte", 0)] }, text: "亲属替你办好一件事，也顺手替你改了主意。你们后来把边界说清：钥匙可以托付，决定仍要回来问本人；亲戚称谓不是一张空白委托书。" },
+    { conditions: { all: [has("resources.wealth", "lte", 35)] }, text: "钱紧时，家人替你选了最省的一种安排，直到办完才告诉你。你没有反对节省，只要求以后先把选择摆出来；贫穷已经够爱替人作主，不必再添一个人。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 2000)] }, text: "家人替你在线办事很快，验证码却常同决定一起被拿走。你要求每次点下确认前先把屏幕转过来；字可以放大，人的意见不能缩成默认选项。" },
+    { conditions: { all: [has("relationships.family", "lte", 35)] }, text: "一次代办变成争执，你担心别人嫌麻烦，对方也担心你逞强。最后约定能帮到哪一步便停在哪一步，关系不算亲密，规矩反而说得很清楚。" },
+    { text: "家人怕你劳累，渐渐什么都不让你管。你说自己需要的是扶手，不是撤职；这句带火气的话，反而把照护的边界说清了。" },
   ], {
     requiresEvents: ["arc_old_age_keys_change_hands"],
     conditions: { all: [within("arc_old_age_keys_change_hands", 7), { hasTag: "arc_old_age_handoff" }] },
@@ -448,10 +453,11 @@ export const narrativeArcEvents = [
     narrativeDomain: "family",
   }),
   arc("old_age_keeps_one_duty", "还留着一件由你做主的事", "family", [64, 100], [
-    "家里仍留一件事由你作主：也许是一笔小账、一盆植物，或逢年过节先联系谁。它不重要到足以难住晚辈，却重要到让你每天仍有一处不是被安排的位置。",
-    "你继续管着一件小事，别人不催也不代劳。它的实际用处有限，却每天证明你仍是这个家的成员，不是一个需要维护的项目。",
-    "晚辈把一件固定的家事留给你。你做得比从前慢，偶尔还会忘，大家也学会先等一等，而不是立刻把它从你手里拿走。",
-    "你仍负责记一个日子、照看一样东西或作一笔小决定。晚年的自主权有时不在大事里，只在别人肯不肯让你把一件小事做完。",
+    { conditions: { all: [has("relationships.children", "lte", 0)] }, text: "你仍自己决定一笔小开支、一次出门或谁可以拿备用钥匙。没有孩子替生活排班，亲属和朋友便按说好的范围帮忙；你的日子不是一张等待别人接管的空表。" },
+    { conditions: { all: [has("birth.hukou", "eq", "rural")] }, text: "院里仍有一小块事归你：看天气收晒物、记种子放处，或提醒哪件工具别淋雨。动作慢了，判断还准；家人偶尔不听，第二天便去捡被雨追过的东西。" },
+    { conditions: { all: [has("meta.currentYear", "gte", 2000)] }, text: "家人替你办复杂手续，仍留一项日常缴费或群里的通知由你处理。你偶尔把表情发错地方，正事倒从没漏过，证明数字生活也容得下一点不熟练的主权。" },
+    { conditions: { all: [has("resources.health", "lte", 35)] }, text: "身体能做的事少了，你仍负责决定每天先做哪一件。有人递药、扶门，却不把整天预先排满；有限的力气终于由你自己分配。" },
+    { text: "你仍负责记一个日子、照看一样东西或作一笔小决定。事情不大，却每天留下一处不是由别人替你安排的位置。" },
   ], {
     requiresEvents: ["arc_old_age_boundary"],
     conditions: { all: [within("arc_old_age_boundary", 9), { hasTag: "arc_old_age_handoff" }] },
@@ -463,7 +469,7 @@ export const narrativeArcEvents = [
 
   arc("generation_thins", "同辈的人渐渐少了", "relationship", [55, 94], [
     "能一开口就明白你在说哪一年、哪条街的人，渐渐少了。讣告和病讯来得比喜帖勤，你开始意识到，长寿并不只是多拥有时间，也是在替一代人多记一会儿。",
-    "通讯录里有些名字再也不会亮起，你却还没有删。和同代人告别多了以后，活得久显出另一面：许多旧笑话只剩你记得为什么好笑。",
+    "记着旧地址和熟人姓名的那一页，渐渐有些人再也联系不上，你却一直没有划掉。和同代人告别多了以后，活得久显出另一面：许多旧笑话只剩你记得为什么好笑。",
     "一次聚会比上次少了几把椅子。留下的人互相问身体，也仍旧拿年轻时的糗事取笑；死亡坐在桌边，大家偏给它夹了一筷子笑话。",
     "你忽然找不到一个能核对某段往事的人。记忆从共同经历变成单方陈述，这种孤单没有声音，却使那一年显得很远。",
   ], {
@@ -471,7 +477,7 @@ export const narrativeArcEvents = [
     effects: [add("relationships.friendship", -6), add("resources.happiness", -6), add("attrs.mental", 1), { addTag: "arc_generation_thins" }],
     narrativeTier: "turning_point",
     narrativeDomain: "relationship",
-    lifetimeProbability: 0.72,
+    lifetimeProbability: 0.62,
   }),
   arc("generation_names_memory", "把旧人旧事说出名字", "relationship", [56, 97], [
     "晚辈问起一张照片，你没有只说‘都是从前的人’，而是慢慢讲出姓名、脾气和谁曾欠谁一顿饭。记忆不再只是你一个人的负担，开始有了新的保管者。",

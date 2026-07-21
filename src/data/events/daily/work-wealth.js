@@ -91,7 +91,11 @@ export const dailyWorkWealthEvents = [
     "baseWeight": 28,
     "text": [
       {
-        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1978 }] },
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1948 }] },
+        "text": "你跟着大人或同伴去了一趟城里，先在车站、渡口或城门边辨方向。集市、药铺和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1949 }, { "path": "meta.currentYear", "lte": 1978 }] },
         "text": "你跟着大人或同伴去了一趟城里，先在车站、渡口或城门边辨方向。供销店、医院和密集人群让路程显得很远，回来还要替邻居捎几样东西。"
       },
       {
@@ -212,8 +216,20 @@ export const dailyWorkWealthEvents = [
         "text": "一位老客人当面夸你做事可靠，还介绍了新生意。自雇者没有表扬栏，回头客就是盖在账本上的红章。"
       },
       {
-        "conditions": { "all": [{ "path": "career.income", "lte": 35 }] },
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1948 }, { "path": "career.status", "eq": "employed" }] },
+        "text": "东家、掌柜或工头当众说你这回做得稳妥，随后把下一件难活也递了过来。夸奖没有装进工钱袋，倒先替你证明能者确实容易多劳。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1949 }, { "path": "meta.currentYear", "lte": 1985 }, { "path": "career.status", "eq": "employed" }] },
+        "text": "班组或单位点名表扬你把一件活做得扎实，红榜上的名字比奖金先到。你回到岗位继续忙，同事说请客可以等工资，光荣最好别赊账。"
+      },
+      {
+        "conditions": { "all": [{ "path": "career.income", "lte": 35 }, { "path": "meta.currentYear", "gte": 1986 }] },
         "text": "上级或同事夸你把一件琐碎工作做得稳妥，夸奖没有带来加薪。你仍高兴了一阵，也更清楚肯定与待遇不是同一种货币。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2010 }, { "path": "career.field", "in": ["technology", "internet", "media", "office", "finance"] }] },
+        "text": "你解决了一个拖了几天的问题，名字被认真写进工作群的感谢里。表情接了长长一串，待办事项也顺手多了两个；现代掌声很轻，常同新任务一起弹出来。"
       },
       { "text": "你妥善处理了一件工作，被人在众人面前认真肯定。掌声很短，回到座位仍是原来的活；那几句话却让疲惫暂时有了出处。" }
     ],
@@ -357,6 +373,10 @@ export const dailyWorkWealthEvents = [
       {
         "conditions": {
           "all": [
+            {
+              "path": "meta.currentYear",
+              "gte": 1993
+            },
             {
               "path": "meta.currentYear",
               "lte": 2009
@@ -520,7 +540,41 @@ export const dailyWorkWealthEvents = [
         "text": "你买了件趁手工具。它不贵，却让手里的活顺了一点，像给日子加了一个小齿轮。"
       },
       {
-        "text": "你买了件真正用得上的小东西。花钱时心疼，后来每次用上，又觉得这钱花得有声响。"
+        "conditions": {
+          "all": [
+            { "path": "career.field", "in": ["farm_work", "agriculture", "rural_work"] },
+            { "path": "location.currentCityTier", "in": ["village", "town"] }
+          ]
+        },
+        "text": "你换了一件握着更顺手的农具，旧的没有扔，靠在墙边留作备用。新工具省下几分力气，田里的活便很快把省下的力气也安排完了。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "career.status", "in": ["self_employed", "gig_worker"] }
+          ]
+        },
+        "text": "你给自己添了一件接活常用的小工具，先在三家店比价，又把保修单收好。它还没替你挣钱，已经先获得了一个不能弄丢的位置。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 38 }
+          ]
+        },
+        "text": "你买下一件修过的旧工具，外壳有前任留下的磕痕，关键处仍好用。便宜不是缺点，突然坏在交活那天才是；你回家先把螺丝又紧了一遍。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2010 },
+            { "path": "career.field", "in": ["professional", "teacher", "education", "healthcare", "office", "technology"] }
+          ]
+        },
+        "text": "你添了一件每天都会用到的小设备，把反复卡手的步骤缩短一点。购买页面许诺提高效率，真正见效的是你从此少骂那根接触不良的线。"
+      },
+      {
+        "text": "你买了件真正用得上的小工具。花钱时心疼，后来每次用上，又觉得这笔钱没有消失，只是变成手里一声干脆的咔哒。"
       }
     ],
     "effects": [

@@ -729,6 +729,7 @@ export const coreLifecycleEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 34,
+    "lifetimeProbability": 0.68,
     "conditions": {
       "any": [
         { "hasTag": "student" },
@@ -806,6 +807,25 @@ export const coreLifecycleEvents = [
           ]
         },
         "text": "这次考试你发挥不错。家里人很快开始比较学校、老师和下一阶段规划，喜悦还没落地，就被安排成新的路线。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "attrs.family",
+              "lte": 3
+            },
+            {
+              "path": "birth.cityTier",
+              "in": [
+                "village",
+                "town",
+                "county"
+              ]
+            }
+          ]
+        },
+        "text": "这次考试你发挥不错。家里把卷子铺在饭桌上看了很久，先高兴，随后才小声算下一学期的书费和路费；好成绩像一扇开了缝的门，门轴也要钱。"
       },
       {
         "text": "这次考试你发挥不错。老师点了点头，家里人把卷子又看了一遍，像确认一张小小的船票。"
@@ -1514,7 +1534,45 @@ export const coreLifecycleEvents = [
         }
       ]
     },
-    "text": "一个朋友拉你做新项目。听起来不靠谱，但说到后来，你还是在纸上写下了几个可能的名字。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 2000 }
+          ]
+        },
+        "text": "朋友带着几页计划来找你，说新市场里到处是空位。你们在饭馆纸巾背面算成本，算到最后发现纸巾免费，其他每一项都要借钱。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.migratedTimes", "gte": 1 },
+            { "path": "resources.wealth", "lte": 42 }
+          ]
+        },
+        "text": "异地认识的朋友邀你合做一门小生意，你们熟悉同一批房租、客户和绕路办法，也同样没有多少本钱。计划先从谁睡店里、谁保管钥匙谈起，理想排在押金后面。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2010 },
+            { "path": "career.field", "in": ["technology", "internet", "media", "trade"] }
+          ]
+        },
+        "text": "朋友发来一份新项目文档，市场、用户和增长曲线画得很整齐，只有收入一栏还在加载。你们改了三次名字，域名倒先被别人注册了。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "gte": 60 }
+          ]
+        },
+        "text": "朋友邀你把一笔积蓄投进新项目。条件比年轻时宽裕，讨论也因此更具体：股份写几位小数、谁负责赔钱时接电话，热情终于遇见了表格。"
+      },
+      {
+        "text": "一个朋友拉你做新项目。说到后来，你在纸上记下成本、分工和几个可能的名字；最动听的愿景旁边，也老老实实留了一栏房租。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.wealth",
@@ -1668,10 +1726,29 @@ export const coreLifecycleEvents = [
             {
               "path": "meta.currentYear",
               "lte": 1948
+            },
+            {
+              "path": "relationships.children",
+              "gte": 1
             }
           ]
         },
         "text": "生计、老人、孩子和家里的活一起压过来。你把能挣的、能省的都重新算了一遍，然后照常起身去做事。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.currentYear",
+              "lte": 1948
+            },
+            {
+              "path": "relationships.children",
+              "lte": 0
+            }
+          ]
+        },
+        "text": "生计、老人和家里的活一起压过来。你把能挣的、能省的都重新算了一遍，然后照常起身去做事。"
       },
       {
         "conditions": {
@@ -1763,7 +1840,11 @@ export const coreLifecycleEvents = [
             },
             {
               "path": "career.field",
-              "in": ["farm_work", "manual_worker", "self_employed", "gig_worker"]
+              "in": ["farm_work", "manual_worker", "domestic_helper", "domestic_work", "care_work", "small_business", "trade", "seasonal_farm_labor"]
+            },
+            {
+              "path": "career.status",
+              "in": ["none", "unemployed", "family_labor", "self_employed", "gig_worker"]
             }
           ]
         },
@@ -1785,11 +1866,15 @@ export const coreLifecycleEvents = [
           "all": [
             {
               "path": "career.status",
-              "in": ["employed", "retired"]
+              "eq": "employed"
+            },
+            {
+              "path": "career.field",
+              "in": ["factory", "state_unit", "public_sector", "corporate", "professional", "teacher", "education", "healthcare", "doctor", "nurse", "grassroots_post", "shop_clerk"]
             }
           ]
         },
-        "text": "你退休了。闹钟终于不再像命令，但身体已经记住了多年早醒。"
+        "text": "你办完退休手续。固定的上班钟点终于不再像命令，身体却还记着多年早醒。"
       },
       {
         "text": "你把最重、最急的事情交出去一些。人没有一下子闲下来，只是从此做每件事，都更愿意先问问身体。"

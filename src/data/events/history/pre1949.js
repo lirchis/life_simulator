@@ -1709,9 +1709,8 @@ export const historyPre1949Events = [
       },
       {
         "conditions": {
-          "any": [
-            { "path": "career.status", "eq": "employed" },
-            { "path": "resources.wealth", "lte": 35 }
+          "all": [
+            { "path": "career.status", "eq": "employed" }
           ]
         },
         "text": "薪水发到手时已追不上米价，你下班便往店铺赶，怕多过一夜又少买半升。钞票的零越来越多，布袋里的东西却越来越少。"
@@ -2028,6 +2027,41 @@ export const historyPre1949Events = [
           ]
         },
         "text": "胜利的消息传到临时住处，人群欢呼，你却先去邮局和车站打听失散的亲人。战争结束是一张大告示，家能不能重新拼齐，仍要等一封很小的信。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.currentCityTier", "in": ["village", "town"] },
+            { "path": "meta.age", "gte": 8 }
+          ]
+        },
+        "text": "胜利的消息沿公路和集市传进村里，先是一句口信，后来才等到报纸或广播证实。有人敲锣，有人立刻问远方的人何时回来；大事终于落地，仍得从一条土路继续往各家走。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "location.currentProvince", "in": ["liaoning", "jilin", "heilongjiang"] },
+            { "path": "meta.age", "gte": 8 }
+          ]
+        },
+        "text": "东北的街面先是传闻四起，随后人群确认战争真的结束。欢呼旁边仍有仓促撤退、接收和寻找亲人的脚步；胜利到了，秩序却还在路上换乘。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "hasTag": "student" },
+            { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }
+          ]
+        },
+        "text": "消息传到学校和街头，学生抄写号外、挤在人群里听广播，口号很快喊齐，谁请客却迟迟没人决定。你第一次觉得八年的重压松开了一角，也知道书桌之外仍有大片废墟。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "gte": 60 }
+          ]
+        },
+        "text": "你已经见过几回兵乱与政局变化，听见胜利时没有立刻挤进人群，只把广播再调清楚些。年轻人欢呼，你在旁边点头；活得够久的人知道，喜讯也值得确认第二遍。"
       },
       {
         "text": "胜利的消息沿着广播、报纸和街头传来，有人放鞭炮，有人抱头痛哭。你跟着人群松了一口气，也知道停火不会把死者、废墟和欠下的日子一并送还。"

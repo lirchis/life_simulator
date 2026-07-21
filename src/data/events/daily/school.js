@@ -440,7 +440,54 @@ export const dailySchoolEvents = [
         "multiply": 1.6
       }
     ],
-    "text": "放学以后你又坐进另一间教室。窗外天色暗下去，题目却像不会天黑。",
+    "text": [
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "lte": 2003 },
+            { "path": "location.currentCityTier", "in": ["village", "town", "county"] }
+          ]
+        },
+        "text": "放学后，老师把愿意留下的人又拢回教室，多讲几道题。窗外自行车铃响了一阵又停，粉笔头越来越短，补课费和人情常写在同一本含糊的账上。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "lte": 35 }
+          ]
+        },
+        "text": "家里反复算过费用，仍让你去上课。讲义几个人合看，旧练习册擦掉答案再做；题目没有因为钱紧变少，只是每一页都被用得更彻底。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "environment.educationPressure", "gte": 7 },
+            { "path": "meta.age", "gte": 14 }
+          ]
+        },
+        "text": "晚饭前后各排一节课，错题又按科目分进不同本子。老师说这是查漏补缺，你看着书包，觉得漏洞大概已经补成了承重墙。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "resources.wealth", "gte": 60 },
+            { "path": "location.currentCityTier", "in": ["city", "tier2", "tier1"] }
+          ]
+        },
+        "text": "放学后你赶去另一间教室，课程、测评和下一阶段规划排得很整齐。家里买得起更多帮助，也因此很难承认今晚其实可以什么都不学。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.age", "lte": 11 }
+          ]
+        },
+        "text": "放学以后你又坐进另一间教室。讲到最后一题时，你先同困意握手言和；老师叫到名字，你站起来，答案和哈欠一起到了嘴边。"
+      },
+      {
+        "text": "放学以后你又坐进另一间教室。窗外天色暗下去，题目却像不会天黑；回家时书包多了几页答案，一天少了一小段空白。"
+      }
+    ],
     "effects": [
       {
         "path": "education.score",

@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 4175",
-    "check": "node --check src/main.js && node --check scripts/batch_simulate.js && node --check scripts/evaluate_content.js && node --check scripts/stratified_batch.js && node --check scripts/review_stratified.js && node scripts/validate_events.js",
+    "check": "node --check src/main.js && node --check scripts/batch_simulate.js && node --check scripts/evaluate_content.js && node --check scripts/stratified_batch.js && node --check scripts/review_stratified.js && node --check scripts/sample_lives.js && node scripts/validate_events.js",
     "batch": "node scripts/batch_simulate.js",
     "evaluate": "node scripts/evaluate_content.js",
     "batch:stratified": "node scripts/stratified_batch.js",
-    "review:stratified": "node scripts/review_stratified.js"
+    "review:stratified": "node scripts/review_stratified.js",
+    "sample:lives": "node scripts/sample_lives.js"
   }
 }

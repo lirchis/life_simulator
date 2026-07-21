@@ -18,14 +18,26 @@ export const dailyChildhoodEvents = [
     "baseWeight": 42,
     "text": [
       {
-        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
-        "text": "稻田边的夏夜没有多少灯，你跟着伙伴用蒲扇轻轻拢住几点萤光。虫子很快放走，空罐子却被大家轮流看了半天。"
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "夏夜没有多少灯，田埂和草沟里的萤火便显得很亮。你跟着大孩子用蒲扇轻轻拢住几点微光，空罐子被轮流看了半天，谁都舍不得先说其实没抓住。"
       },
       {
-        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1990 }, { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }] },
-        "text": "城边难得见到几只萤火虫，大人让你关掉手电再看。黑暗安静下来以后，那几点微光才终于肯出现。"
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1950 }, { "path": "meta.currentYear", "lte": 1989 }, { "path": "location.currentCityTier", "eq": "village" }] },
+        "text": "收工后的大人坐在院边说话，你和伙伴沿田脚追萤火虫。有人拿旧药瓶当灯笼，瓶盖扎了孔，郑重得像给几只虫子办了户口。"
       },
-      { "text": "夏夜里，草丛间有萤火虫忽明忽暗。你同孩子们追了一阵，最后摊开手，掌心只剩一点草叶的凉气。" }
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1990 }, { "path": "location.currentCityTier", "eq": "county" }] },
+        "text": "城边难得见到几只萤火虫，大人让你先关掉手电。黑暗安静下来以后，那几点微光才肯出现；你追了几步，又怕追得太近把它们吓回草里。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 2005 }, { "path": "location.currentCityTier", "in": ["village", "town"] }] },
+        "text": "夏夜里，草丛亮起零星萤火。伙伴说手机拍不出来才算真的，你们便把屏幕收起来追了一阵，最后每个人都声称自己刚才看见的最大。"
+      },
+      {
+        "conditions": { "all": [{ "path": "resources.wealth", "lte": 30 }] },
+        "text": "天黑以后没有新的玩具，草边的萤火虫便足够让一群孩子忙上一晚。你摊开手，掌心只有草叶的凉气，回家时仍觉得带走了一点光。"
+      },
+      { "text": "夏夜里，草丛间有萤火虫忽明忽暗。你同伙伴追了一阵，最后都停下来只看；有些微光装不进口袋，也不妨碍它照亮一个晚上。" }
     ],
     "effects": [
       {
@@ -104,8 +116,35 @@ export const dailyChildhoodEvents = [
         "text": "雨停后，大人牵着三岁的孩子绕过泥坑，鞋尖还是不慎踩进去。孩子低头看水花，大人先把人抱稳，再去想这双鞋怎样洗。"
       },
       {
-        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }] },
-        "text": "雨后田边的土软了，你和孩子们挑不深的地方踩脚印。回家前先在草上蹭鞋，办法很认真，效果比较谦虚。"
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }] },
+        "text": "雨后土路软下来，你跟着大孩子挑浅处走，草鞋和布鞋仍各自带回一圈泥。进门前大家刮了半天鞋底，门槛最后也分到了一份。"
+      },
+      {
+        "conditions": { "all": [
+          { "path": "meta.currentYear", "gte": 1950 },
+          { "path": "meta.currentYear", "lte": 1977 },
+          { "path": "location.currentCityTier", "in": ["village", "town"] }
+        ] },
+        "text": "雨后田边的土软了，你和几个孩子用树枝划出不能踩的秧地，再专挑路上的泥印脚。规矩执行得很好，裤脚对此另有记录。"
+      },
+      {
+        "conditions": { "all": [
+          { "path": "meta.currentYear", "gte": 1978 },
+          { "path": "meta.currentYear", "lte": 2005 },
+          { "path": "location.currentCityTier", "in": ["village", "town"] }
+        ] },
+        "text": "雨停以后，村路上留下拖拉机和自行车压出的水沟。你们沿着凸起处比赛走直线，最先掉进泥里的人负责宣布这局不算。"
+      },
+      {
+        "conditions": { "all": [
+          { "path": "meta.currentYear", "gte": 2006 },
+          { "path": "location.currentCityTier", "in": ["village", "town"] }
+        ] },
+        "text": "雨后路边的土软了，你和孩子们挑不深的地方踩脚印，还用鞋印比谁跳得远。回家前先在草上蹭鞋，办法很认真，效果比较谦虚。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "eq": "county" }] },
+        "text": "雨水在县城边的空地积成几处浅洼，你跟着同伴绕着走，最后仍有人故意踩响最大的一处。袜子先湿，大人的责问随后按脚印找到本人。"
       },
       { "text": "雨停后，几个孩子带着你在泥地边留下一串大小不一的脚印。大人远远喊别再踩了，队伍这才拖着湿鞋往回走。" }
     ],

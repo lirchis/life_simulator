@@ -68,7 +68,11 @@ export const dailyHealthAgingEvents = [
         "text": "你这一晚没有睡好。欠账、米钱或下个月的开销在黑暗里轮流报数，天还没亮，日子已经先来催你。"
       },
       {
-        "conditions": { "all": [{ "path": "career.status", "in": ["employed", "self_employed", "gig_worker"] }] },
+        "conditions": { "all": [{ "path": "meta.currentYear", "lte": 1949 }, { "path": "career.status", "in": ["employed", "self_employed", "gig_worker", "family_labor"] }] },
+        "text": "你这一晚没睡好，脑子把白天的差错和明天的活重新排演了一遍。天色刚亮，你便起身，像整夜的清醒也得照常去做工。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.currentYear", "gte": 1950 }, { "path": "career.status", "in": ["employed", "self_employed", "gig_worker"] }] },
         "text": "你这一晚没睡好，脑子把白天的差错和明天的活重新排演了一遍。闹钟响时，它倒装作什么都没发生。"
       },
       {

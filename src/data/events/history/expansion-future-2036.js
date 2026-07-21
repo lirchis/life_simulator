@@ -48,6 +48,130 @@ function makeEvent(period, item) {
   };
 }
 
+// A small, explicitly structural bridge for the first cohorts whose secondary
+// schooling ends after the authored 2021-2035 contemporary window. It is
+// intentionally urban-only and age-specific: this keeps it from becoming a
+// universal future milestone while preventing graduation from dissolving into
+// a run of unrelated daily texture. The record does not decide university or
+// employment for the character; the follow-up reads whatever path actually
+// emerged and advances automatically like every other event.
+const futureYouthTransition = [
+  {
+    id: "future36_youth_transition_record",
+    title: "毕业档案里多了一页",
+    category: "education",
+    yearRange: [2036, 2055],
+    ageRange: [17, 17],
+    currentRegions: URBAN,
+    priority: 64,
+    maxOccurrences: 1,
+    baseWeight: 90,
+    conditions: {
+      all: [
+        C("education.status", "eq", "enrolled"),
+        C("education.currentLevel", "in", ["high", "high_school"]),
+      ],
+    },
+    text: [
+      {
+        conditions: {
+          all: [
+            C("resources.wealth", "lte", 42),
+          ],
+        },
+        text: "毕业前，学校把课程、一次实作和同伴评语合进同一份记录。有人用自家设备做材料，你借学校的，交回去时又核对了一遍充电线；机会说是一样，附件往往各有家境。",
+      },
+      {
+        conditions: {
+          all: [
+            C("location.migratedTimes", "gte", 1),
+          ],
+        },
+        text: "毕业前，学校把几处学习记录合进同一份档案。你曾换过住处和学校，两段材料一度对不上；老师陪你逐项补齐，迁移留下的缝终于没有被系统当成空白。",
+      },
+      {
+        text: "毕业前，学校把课程成绩、一次校外实作和同伴评语合进同一份记录。系统几秒便排好版，班主任仍拿着名单逐人核对——机器擅长归档，人还得负责别把同名同学毕业两次。你在确认栏签字，三年生活忽然薄成几页纸。",
+      },
+    ],
+    effects: [
+      add("education.score", 2),
+      add("resources.achievement", 3),
+      add("attrs.mental", 1),
+      { addTag: "future_youth_transition_record" },
+      {
+        scheduleEvent: {
+          eventId: "future36_youth_transition_record_checked",
+          delayYears: [2, 4],
+          weightMultiplier: 7,
+        },
+      },
+    ],
+    narrativeTier: "historical_pressure",
+    narrativeDomain: "future_youth_transition",
+    narrativeThread: { expiresAfterYears: 4 },
+    tags: ["fictional_future"],
+  },
+  {
+    id: "future36_youth_transition_record_checked",
+    title: "那几页第一次被人细看",
+    category: "career",
+    yearRange: [2038, 2059],
+    ageRange: [19, 23],
+    maxOccurrences: 1,
+    baseWeight: 82,
+    requiresEvents: ["future36_youth_transition_record"],
+    conditions: {
+      all: [
+        {
+          eventOccurredBetween: {
+            eventId: "future36_youth_transition_record",
+            minYears: 2,
+            maxYears: 4,
+          },
+        },
+      ],
+    },
+    text: [
+      {
+        conditions: {
+          all: [
+            C("education.status", "eq", "enrolled"),
+          ],
+        },
+        text: "到了新的学校，那份毕业记录又被调出来。老师没有只看总分，而是追问你在实作里具体做过哪一步；旧档案第一次不像结论，更像一句尚未说完的开头。",
+      },
+      {
+        conditions: {
+          all: [
+            C("career.status", "in", ["employed", "self_employed", "gig_worker", "family_labor"]),
+          ],
+        },
+        text: "开始做事以后，带你的人翻到那份毕业记录，跳过漂亮摘要，问你当时怎样收拾一个出错的步骤。你答得不算流利，却比背岗位介绍诚实；第一点可信，往往长在不够漂亮的地方。",
+      },
+      {
+        conditions: {
+          all: [
+            C("career.status", "in", ["none", "unemployed", "laid_off"]),
+          ],
+        },
+        text: "离校后的又一份申请要求附上经历。你把那几页重新打开：里面确有做过的事，却还没有一份稳定工作替它盖章。所谓空档期，只在表格里很空；你的星期一到星期日并没有闲着。",
+      },
+      {
+        text: "后来有人认真看了那份毕业记录，没有只扫过总分，而是问其中一件小事究竟由你完成了什么。几页纸没有替你决定道路，至少让一段年轻日子不只剩一个数字。",
+      },
+    ],
+    effects: [
+      add("resources.achievement", 3),
+      add("attrs.mental", 1),
+      add("resources.happiness", 1),
+    ],
+    narrativeTier: "consequence",
+    narrativeDomain: "future_youth_transition",
+    narrativeThread: { close: true },
+    tags: ["fictional_future"],
+  },
+];
+
 const near = [
   ["heat_curtain", "午后的遮光帘", "health", [18, 80], "盛夏午后，你把最晒的窗帘拉上，等太阳偏一点再出门。日程往后挪了半小时，身体便少替天气交一点税。", [add("resources.health", 2)], ["poor", "屋里没有多少可调节的设备，你把湿毛巾搭在椅背上，又把风扇转向最需要的人。凉快不够平均，家里只好先平均。"]],
   ["cooling_room", "纳凉屋", "health", [6, 88], "连续热天里，附近一处公共房间延长开放。你坐在慢慢转动的风下，和陌生人分享插座、凉水与一句‘今年真热’。", [add("resources.health", 2), add("relationships.friendship", 1)], ["elder", "热天最难熬的时段，你去公共纳凉点坐一会儿。工作人员记得给你倒温水，空调很凉，照料倒是暖的。"]],
@@ -61,22 +185,22 @@ const near = [
   ["remote_followup", "复诊前的记录", "health", [32, 88], "复诊前，你把这一月的睡眠、用药和不适记下来。医生隔着屏幕也能问得细，只是最后仍叮嘱：哪里真疼，别只在表格里忍。", [add("resources.health", 3)], [["frail", "你把药盒摆成一排，请家人一起核对记录。屏幕替你省了路，疾病本身没有因此变得更客气。"], ["rural", "去一趟远处医院并不轻松，你先在家完成复诊，把需要面诊的项目另列出来。线上问诊没有消除路程，却让路只留给非走不可的时候。"]]],
   ["medicine_alarm", "药盒响了一声", "health", [55, 92], "药盒按时轻响，你正在和人说话，先装作没听见。它又响一次，礼貌而固执，像家里那位最不肯放过你的人。", [add("resources.health", 2)], ["elder", "提醒响起时，你一时想不起药有没有吃。好在格子已经空了；记忆偶尔请假，日常的小设计替它值班。"]],
   ["walker_ramp", "门口那段缓坡", "health", [60, 95], "楼门口补了一段缓坡。你扶着助行器慢慢通过，过去不起眼的一小级台阶，终于不再把世界分成能进和不能进。", [add("resources.freedom", 3), add("resources.health", 1)], ["frail", "坡道修好后，你第一次不用旁人抬轮椅。自由没有喧哗，只是轮子安静地越过门槛。"]],
-  ["child_rain_game", "廊下数雨滴", "family", [20, 75], "大雨把户外活动困在廊下。你陪孩子看水珠从屋檐逐颗落下，一面查回家的路，一面阻止那双小鞋把水踩进裤腿。", [add("resources.happiness", 2), add("relationships.family", 1)], ["rural", "雨把院子冲得发亮，你陪孩子在门槛里看鸭子经过。你拦住孩子往泥里走，鸭子没有大人，显得自由很多。"]],
+  ["child_rain_game", "廊下数雨滴", "family", [20, 75], "大雨把户外活动困在廊下。亲友家的孩子同你看水珠从屋檐逐颗落下，你一面查回家的路，一面阻止那双小鞋把水踩进裤腿。", [add("resources.happiness", 2), add("relationships.family", 1)], [["parent", "大雨把户外活动困在廊下。你陪孩子看水珠从屋檐逐颗落下，一面查回家的路，一面阻止那双小鞋把水踩进裤腿。"], ["rural", "雨把院子冲得发亮，邻家孩子在门槛里看鸭子经过。你拦住他往泥里走，鸭子没有大人，显得自由很多。"]]],
   ["school_heat_break", "课间先喝水", "education", [7, 16], "热天的课间，老师先催大家喝水，再讲下一页。你们把水瓶碰得叮当响，知识暂时排在防暑后面。", [add("resources.health", 2), add("education.score", 1)], ["poor", "你的水瓶用了许多年，瓶盖有点漏。家里换了密封圈，它又能上学；新学期不一定每样东西都要新。"]],
   ["library_late_hours", "晚一点关门", "education", [12, 65], "热浪或暴雨的日子，图书馆把开放时间挪了挪。你在那里等天气缓和，顺手读完一本原本没打算借的书。", [add("education.score", 2), add("resources.happiness", 1)], ["migrated", "住处狭小又闷，你常去图书馆待到晚些。那里不问你从哪里来，只提醒闭馆前别忘了带走自己的水杯。"]],
-  ["adult_course", "下班后的短课", "education", [22, 62], "工作流程又变了一轮，你报名学一门短课。第一晚记了三页，第二晚只记住老师说‘别怕问’，倒也算抓住了重点。", [add("education.score", 3), add("career.level", 1)], ["employed", "你下班后补学新流程，工牌还挂在胸前。所谓终身学习，有时只是单位把作业重新发给了成年人。"]],
-  ["automation_check", "最后由人看一遍", "career", [20, 67], "许多重复步骤交给系统后，你的工作变成核对例外。机器擅长不累，你擅长发现一个名字背后还有具体的人。", [add("resources.achievement", 2), add("attrs.intelligence", 1)], ["poor", "你担心流程一改，自己的岗位也跟着变薄。后来你学会处理机器做不稳的边角，收入仍紧，手上的分寸却没有失业。"]],
+  ["adult_course", "下班后的短课", "education", [22, 62], "工作流程又变了一轮，你报名学一门短课。第一晚记了三页，第二晚只记住老师说‘别怕问’，倒也算抓住了重点。", [add("education.score", 3), add("career.level", 1)], ["employed", "你下班后补学新流程，工牌还挂在胸前。所谓终身学习，有时只是单位把作业重新发给了成年人。"], { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"])] } }],
+  ["automation_check", "最后由人看一遍", "career", [20, 67], "许多重复步骤交给系统后，你的工作变成核对例外。机器擅长不累，你擅长发现一个名字背后还有具体的人。", [add("resources.achievement", 2), add("attrs.intelligence", 1)], ["poor", "你担心流程一改，自己的岗位也跟着变薄。后来你学会处理机器做不稳的边角，收入仍紧，手上的分寸却没有失业。"], { conditions: { all: [C("career.status", "in", ["employed", "self_employed", "gig_worker"])] } }],
   ["manual_skill", "手上的那点分寸", "career", [18, 72], "一种老手艺忽然又被人需要：不是怀旧，只因有些修补仍要手摸、耳听、慢慢试。你把价格写清，也把经验算进工钱。", [add("career.income", 2), add("resources.reputation", 2)], ["elder", "年轻人带着一件老物来问，你先听声音，再动手。经验无法一键更新，却能在一声轻响里找到故障。"]],
-  ["shift_handover", "交班多写一句", "career", [20, 70], "你在交班记录里多写了一句异常，而不是只点确认。后来那句话让接班的人少走一段弯路；认真通常没有提示音。", [add("resources.achievement", 2), add("relationships.friendship", 1)], [["frail", "长期疲倦让你更怕遗漏，便把交班写得格外细。身体催你慢一点，也意外教会你把事情交代完整。"], ["elder", "年纪渐长后，你不再相信一句‘他们都知道’。你把设备脾气和例外情况写进交班，经验终于没有只留在某个人下班后的脑子里。"]]],
-  ["four_day_schedule", "重新排过的班", "career", [20, 65], "单位试着重排工时，你多出一个完整下午，却发现休息也需要学习。最后你去菜场、睡一觉，完成了两件很实际的事。", [add("resources.freedom", 2), add("resources.health", 1)], ["parent", "多出的半天先被接送、家务和陪诊分完。你在傍晚独坐十分钟，才算领到一点属于自己的工时改革。"]],
-  ["platform_rating", "别让一个分数概括", "career", [18, 62], "一次低评分让当天的活少了些。你申诉、解释，又同同行交换经验；人的劳动被压成数字时，只好由人把故事补回去。", [add("resources.happiness", -1), add("relationships.friendship", 2)], ["poor", "你盯着那个分数算今天少了多少钱。系统没有表情，房租却很有表情；你仍把下一单认真做完。"]],
-  ["coworker_teaches", "同事教的捷径", "career", [18, 68], "新工具更新后，说明写得很长。同事把椅子滑过来，三分钟教会你最常用的部分；职场里最可靠的教程有时会顺手借你的订书机。", [add("career.level", 2), add("relationships.friendship", 2)], ["elder", "你不怕学，只是不愿装懂。年轻同事教你新工具，你回头替他看一处老流程，彼此都少喊一次‘怎么又不行’。"]],
+  ["shift_handover", "交班多写一句", "career", [20, 70], "你在交班记录里多写了一句异常，而不是只点确认。后来那句话让接班的人少走一段弯路；认真通常没有提示音。", [add("resources.achievement", 2), add("relationships.friendship", 1)], [["frail", "长期疲倦让你更怕遗漏，便把交班写得格外细。身体催你慢一点，也意外教会你把事情交代完整。"], ["elder", "年纪渐长后，你不再相信一句‘他们都知道’。你把设备脾气和例外情况写进交班，经验终于没有只留在某个人下班后的脑子里。"]], { conditions: { all: [C("career.status", "eq", "employed")] } }],
+  ["four_day_schedule", "重新排过的班", "career", [20, 65], "单位试着重排工时，你多出一个完整下午，却发现休息也需要学习。最后你去菜场、睡一觉，完成了两件很实际的事。", [add("resources.freedom", 2), add("resources.health", 1)], ["parent", "多出的半天先被接送、家务和陪诊分完。你在傍晚独坐十分钟，才算领到一点属于自己的工时改革。"], { conditions: { all: [C("career.status", "eq", "employed")] } }],
+  ["platform_rating", "别让一个分数概括", "career", [18, 62], "一次低评分让当天的活少了些。你申诉、解释，又同同行交换经验；人的劳动被压成数字时，只好由人把故事补回去。", [add("resources.happiness", -1), add("relationships.friendship", 2)], ["poor", "你盯着那个分数算今天少了多少钱。系统没有表情，房租却很有表情；你仍把下一单认真做完。"], { conditions: { all: [C("career.status", "eq", "gig_worker")] } }],
+  ["coworker_teaches", "同事教的捷径", "career", [18, 68], "新工具更新后，说明写得很长。同事把椅子滑过来，三分钟教会你最常用的部分；职场里最可靠的教程有时会顺手借你的订书机。", [add("career.level", 2), add("relationships.friendship", 2)], ["elder", "你不怕学，只是不愿装懂。年轻同事教你新工具，你回头替他看一处老流程，彼此都少喊一次‘怎么又不行’。"], { conditions: { all: [C("career.status", "eq", "employed")] } }],
   ["small_shop_collective", "几家小店一起进货", "wealth", [25, 72], "街上几家小店凑单进货，摊薄了运费。老板们平日互相打量，这回在计算器前暂时成为同盟。", [add("resources.wealth", 3), add("relationships.friendship", 1)], ["rural", "镇上几家铺子合着叫一趟货车。谁家多两箱、谁家少一包，都在群里说清；小地方的人情经不起含糊，倒也因此结实。"]],
   ["apprentice_again", "四十岁再当学徒", "education", [35, 58], "你换了方向，重新跟人学一门实用技能。称呼从老师傅变回学员有点别扭，手却比年轻时更知道为什么要慢。", [add("education.score", 3), add("career.level", 2), add("resources.happiness", -1)], ["employed", "白天的旧工作还没完全放下，晚上已在练新手艺。成年人换路不潇洒，常是一只脚试水，另一只脚还得准时打卡。"]],
   ["care_worker_name", "先问照护者的名字", "career", [18, 68], "你第一次请来照护人员，先问清对方的休息时间和称呼。照护是一份劳动，不是从门口自动长出来的耐心。", [add("relationships.family", 2), add("resources.reputation", 1)]],
   ["community_meal", "一张长桌", "family", [55, 90], "社区饭堂摆了张长桌，你起初只打包，后来坐下吃。菜的味道普通，邻座却记得你上周咳嗽。", [add("resources.health", 1), add("relationships.friendship", 2)]],
-  ["grandparent_video", "镜头总照着天花板", "family", [48, 92], "你和远处的孩子通话，镜头一度只照到天花板。大家笑着重新调整，距离仍在，声音先坐到了一张桌上。", [add("relationships.family", 3), add("resources.happiness", 1)]],
-  ["shared_childcare", "轮流接孩子", "family", [24, 55], "几户家长轮流接孩子，迟到的人负责下次多值一天。信任先从一串接送时间开始，后来才慢慢长出交情。", [add("relationships.friendship", 2), add("resources.freedom", 2)]],
+  ["grandparent_video", "镜头总照着天花板", "family", [48, 92], "你和远处的亲友通话，镜头一度只照到天花板。大家笑着重新调整，距离仍在，声音先坐到了一张桌上。", [add("relationships.family", 3), add("resources.happiness", 1)], ["parent", "你和远处的孩子通话，镜头一度只照到天花板。大家笑着重新调整，距离仍在，声音先坐到了一张桌上。"]],
+  ["shared_childcare", "轮流接孩子", "family", [24, 55], "邻里临时缺人时，你替相熟的一户接过一次孩子。接送表上只是多一个名字，信任却从准时出现在校门口慢慢长出来。", [add("relationships.friendship", 2), add("resources.freedom", 2)], ["parent", "几户家长轮流接孩子，迟到的人负责下次多值一天。信任先从一串接送时间开始，后来才慢慢长出交情。"]],
   ["single_household_soup", "一人份的汤", "daily", [22, 75], "你学会把汤分装成几小盒，不再为一个人做饭就随便对付。孤独未必消失，但晚饭开始有了盐和温度。", [add("resources.health", 2), add("resources.happiness", 1)], [["poor", "手头不宽，你用同一锅汤分出几顿，再换着添菜。节省没有把晚饭变成惩罚，反而逼你认真算过一周该怎样吃。"], ["elder", "一个人住到晚年，你把汤分成小份冷藏，也在盒盖写上日期。照顾自己不再靠胃口临时决定，而是一项不声张的日程。"]]],
   ["family_account", "家庭账本的新一页", "wealth", [25, 72], "家里重新谈过收入、照护与开支，谁也没能完全满意。可账写清以后，沉默终于少替钱承担一点责任。", [add("relationships.family", 2), add("attrs.mental", 1)], [["poor", "收入紧时，每笔医疗和生活开支都挤着下一笔。你们把最低需要先列出来，争论没有消失，却不再由最沉默的人独自垫付。"], ["parent", "孩子的教育、长辈的照护和两个人的收入摆到同一页上。账本没有解决代际压力，只让谁在承担什么终于能被全家看见。"]]],
   ["migrant_rooftop", "楼顶晒被子", "daily", [18, 75], "住处没有院子，你同邻居约好轮流去楼顶晒被子。风把床单吹成帆，大家追着夹子跑，像进行一场很家常的远航。", [add("relationships.friendship", 2)], [["migrated", "离开原乡后，你在租住楼顶找到晒被子的地方。邻居用不同口音提醒要下雨，临时住处也慢慢长出一套共同生活的规矩。"], ["poor", "屋里窄得晾不开大件，你和邻居错开时辰用楼顶。夹子各自做了记号，有限空间因此少几次争执。"]]],
@@ -102,7 +226,7 @@ const near = [
 const middle = [
   ["care_coop", "照护合作的小账", "family", [35, 82], "几户人家按时数互相帮忙照看老人。账上记的是小时，真正被分担的却是那些半夜醒来、不知该找谁的慌。", [add("relationships.friendship", 3), add("resources.freedom", 1)], ["poor", "请不起长期照护，你用自己的时间换邻里的时间。没有谁特别宽裕，几双手凑起来却能让人喘口气。"]],
   ["old_age_class", "老年班的作业", "education", [60, 92], "你报名学一件从前没空学的事，老师照样留作业。退休并没有免除被批改，只是这次写错了也不影响工资。", [add("education.score", 2), add("resources.happiness", 2)], [["frail", "身体不便让你改成在家跟课。动作慢些，作品仍能完成；学习没有规定必须用哪种姿势。"], ["migrated", "搬来新地方后，你在老年班里既学课程，也重新认识口音和街道。作业给了见面理由，熟人是在交作业前后慢慢有的。"]]],
-  ["family_care_leave", "请下来的一天", "family", [28, 68], "家里有人需要陪诊，你终于把一天完整请下来。工作群仍亮着，病房里的时间却不肯按消息条数计算。", [add("relationships.family", 3), add("career.income", -1)], ["employed", "你把工作交代给同事，陪家人做完几项检查。一天的工资看得见，一天的陪伴没有发票。"]],
+  ["family_care_leave", "请下来的一天", "family", [28, 68], "家里有人需要陪诊，你把原有安排推开，完整陪着做完几项检查。病房里的时间不按外面的钟走，陪伴也没有发票。", [add("relationships.family", 3), add("career.income", -1)], ["employed", "你把工作交代给同事，陪家人做完几项检查。一天的工资看得见，一天的陪伴没有发票。"]],
   ["meal_texture", "把饭做软一点", "health", [45, 92], "家中老人咀嚼费力，大家把同一锅菜分出软一些的一份。照护没有另起炉灶，只是多切几刀、少催一句。", [add("resources.health", 2), add("relationships.family", 2)], ["elder", "牙口变慢后，你不肯每顿只喝粥。家人把菜切细，仍让它看起来像一道菜；尊严也需要一点嚼头。"]],
   ["fall_mat", "浴室里多一块垫", "health", [55, 95], "浴室添了扶手和防滑垫。它们不漂亮，却把一次可能发生的摔倒，改写成许多个平安洗完的晚上。", [add("resources.health", 3)], ["poor", "你们没做大改造，只把松动处拧紧、最滑的地方铺好。有限的钱先买不摔跤，也算很会安排。"]],
   ["caregiver_rest", "照护者也去睡一觉", "health", [25, 78], "亲友来替了半天，你终于去睡一觉。醒来第一反应仍是听动静，第二反应才想起今天有人接班。", [add("resources.health", 2), add("resources.happiness", 1)], ["female", "长期照护多半落在你身上，别人说你最细心。你开始要求轮班：所谓细心，不该成为永不休息的证明。"]],
@@ -122,20 +246,20 @@ const middle = [
   ["seed_exchange", "换一把种子", "wealth", [18, 78], "几户人家交换更适应本地天气的种子，也各留一份旧种。对未来的把握有限，手里多几种可能总比只听一种说法稳。", [add("resources.wealth", 2), add("relationships.friendship", 2)], ["rural", "你把自家留种分给邻户，又换回另一种。种子很小，承载的意见却不少，最后由土地慢慢投票。"]],
   ["soil_rest", "让一小块地歇一年", "career", [22, 78], "你们决定让一小块地轮歇，眼前少些收成，来年再看。土地没有请假条，疲惫却同人一样会写在表现里。", [add("resources.wealth", -1), add("resources.achievement", 2)], ["poor", "少种一块地让账更紧，你仍留下覆盖物护土。穷的时候做长远事最难，因为来年从不肯预付。"]],
   ["automation_union", "把新流程讲明白", "career", [20, 68], "工作引入更多自动流程，大家要求把岗位变化、责任和收入讲明白。技术可以快，人的生计不能只收到一封简短通知。", [add("resources.freedom", 2), add("relationships.friendship", 2)], ["employed", "你参加讨论，问的不是机器能做什么，而是出了错算谁的、节省下来的时间归谁。问题朴素，因此不容易被漂亮演示带走。"]],
-  ["human_exception", "窗口还留着人", "career", [22, 72], "一项服务大多自动办理，窗口仍留人处理例外。你值班时遇到一份系统认不出的证明，纸很旧，求助的人很急。", [add("resources.reputation", 2), add("resources.achievement", 1)], ["elder", "你来办事时卡在一个选项外，工作人员没有让你回去重试，而是坐下来把材料看完。有人处理例外，制度才知道人不是下拉菜单。"]],
+  ["human_exception", "窗口还留着人", "career", [22, 72], "一项服务大多自动办理，窗口仍留人处理例外。你值班时遇到一份系统认不出的证明，纸很旧，求助的人很急。", [add("resources.reputation", 2), add("resources.achievement", 1)], ["elder", "年纪渐长后你仍在窗口值班，遇到一份系统认不出的旧证明。求助的人很急，你没有让他回去重试，而是坐下来把材料看完。"], { conditions: { all: [C("career.status", "eq", "employed")] } }],
   ["skill_license", "重新证明会做这件事", "education", [30, 68], "行业标准变了，你又去接受一次培训和考核。多年经验没有作废，只是被要求换一种格式签名。", [add("education.score", 2), add("career.level", 1)], ["elder", "你在一群年轻人中重新考试，操作题做得最稳，登录密码输得最慢。两项表现都很诚实。"]],
   ["craft_contract", "手艺也写进合同", "career", [18, 75], "你接一份修复旧物的活，第一次把材料、工时和返工范围写清。情面还在，欠款终于不必全靠记性维持。", [add("career.income", 3), add("resources.freedom", 1)], ["rural", "熟人来找你做活，你仍把价和交付写明。小地方不是不需要合同，只是合同说话时最好别伤了饭桌上的和气。"]],
-  ["mentor_reverse", "两个人互相当老师", "education", [18, 76], "你教同事一门老技能，对方教你新的工具。谁也没有完整的时代答案，倒因此都肯把不懂说出来。", [add("education.score", 2), add("relationships.friendship", 3)], ["elder", "你示范手上功夫，年轻同事替你整理成易查的步骤。经验不再只藏在一句‘我做惯了’，终于有了能传下去的次序。"]],
+  ["mentor_reverse", "两个人互相当老师", "education", [18, 76], "你教身边的人一门老技能，对方教你新的工具。谁也没有完整的时代答案，倒因此都肯把不懂说出来。", [add("education.score", 2), add("relationships.friendship", 3)], [["employed", "你教同事一门老技能，对方教你新的工具。谁也没有完整的时代答案，倒因此都肯把不懂说出来。"], ["elder", "你示范手上功夫，年轻人替你整理成易查的步骤。经验不再只藏在一句‘我做惯了’，终于有了能传下去的次序。"]]],
   ["quiet_job", "一份不追排名的工作", "career", [25, 68], "你换到一份收入普通、节奏较稳的工作。别人问是不是可惜，你算过睡眠和胃口，觉得账没有少列。", [add("resources.health", 3), add("career.income", -1), add("resources.happiness", 2)], ["frail", "身体不再允许你长期硬撑，你把工作调慢。名片上的字少了些，能完整吃完的晚饭多了。"]],
   ["older_worker", "年长者的排班", "career", [58, 78], "你还愿意做些活，只是不再适合整天站立。新排班把经验留在岗位上，也允许膝盖参与劳动协商。", [add("career.income", 2), add("resources.health", 1)], ["poor", "储蓄不够让你完全停下，你接些强度较低的活。晚年劳动谈不上诗意，只希望别拿健康倒贴工资。"]],
   ["child_tree_map", "给树画地图", "education", [36, 90], "学校让孩子们记下附近树木的阴影变化，你被请去帮忙辨认老树和旧路。彩笔画得未必准，哪棵树下夏天最适合等人却有人记得。", [add("education.score", 2), add("resources.happiness", 1)], ["rural", "你陪孩子认村边的树，几个旧名已经没人叫。树没有纠正任何人，只把阴影稳稳留在地上。"]],
-  ["child_fix_toy", "玩具先不扔", "family", [36, 90], "孩子的玩具坏了，你陪着打开外壳找原因。小手负责递错型号的螺丝刀，修好后又郑重宣布主要是自己动的手。", [add("education.score", 1), add("relationships.family", 2)], ["poor", "家里没有立刻买新的，你把断处粘好，孩子在旁边等得很不耐烦。第二天玩具又跑起来，修补的道理先由两双手记住。"]],
+  ["child_fix_toy", "玩具先不扔", "family", [36, 90], "亲友家的孩子带来一件坏玩具，你陪着打开外壳找原因。小手负责递错型号的螺丝刀，修好后又郑重宣布主要是自己动的手。", [add("education.score", 1), add("relationships.family", 2)], [["parent", "孩子的玩具坏了，你陪着打开外壳找原因。小手负责递错型号的螺丝刀，修好后又郑重宣布主要是自己动的手。"], ["poor", "没有立刻买新的，你把断处粘好，小孩在旁边等得很不耐烦。第二天玩具又跑起来，修补的道理先由两双手记住。"]]],
   ["teen_care_visit", "放学后去看一眼", "family", [36, 90], "一个放学后的年轻人顺路来看你，帮着拿重物、调大屏幕上的字。你给对方塞吃的，互助因此很难算清谁照顾谁。", [add("relationships.friendship", 3), add("resources.reputation", 1)], ["migrated", "来看你的并非亲属，只是同社区的年轻人。异乡的亲缘有时不靠姓氏，靠每周真的有人敲门。"]],
   ["mixed_family_table", "饭桌上有几种家乡话", "family", [8, 82], "一家人来自不同地方，饭桌上几种口音来回切换。孩子先学会的是：同一种菜，每位长辈都有唯一正确的做法。", [add("relationships.family", 3), add("resources.happiness", 1)], ["migrated", "你的家乡话在家里只剩几个人说，仍被保留在称呼和调味里。语言没有消失，只是搬进了厨房。"]],
   ["friend_household", "互留一把钥匙", "family", [24, 78], "你和可信的朋友互留一把备用钥匙，以防生病、出差或忘带。钥匙很小，却承认生活并不总由血缘兜底。", [add("relationships.friendship", 4), add("resources.freedom", 1)], ["elder", "独居以后，你把备用钥匙交给老朋友。两个人都说用不上，说完又认真记下放在哪里。"]],
   ["late_companion", "晚年的同桌", "family", [60, 92], "你和一位相处舒服的人常约着吃饭、散步，各自保留住处。关系不必照旧格式登记，关心仍会准时问药吃了没有。", [add("resources.happiness", 3), add("relationships.friendship", 2)], [["comfortable", "你们各自有空间，也把照护和财务事先谈清。浪漫到了晚年，不只送花，也会核对紧急联系人。"], ["frail", "身体差些以后，你们把散步改成在近处坐坐，也说清谁能陪诊、谁该联系家人。亲密没有假装衰老不存在，而是替它留了座位。"]]],
   ["inheritance_sort", "先把物件说清", "family", [55, 90], "你趁身体尚好，把重要物件、账号和愿望一项项告诉家人。谈死亡很难，找不到钥匙也很难，先解决后者让前者稍微有了入口。", [add("relationships.family", 2), add("attrs.mental", 1)], ["poor", "能留下的钱不多，你仍把欠款、证件和几件有来历的物品写清。遗产不只按价格计算，也按免去多少猜测计算。"]],
-  ["archive_work_badge", "一张旧工牌", "family", [45, 90], "整理旧物时，你留下某份工作的工牌。那段劳动早被流程替换，照片里的你仍板着脸，像很相信事情会一直这样做下去。", [add("resources.happiness", 1), add("resources.achievement", 1)], ["elder", "孙辈问起工牌上的单位，你从一顿午饭讲到下班铃。过去并不宏大，只是细节太多，一时收不回来。"]],
+  ["archive_work_badge", "一张旧工牌", "family", [45, 90], "整理旧物时，你留下某份工作的工牌。那段劳动早被流程替换，照片里的你仍板着脸，像很相信事情会一直这样做下去。", [add("resources.happiness", 1), add("resources.achievement", 1)], ["elder", "晚辈问起工牌上的单位，你从一顿午饭讲到下班铃。过去并不宏大，只是细节太多，一时收不回来。"]],
   ["community_kitchen", "灶台轮流用", "wealth", [20, 82], "几户住得小的人预约使用公共厨房，做一顿费火候的饭。锅铲各有归属，香味暂时不讲产权。", [add("resources.wealth", 2), add("relationships.friendship", 2)], ["poor", "家里的烹饪条件有限，你去公共厨房炖一锅菜。有人顺手教你省火的办法，贫困没有消失，饭至少熟得均匀。"]],
   ["clothes_mend_tag", "补丁写了日期", "wealth", [10, 80], "一件常穿的衣服又补一次，你在内侧写下年份。后来补丁比原布更牢，像日子把脆弱处反复缝成了骨头。", [add("resources.wealth", 2), add("resources.happiness", 1)], ["young", "大人给你的衣服补好破口，内侧还留着前一个孩子的姓名。你不在意历史，只关心口袋还能不能装石子。"]],
   ["parts_library", "零件抽屉", "wealth", [16, 78], "维修点把拆下的可用零件分类收好。你要找的那一颗并不新，却严丝合缝；旧物之间也有器官捐赠。", [add("resources.wealth", 2), add("resources.achievement", 1)], ["rural", "等新零件要很久，你从旧机器上找到合用的一颗。村里的维修哲学向来务实：先问还能不能用，再问它本来是谁的。"]],
@@ -146,7 +270,7 @@ const middle = [
   ["cemetery_walk", "去看一个不在的人", "family", [28, 95], "你去看望一位已经离世的人，带的东西很少，坐得比预想久。回来路上买了菜，悲伤和晚饭继续使用同一个下午。", [add("resources.happiness", -1), add("attrs.mental", 1)]],
   ["empty_school_room", "旧教室的新用途", "daily", [12, 85], "学生少了以后，一间旧教室改成村里的活动室。黑板还在，老人开会时偶尔顺手写字，粉笔灰重新有了工作。", [add("relationships.friendship", 2), add("resources.happiness", 1)], null, { currentRegions: RURAL }],
   ["station_bench", "站里有了靠背", "daily", [50, 95], "车站换了一批有靠背的座椅。设计者也许只是改了一个角度，你等车时却觉得腰终于被公共空间承认。", [add("resources.health", 1), add("resources.happiness", 1)]],
-  ["night_clinic", "晚一点的门诊", "health", [18, 82], "你下班后还能去处理一个拖了许久的小毛病。诊室灯光普通，却把‘没时间看’从借口里拿掉了一点。", [add("resources.health", 3), add("resources.wealth", -1)]],
+  ["night_clinic", "晚一点的门诊", "health", [18, 82], "门诊开得晚一些，你终于处理了一个拖了许久的小毛病。诊室灯光普通，延长的时辰却让看病不必再同白天的安排硬挤。", [add("resources.health", 3), add("resources.wealth", -1)], ["employed", "你下班后还能去处理一个拖了许久的小毛病。诊室灯光普通，却把‘没时间看’从借口里拿掉了一点。"]],
   ["meal_check", "冰箱里少了一盒饭", "family", [28, 90], "你给独居亲友送去几盒饭，第二天发现确实少了一盒。那一点空位比一句‘我吃过了’更让人安心。", [add("relationships.family", 3), add("resources.wealth", -1)]],
   ["roof_leak_map", "漏雨处画在纸上", "daily", [18, 82], "老楼漏雨，住户把每处水痕标在平面图上。抱怨终于有了坐标，维修也不再只追着最大声的人走。", [add("resources.reputation", 2), add("relationships.friendship", 1)], null, { currentRegions: URBAN }],
   ["garden_compost", "菜叶回到土里", "daily", [8, 82], "你把能处理的厨余送到社区堆肥点，几个月后分回一小袋土。菜叶绕了一圈，回来时身价并未提高，作用倒变了。", [add("resources.happiness", 1), add("education.score", 1)]],
@@ -178,14 +302,14 @@ const far = [
   ["learning_circle", "七十岁的小组作业", "education", [60, 95], "学习小组要一起完成作业，你和同伴开了三次会，真正动笔只用半小时。年岁增长并未治好会议，只让大家更敢准时回家。", [add("education.score", 2), add("relationships.friendship", 2)], ["frail", "你行动不便，便负责在家整理材料。同伴带来点心和一堆不同格式的文件，探望与协作终于合并成一次行程。"]],
   ["grandchild_teaches", "晚辈没有替你按", "education", [55, 95], "晚辈教你操作新设备，忍住没有直接替你做完。你慢慢学会，双方都表现出比平日更多的耐心。", [add("education.score", 2), add("relationships.family", 2)], ["elder", "你记步骤时坚持写在纸上，晚辈说可以保存到设备里。你点头，把纸仍放进最熟悉的抽屉。"]],
   ["child_old_object", "这东西从前怎么用", "education", [61, 99], "孩子在展柜前指着一件旧日用品追问用途，你比划半天。对方很快被旁边能转动的把手吸引，历史暂时输给了机械结构。", [add("education.score", 1), add("resources.happiness", 1)], ["rural", "老屋里一件旧农具引起孩子注意，你慢慢示范动作。工具很重，过去也因此没有被浪漫化。"]],
-  ["child_heat_story", "太阳太大就晚点出去", "family", [61, 99], "午后太热，你把带孩子出门的时间推迟。小孩在屋里搭积木，只知道今天的公园要等影子变长；判断天气趋势是大人的那份功课。", [add("resources.health", 1), add("relationships.family", 1)], ["poor", "屋里仍旧闷，你给孩子擦汗、换水，把最凉的位置留出来。小孩只顾追一小片移动的光，照料的辛苦仍在镜头外。"]],
+  ["child_heat_story", "太阳太大就晚点出去", "family", [61, 99], "午后太热，来家里的小孩暂时不能出门，只知道今天的公园要等影子变长；判断天气趋势是大人的那份功课。", [add("resources.health", 1), add("relationships.family", 1)], [["parent", "午后太热，你把带孩子出门的时间推迟。小孩在屋里搭积木，只知道今天的公园要等影子变长；判断天气趋势是大人的那份功课。"], ["poor", "屋里仍旧闷，你给来家里的小孩擦汗、换水，把最凉的位置留出来。小孩只顾追一小片移动的光，照料的辛苦仍在镜头外。"]]],
   ["child_neighbor_elder", "替楼上老人送东西", "family", [61, 99], "一个孩子跟着大人把门口的东西送来给你，先敲得太轻，又敲得太响。关于互助的第一课，主要练习了门的音量。", [add("resources.reputation", 1), add("relationships.friendship", 2)], ["urban", "电梯门开时，孩子抱着一小袋东西，大人负责确认门牌。你递去一颗糖，社区关系在双方监护下完成交接。"]],
   ["school_oral_history", "问家里从哪里来", "education", [61, 99], "孩子带着学校的任务来问你：家里从哪里迁来、做过什么。你的答案不总完整，却让地图上的地名带上饭菜和口音。", [add("education.score", 2), add("relationships.family", 2)], ["migrated", "你把几次迁居讲成一条弯曲的线，孩子发现‘家乡’不止一个点。老师没有要求选唯一答案，纸终于够大。"]],
   ["family_many_elders", "一桌子长辈", "family", [25, 75], "家庭里高龄长辈越来越多，聚餐先讨论谁坐有靠背的位置。寿命变长是好消息，也带来一桌细密的药盒与照护表。", [add("relationships.family", 3), add("resources.freedom", -1)], ["female", "你不再默认由自己记住所有人的药和忌口，而是把清单发给全家。长寿是共同的福气，劳动也应共同认领。"]],
   ["few_children_festival", "人不多的团圆饭", "family", [20, 90], "团圆饭人数比旧照片里少，菜也不再铺满桌。大家把几道真正爱吃的做好，空椅子没有被热闹强行遮住。", [add("relationships.family", 3), add("resources.happiness", 1)], ["elder", "你记得从前一桌挤很多人，如今来的人少些。饭后每个人都多坐了一会儿，数量不是亲近唯一的算法。"]],
   ["chosen_kin", "没有血缘的一桌人", "family", [25, 88], "节日里，你同几位没有血缘却长期相伴的人一起吃饭。称呼不合旧族谱，夹菜的动作已经很熟。", [add("relationships.friendship", 4), add("resources.happiness", 2)], ["migrated", "大家都离原乡很远，便各带一道家乡菜凑桌。味道互不服气，人倒相处得很好。"]],
   ["care_contract_family", "亲情之外也写清", "family", [35, 88], "家人把照护费用、时间与决定方式写下来。写清并非生分，而是避免最疲惫的时候只剩一句‘你应该懂’。", [add("relationships.family", 2), add("resources.freedom", 1)], ["poor", "钱少使每项安排都更难，你们仍把谁出多少、谁出时间说清。窘迫最怕沉默，因为沉默常把账压给最弱的人。"]],
-  ["empty_room_rent", "把空房间住起来", "wealth", [45, 88], "孩子离开后，你把一间空房租给需要的人。起初只谈租金，后来也会互相留一碗汤；边界写在合同里，善意留在门外垫上。", [add("resources.wealth", 3), add("relationships.friendship", 2)], ["elder", "家里多一位年轻住客，帮你搬重物，你替他收偶尔寄错的信。两代人都没把对方当免费服务，因此反而相处长久。"]],
+  ["empty_room_rent", "把空房间住起来", "wealth", [45, 88], "家里有一间暂时空下来的房，你把它租给需要的人。起初只谈租金，后来也会互相留一碗汤；边界写在合同里，善意留在门外垫上。", [add("resources.wealth", 3), add("relationships.friendship", 2)], [["parent", "孩子离开后，你把一间空房租给需要的人。起初只谈租金，后来也会互相留一碗汤；边界写在合同里，善意留在门外垫上。"], ["elder", "家里多一位年轻住客，帮你搬重物，你替他收偶尔寄错的信。两代人都没把对方当免费服务，因此反而相处长久。"]]],
   ["intergenerational_house", "楼上楼下互相照应", "family", [18, 90], "一栋房里住着不同年龄的人，公共区域的规则开了很久才定下。孩子嫌老人早起，老人嫌年轻人晚睡，最后都同意门要轻关。", [add("relationships.friendship", 3), add("resources.freedom", 1)], ["young", "你在公共客厅写作业，旁边老人慢慢择菜。彼此没有亲属称谓，却都知道对方今天几点回家。"]],
   ["village_care_station", "村口的照护站", "health", [55, 98], "村口一间小站提供量测、送餐和短时照看。它不能解决所有衰老，却让独居的人白天有处坐，家属远在外地也少一点悬心。", [add("resources.health", 2), add("relationships.friendship", 2)], ["poor", "费用必须精打细算，你只使用最需要的服务。工作人员仍会多问一句饭吃没有，这句话暂时还没单独计费。"], { currentRegions: RURAL }],
   ["mobile_library", "书跟着车来", "education", [6, 92], "定期来的车带来图书、课程和代办服务。你借走一本书，归还时夹着一张自己做的书签，公共资源因此多了一件私人小物。", [add("education.score", 2), add("resources.happiness", 1)], ["rural", "车一到，孩子先围上去，老人随后来问事情。它装的不只是书，也把远处的服务临时搬到村口。"]],
@@ -218,6 +342,7 @@ const far = [
 ];
 
 export const historyExpansionFuture2036Events = [
+  ...futureYouthTransition,
   ...near.map((item) => makeEvent([2036, 2055], item)),
   ...middle.map((item) => makeEvent([2056, 2080], item)),
   ...far.map((item) => makeEvent([2081, 2120], item)),

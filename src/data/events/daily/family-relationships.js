@@ -351,6 +351,13 @@ export const dailyFamilyRelationshipsEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 24,
+    "conditions": {
+      "any": [
+        { "path": "meta.currentYear", "gte": 1950 },
+        { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] },
+        { "path": "resources.wealth", "gte": 55 }
+      ]
+    },
     "weightModifiers": [
       {
         "path": "attrs.charm",
@@ -367,20 +374,52 @@ export const dailyFamilyRelationshipsEvents = [
       {
         "conditions": {
           "all": [
-            {
-              "path": "birth.gender",
-              "eq": "female"
-            },
-            {
-              "path": "meta.currentYear",
-              "lte": 2005
-            }
+            { "path": "meta.currentYear", "lte": 1949 }
           ]
         },
-        "text": "你坐过某个人的自行车后座。风把校服吹得鼓起来，你一边心动，一边怕被熟人看见。"
+        "text": "那辆自行车在街上还算稀罕。你坐上后座，沿途很怕碰见熟人；车铃只响了两次，心里那点动静却一路没有停。"
       },
       {
-        "text": "你坐过某个人的自行车后座。风把校服吹得鼓起来，很多年后你还记得那段路的坡度。"
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
+            { "path": "meta.currentYear", "lte": 1977 },
+            { "path": "education.status", "eq": "enrolled" }
+          ]
+        },
+        "text": "放学后你坐在某个人的自行车后座，书包夹在两人中间，既碍事又像一道很薄的掩护。到了熟人多的路口，你提前跳下来走。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "birth.gender", "eq": "female" },
+            { "path": "meta.currentYear", "gte": 1978 },
+            { "path": "meta.currentYear", "lte": 2005 }
+          ]
+        },
+        "text": "你坐在某个人的自行车后座，风把衣角吹得鼓起来。你一边心动，一边怕被熟人看见；到了路口，还故意把手放得很规矩。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "birth.gender", "eq": "male" },
+            { "path": "meta.currentYear", "gte": 1978 },
+            { "path": "meta.currentYear", "lte": 2005 }
+          ]
+        },
+        "text": "你骑车载着喜欢的人，路面每个坑忽然都显得是对车技的公开考试。一路说的话不多，到了以后，手心比上坡时还湿。"
+      },
+      {
+        "conditions": {
+          "all": [
+            { "path": "meta.currentYear", "gte": 2006 },
+            { "path": "location.currentCityTier", "in": ["county", "city", "tier2", "tier1"] }
+          ]
+        },
+        "text": "你们骑车绕开堵着的路，一个人在前面辨方向，一个人在后面说刚才又错过路口。导航重新规划了三次，谁也没有真的急着抵达。"
+      },
+      {
+        "text": "你坐过某个人的自行车后座，车链偶尔响一声，路也并不平。很多年后，人和话都模糊了，那段上坡该在哪里下车帮推却还记得。"
       }
     ],
     "effects": [
@@ -470,6 +509,7 @@ export const dailyFamilyRelationshipsEvents = [
       {
         "conditions": {
           "all": [
+            { "path": "meta.currentYear", "gte": 1950 },
             { "path": "meta.currentYear", "lte": 1992 }
           ]
         },

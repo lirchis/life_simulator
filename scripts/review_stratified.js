@@ -41,12 +41,19 @@ function review(batch, output) {
   addFinding(output, "warning", "AGE_SEMANTIC_RISK", `文案语义与人物年龄疑似不合常理 ${consistency.age.length} 处`, consistency.age);
   addFinding(output, "warning", "INFANT_ADULT_PERSPECTIVE", `0—3岁文案把成年人的认知或自传式记忆写进幼儿当下 ${consistency.infantPerspective.length} 处`, consistency.infantPerspective);
   addFinding(output, "warning", "STATE_NARRATIVE_CONFLICT", `事件叙述与当年结束后的婚姻、子女、教育或职业状态矛盾 ${consistency.state.length} 处`, consistency.state);
+  addFinding(output, "warning", "KINSHIP_AMBIGUITY", `无子女人物的正文出现关系归属不够清楚的儿童称谓 ${consistency.kinshipAmbiguity.length} 处`, consistency.kinshipAmbiguity);
+  addFinding(output, "warning", "RETIRED_WORK_AMBIGUITY", `已退休人物的正文出现可能是当前工作、也可能是旧事的单位语汇 ${consistency.retiredWorkAmbiguity.length} 处`, consistency.retiredWorkAmbiguity);
   addFinding(output, "error", "LIFE_COURSE_CONFLICT", `逐年教育、就业与主要身份状态发生无解释冲突 ${consistency.lifeCourse.length} 处`, consistency.lifeCourse);
   addFinding(output, "warning", "PLACE_TEXTURE_RISK", `地点纹理与触发所在地疑似冲突 ${consistency.place.length} 处`, consistency.place);
   addFinding(output, "warning", "CLASS_TEXTURE_RISK", `家庭资源层级与文案生活纹理疑似冲突 ${consistency.classTexture.length} 处`, consistency.classTexture);
 
   const anachronism = reviewAnachronisms(batch.events);
   addFinding(output, "error", "OBSERVED_ANACHRONISM", `样本正文出现早于合理使用年份的高置信词汇 ${anachronism.length} 处`, anachronism);
+  const contextualAnachronism = reviewContextualAnachronisms(batch.events);
+  addFinding(output, "warning", "CONTEXTUAL_ANACHRONISM_RISK", `样本正文出现需要结合城乡与阶层人工判断的早期物件 ${contextualAnachronism.length} 处`, contextualAnachronism);
+
+  const missingContinuations = reviewScheduledContinuations(batch);
+  addFinding(output, "error", "CHAIN_CONTINUATION_MISSING", `人物存活越过调度窗口，但已开启的确定性结构链没有续段 ${missingContinuations.length} 处`, missingContinuations);
 
   const frequency = reviewFrequency(batch);
   addFinding(output, "warning", "EVENT_OVERPENETRATION", `非生命周期事件在过多人生中出现（人生渗透率 > 55%）${frequency.overpenetrating.length} 个`, frequency.overpenetrating);
@@ -93,6 +100,7 @@ function review(batch, output) {
       place_texture_risks: consistency.place.length,
       class_texture_risks: consistency.classTexture.length,
       observed_anachronisms: anachronism.length,
+      missing_scheduled_continuations: missingContinuations.length,
     },
     frequency,
     narrative,
@@ -251,7 +259,7 @@ function reviewShadowNarrative(batch) {
     fieldDistribution[field] = {
       mean_final: average(finals),
       p90_final: quantile(finals, 0.9),
-      max_observed: Math.max(0, ...observedAfter[field]),
+      max_observed: maximum(observedAfter[field]),
       changed_events: batch.events.filter((row) => num(row[shadowColumn(field, "after")]) !== num(row[shadowColumn(field, "before")])).length,
     };
   }
@@ -267,7 +275,7 @@ function reviewShadowNarrative(batch) {
     completed_chain_events: authoredRows.filter((row) => definitions.get(row.event_id)?.narrativeThread?.close).length,
     authored_events_per_affected_life_mean: average(authoredCounts),
     authored_events_per_affected_life_p90: quantile(authoredCounts, 0.9),
-    authored_events_per_affected_life_max: Math.max(0, ...authoredCounts),
+    authored_events_per_affected_life_max: maximum(authoredCounts),
     authored_by_family: countBy(authoredRows, (row) => row.event_id.startsWith("shadow_public_") ? "public" : row.event_id.startsWith("shadow_private_") ? "private" : "survival"),
     shadow_change_events: changedEvents.length,
     shadow_change_event_rate: ratio(changedEvents.length, batch.events.length),
@@ -363,14 +371,18 @@ function reviewNarrativeStructure(batch) {
   const byRun = groupByMap(ordinaryEvents, (row) => row.run_id);
   const lives = [];
   const problemLives = [];
+  const gapStartsByDecade = {};
+  const gapStartsByAgeBand = {};
 
   for (const [runId, unsorted] of byRun) {
     const rows = [...unsorted].sort((left, right) => num(left.event_order) - num(right.event_order));
     const adultRows = rows.filter((row) => num(row.age) >= 13 && row.death !== "yes");
     const structural = rows.filter((row) => structuralTiers.has(row.narrative_tier));
     const texture = rows.filter((row) => row.narrative_tier === "texture");
-    const maxTextureStreak = longestStreak(rows, (row) => row.narrative_tier === "texture");
-    const adultTextureStreak = longestStreak(adultRows, (row) => row.narrative_tier === "texture");
+    const textureGap = longestStreakDetail(rows, (row) => row.narrative_tier === "texture");
+    const adultTextureGap = longestStreakDetail(adultRows, (row) => row.narrative_tier === "texture");
+    const maxTextureStreak = textureGap.length;
+    const adultTextureStreak = adultTextureGap.length;
     const adultStructuralRate = ratio(adultRows.filter((row) => structuralTiers.has(row.narrative_tier)).length, adultRows.length);
     const stat = {
       run_id: runId,
@@ -387,7 +399,15 @@ function reviewNarrativeStructure(batch) {
     const reasons = [];
     if (rows.length >= 25 && stat.structural_rate < 0.22) reasons.push(`结构事件仅${percent(stat.structural_rate)}`);
     if (adultRows.length >= 12 && adultStructuralRate < 0.2) reasons.push(`成年后结构事件仅${percent(adultStructuralRate)}`);
-    if (maxTextureStreak > 5) reasons.push(`最长连续纹理${maxTextureStreak}年`);
+    if (maxTextureStreak > 5) {
+      const start = textureGap.start;
+      const end = textureGap.end;
+      reasons.push(`连续纹理${maxTextureStreak}年（${start?.year}-${end?.year}，${start?.age}-${end?.age}岁）`);
+      const decade = `${Math.floor(num(start?.year) / 10) * 10}s`;
+      const ageBand = narrativeAgeBand(num(start?.age));
+      gapStartsByDecade[decade] = (gapStartsByDecade[decade] ?? 0) + 1;
+      gapStartsByAgeBand[ageBand] = (gapStartsByAgeBand[ageBand] ?? 0) + 1;
+    }
     if (reasons.length) problemLives.push(`${runId} ${stat.cohort}: ${reasons.join("，")}`);
   }
 
@@ -414,18 +434,42 @@ function reviewNarrativeStructure(batch) {
     lives_with_texture_streak_over_5: lives.filter((row) => row.max_texture_streak > 5).length,
     lives_with_texture_streak_over_5_rate: ratio(lives.filter((row) => row.max_texture_streak > 5).length, lives.length),
     cohort_distribution: cohortDistribution,
+    gap_start_decade_distribution: sortCountObject(gapStartsByDecade),
+    gap_start_age_band_distribution: sortCountObject(gapStartsByAgeBand),
     problemLives,
   };
 }
 
-function longestStreak(rows, predicate) {
-  let current = 0;
-  let maximum = 0;
-  for (const row of rows) {
-    current = predicate(row) ? current + 1 : 0;
-    maximum = Math.max(maximum, current);
+function longestStreakDetail(rows, predicate) {
+  let currentStart = -1;
+  let bestStart = -1;
+  let bestEnd = -1;
+  for (let index = 0; index < rows.length; index += 1) {
+    if (predicate(rows[index])) {
+      if (currentStart < 0) currentStart = index;
+      if (bestStart < 0 || index - currentStart > bestEnd - bestStart) {
+        bestStart = currentStart;
+        bestEnd = index;
+      }
+    } else currentStart = -1;
   }
-  return maximum;
+  return {
+    length: bestStart < 0 ? 0 : bestEnd - bestStart + 1,
+    start: bestStart < 0 ? null : rows[bestStart],
+    end: bestEnd < 0 ? null : rows[bestEnd],
+  };
+}
+
+function narrativeAgeBand(age) {
+  if (age < 13) return "0-12";
+  if (age < 20) return "13-19";
+  if (age < 40) return "20-39";
+  if (age < 60) return "40-59";
+  return "60+";
+}
+
+function sortCountObject(input) {
+  return Object.fromEntries(Object.entries(input).sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])));
 }
 
 function reviewIntegrity(batch) {
@@ -448,8 +492,14 @@ function reviewIntegrity(batch) {
   for (const row of batch.summary) {
     const runEvents = eventsByRun.get(row.run_id) ?? [];
     const runYears = yearsByRun.get(row.run_id) ?? [];
+    const rawFinalYear = String(row.final_year ?? "").trim();
+    if (!rawFinalYear || !Number.isFinite(Number(rawFinalYear))) problems.push(`${row.run_id} final_year 缺失或不是数字`);
     if (num(row.event_count) !== runEvents.length) problems.push(`${row.run_id} summary event_count=${row.event_count}，明细=${runEvents.length}`);
-    if (runYears.length && num(row.final_age) !== Math.max(...runYears.map((item) => num(item.age)))) problems.push(`${row.run_id} final_age 与逐年表不符`);
+    if (runYears.length && num(row.final_age) !== maximum(runYears.map((item) => num(item.age)))) problems.push(`${row.run_id} final_age 与逐年表不符`);
+    if (runYears.length && rawFinalYear && Number.isFinite(Number(rawFinalYear))
+      && Number(rawFinalYear) !== maximum(runYears.map((item) => num(item.year)))) {
+      problems.push(`${row.run_id} final_year 与逐年表不符`);
+    }
   }
 
   const manifestRunIds = new Set((batch.manifest.cases ?? []).map((item) => item.run_id));
@@ -474,6 +524,8 @@ function reviewConsistency(batch) {
   const age = [];
   const infantPerspective = [];
   const state = [];
+  const kinshipAmbiguity = [];
+  const retiredWorkAmbiguity = [];
   const place = [];
   const classTexture = [];
   const lifeCourse = [];
@@ -514,8 +566,20 @@ function reviewConsistency(batch) {
     if (/孩子出生|生下(?:一个|了)|添了(?:一个|个)?孩子|有了第一个孩子/.test(copy) && num(row.children_after) < 1) {
       state.push(`${prefix}: 叙述生育但 children=${row.children_after}`);
     }
+    if (num(row.children_after) < 1 && OWN_CHILD_TEXT.test(copy)) {
+      state.push(`${prefix}: 正文把孩子写成人物自己的家庭成员，但 children=${row.children_after || 0}；“${excerpt(copy)}”`);
+    } else if (num(row.children_after) < 1 && AMBIGUOUS_CHILD_TEXT.test(copy)) {
+      kinshipAmbiguity.push(`${prefix}: children=${row.children_after || 0}，儿童称谓需确认亲属关系；“${excerpt(copy)}”`);
+    }
     if (/你(?:办了)?退休|你办了退养|你开始领退休金/.test(copy) && ["employed", "self_employed", "gig_worker"].includes(row.career_status_after)) {
       state.push(`${prefix}: 叙述退休但 career_status=${row.career_status_after}`);
+    }
+    if (row.career_status_before === "retired" && row.career_status_after === "retired"
+      && hasUnqualifiedMatch(copy, CURRENT_WORK_TEXT) && !ACTIVE_AFTER_RETIREMENT_CONTEXT.test(copy)) {
+      state.push(`${prefix}: 已退休人物出现当前在职语义；“${excerpt(copy)}”`);
+    } else if (row.career_status_before === "retired" && row.career_status_after === "retired"
+      && hasUnqualifiedMatch(copy, AMBIGUOUS_WORK_TEXT) && !ACTIVE_AFTER_RETIREMENT_CONTEXT.test(copy)) {
+      retiredWorkAmbiguity.push(`${prefix}: 已退休人物出现含混单位语义；“${excerpt(copy)}”`);
     }
     if (["第一份工作", "早早谋生"].includes(row.title) && num(row.career_jobs_held_after) !== 1) {
       lifeCourse.push(`${prefix}: 首次谋生后 jobs_held=${row.career_jobs_held_after}`);
@@ -549,6 +613,8 @@ function reviewConsistency(batch) {
     age: unique(age),
     infantPerspective: unique(infantPerspective),
     state: unique(state),
+    kinshipAmbiguity: unique(kinshipAmbiguity),
+    retiredWorkAmbiguity: unique(retiredWorkAmbiguity),
     place: unique(place),
     classTexture: unique(classTexture),
     lifeCourse: unique(lifeCourse),
@@ -657,11 +723,66 @@ function reviewAnachronisms(events) {
   for (const row of events) {
     const copy = `${row.title}${row.final_text}${row.final_result_text}`;
     for (const rule of ERA_TERMS) {
-      if (num(row.year) >= rule.since || !copy.includes(rule.term)) continue;
+      const matched = rule.pattern ? rule.pattern.test(copy) : copy.includes(rule.term);
+      if (num(row.year) >= rule.since || !matched) continue;
       results.push(`${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}: “${rule.term}”建议不早于${rule.since}年；“${excerpt(copy)}”`);
     }
   }
   return unique(results);
+}
+
+function reviewContextualAnachronisms(events) {
+  const results = [];
+  for (const row of events) {
+    const copy = `${row.title}${row.final_text}${row.final_result_text}`;
+    if (num(row.year) >= 1910 || !/闹钟/.test(copy)) continue;
+    const especiallyUnlikely = num(row.year) < 1880 || ["village", "town"].includes(row.trigger_city_tier) || row.class_tier === "low";
+    if (!especiallyUnlikely) continue;
+    results.push(`${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}: 早期${row.trigger_city_tier}/${row.class_tier}处境出现“闹钟”；“${excerpt(copy)}”`);
+  }
+  return unique(results);
+}
+
+function reviewScheduledContinuations(batch) {
+  const definitions = new Map(data.events.map((event) => [event.id, event]));
+  const summaries = new Map(batch.summary.map((row) => [row.run_id, row]));
+  const eventsByRun = groupByMap(batch.events, (row) => row.run_id);
+  const missing = [];
+  for (const [runId, rows] of eventsByRun) {
+    const ordered = [...rows].sort((left, right) => num(left.event_order) - num(right.event_order));
+    const summary = summaries.get(runId);
+    const rawFinalYear = String(summary?.final_year ?? "").trim();
+    if (!rawFinalYear || !Number.isFinite(Number(rawFinalYear))) continue;
+    const finalYear = Number(rawFinalYear);
+    const aliveAtEnd = ["yes", "true", "1"].includes(String(summary?.alive ?? "").toLowerCase());
+    for (const row of ordered) {
+      const source = definitions.get(row.event_id);
+      for (const effect of source?.effects ?? []) {
+        const scheduled = effect.scheduleEvent;
+        if (!scheduled?.eventId || (scheduled.probability !== undefined && scheduled.probability < 1)) continue;
+        const [minDelay, maxDelay] = scheduled.delayYears ?? [];
+        if (!Number.isFinite(minDelay) || !Number.isFinite(maxDelay)) continue;
+        const earliest = num(row.year) + minDelay;
+        const latest = num(row.year) + maxDelay;
+        const target = definitions.get(scheduled.eventId);
+        const prefix = `${row.event_row_id} ${row.year}年/${row.age}岁 ${row.event_id}`;
+        if (!target) {
+          missing.push(`${prefix}: 调度目标 ${scheduled.eventId} 没有事件定义`);
+          continue;
+        }
+        const observedInWindow = ordered.find((item) => item.event_id === scheduled.eventId && inRange(num(item.year), [earliest, latest]));
+        if (observedInWindow) continue;
+        const observedOutsideWindow = ordered.find((item) => item.event_id === scheduled.eventId && num(item.year) >= num(row.year));
+        if (observedOutsideWindow) {
+          missing.push(`${prefix}: 调度 ${scheduled.eventId} 应在${earliest}-${latest}年，实际${observedOutsideWindow.year}年`);
+          continue;
+        }
+        if (finalYear < latest || (finalYear === latest && !aliveAtEnd)) continue;
+        missing.push(`${prefix}: 调度 ${scheduled.eventId} 应在${earliest}-${latest}年续接，人物活到${finalYear}年仍未出现；目标“${target.title}”`);
+      }
+    }
+  }
+  return unique(missing);
 }
 
 function reviewFrequency(batch) {
@@ -680,7 +801,7 @@ function reviewFrequency(batch) {
   for (const [eventId, rows] of eventRows) {
     const runs = new Set(rows.map((row) => row.run_id));
     const texts = countBy(rows, (row) => normalizeText(`${row.final_text}\n${row.final_result_text}`));
-    const dominantTextCount = Math.max(...Object.values(texts));
+    const dominantTextCount = maximum(Object.values(texts));
     const stat = {
       event_id: eventId,
       count: rows.length,
@@ -718,9 +839,11 @@ function reviewFrequency(batch) {
   const top10Count = countSorted.slice(0, 10).reduce((sum, item) => sum + item.count, 0);
   const top20Count = countSorted.slice(0, 20).reduce((sum, item) => sum + item.count, 0);
   const observedDefinitions = eventStats.filter((item) => definitions.has(item.event_id)).length;
+  const observedIds = new Set(eventStats.map((item) => item.event_id));
   return {
     observed_unique_events: observedDefinitions,
     event_definition_coverage_rate: ratio(observedDefinitions, data.events.length),
+    unobserved_event_definitions: data.events.map((event) => event.id).filter((id) => !observedIds.has(id)).sort(),
     top_10_event_share: ratio(top10Count, batch.events.length),
     top_20_event_share: ratio(top20Count, batch.events.length),
     event_hhi: eventStats.reduce((sum, item) => sum + item.event_share ** 2, 0),
@@ -851,6 +974,9 @@ function evaluateGates(metrics, allFindings) {
     min_future_history_coverage_rate: numericArg(args["min-future-history-coverage"], 0.45),
     max_shadow_untraced_rate: numericArg(args["max-shadow-untraced-rate"], 0.12),
     max_shadow_overconcentrated_life_rate: numericArg(args["max-shadow-overconcentrated-rate"], 0.05),
+    max_long_texture_streak_life_rate: numericArg(args["max-long-texture-streak-life-rate"], 0.2),
+    max_overpenetrating_events: nonnegativeInteger(args["max-overpenetrating-events"], 0, "--max-overpenetrating-events"),
+    max_copy_monoculture_events: nonnegativeInteger(args["max-copy-monoculture-events"], 0, "--max-copy-monoculture-events"),
   };
   const hasFutureSample = metrics.future_history.person_years >= 200;
   const hasShadowSample = metrics.shadow.harm_narrative_events >= 20;
@@ -869,6 +995,9 @@ function evaluateGates(metrics, allFindings) {
     gate("shadow_state_integrity", metrics.shadow.state_jump_count === 0 && metrics.shadow.contradiction_count === 0, `跳变${metrics.shadow.state_jump_count} / 矛盾${metrics.shadow.contradiction_count}`),
     gate("shadow_overconcentration", ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs) <= thresholds.max_shadow_overconcentrated_life_rate, `${percent(ratio(metrics.shadow.overconcentratedLives.length, metrics.counts.runs))} <= ${percent(thresholds.max_shadow_overconcentrated_life_rate)}`),
     gate("shadow_identity_skew", metrics.counts.runs < 100 || metrics.shadow.subgroupSkews.length === 0, metrics.counts.runs < 100 ? `跳过：仅${metrics.counts.runs}局` : `${metrics.shadow.subgroupSkews.length}组显著偏差`),
+    gate("long_texture_streak_life_rate", metrics.narrative.lives_with_texture_streak_over_5_rate <= thresholds.max_long_texture_streak_life_rate, `${percent(metrics.narrative.lives_with_texture_streak_over_5_rate)} <= ${percent(thresholds.max_long_texture_streak_life_rate)}`),
+    gate("overpenetrating_event_count", metrics.frequency.overpenetrating.length <= thresholds.max_overpenetrating_events, `${metrics.frequency.overpenetrating.length} <= ${thresholds.max_overpenetrating_events}`),
+    gate("copy_monoculture_event_count", metrics.frequency.copyMonoculture.length <= thresholds.max_copy_monoculture_events, `${metrics.frequency.copyMonoculture.length} <= ${thresholds.max_copy_monoculture_events}`),
   ];
   return { passed: checks.every((item) => item.passed), thresholds, checks };
 }
@@ -891,6 +1020,7 @@ function formatReport(result) {
     `- 平常年占比：${percent(metrics.frequency.quiet_year_rate)}`,
     `- 结构性事件：${percent(metrics.narrative.structural_event_rate)}（转折 ${percent(metrics.narrative.turning_point_rate)} / 后果 ${percent(metrics.narrative.consequence_rate)} / 历史压力 ${percent(metrics.narrative.historical_pressure_rate)}）`,
     `- 日常纹理：${percent(metrics.narrative.texture_event_rate)}；最长纹理超过5年的生命 ${metrics.narrative.lives_with_texture_streak_over_5} 局`,
+    `- 长纹理起点：${formatCounts(metrics.narrative.gap_start_decade_distribution, 5)}；年龄段 ${formatCounts(metrics.narrative.gap_start_age_band_distribution, 5)}`,
     `- 阴影人生：${metrics.shadow.authored_lives}/${metrics.counts.runs}局触发 ${metrics.shadow.authored_event_count} 条（公共 ${metrics.shadow.authored_by_family.public ?? 0} / 私人 ${metrics.shadow.authored_by_family.private ?? 0} / 生存 ${metrics.shadow.authored_by_family.survival ?? 0}）；定义覆盖 ${metrics.shadow.observed_authored_definitions}/${metrics.shadow.authored_definitions}（${percent(metrics.shadow.authored_definition_coverage_rate)}）`,
     `- 阴影连续性：主动伤害开端 ${metrics.shadow.harm_narrative_events} 条，其中十五年内缺少后续痕迹 ${metrics.shadow.harm_without_trace_count} 条；状态跳变 ${metrics.shadow.state_jump_count} 条，矛盾 ${metrics.shadow.contradiction_count} 条`,
     `- 阴影身份偏差：性别、阶层、城乡显著失衡 ${metrics.shadow.subgroupSkews.length} 组（允许处境不同，不允许身份直接等于恶）`,
@@ -898,6 +1028,7 @@ function formatReport(result) {
     `- 同局重复事件：${metrics.frequency.repeated_event_excess}（${percent(metrics.frequency.repeated_event_rate)}）；排除平常年后 ${metrics.frequency.repeated_nonquiet_event_excess}`,
     `- 同局重复可见文案：${metrics.frequency.repeated_visible_copy_excess}（${percent(metrics.frequency.repeated_visible_copy_rate)}）`,
     `- 头部10事件占比：${percent(metrics.frequency.top_10_event_share)}；HHI ${metrics.frequency.event_hhi.toFixed(4)}`,
+    `- 未观察事件定义：${metrics.frequency.unobserved_event_definitions.length} 个`,
     `- 平均终年：${metrics.mortality.mean_final_age.toFixed(1)}；P10/P50/P90：${metrics.mortality.p10_final_age}/${metrics.mortality.median_final_age}/${metrics.mortality.p90_final_age}`,
     `- 18岁前结束：${percent(metrics.mortality.death_under_18_rate)}；40岁前结束：${percent(metrics.mortality.death_under_40_rate)}`,
     "",
@@ -932,7 +1063,7 @@ function loadBatch(inputFiles) {
     summary: parseCsv(readFileSync(inputFiles.summary, "utf8"), new Set([
       "run_id", "case_id", "cohort", "region_group", "settlement", "class_tier", "attribute_tier",
       "birth_year", "gender", "birth_province", "birth_city_tier", "hukou", "family_class",
-      "final_age", "alive", "reached_age_cap", "event_count", "repeated_visible_copy_excess",
+      "final_age", "final_year", "alive", "reached_age_cap", "event_count", "repeated_visible_copy_excess",
       "structural_event_count", "texture_event_count", "max_texture_streak", "longest_structural_gap",
       ...SHADOW_FIELDS.map((field) => shadowColumn(field, "final")),
     ])),
@@ -1132,6 +1263,14 @@ function average(values) {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }
 
+function maximum(values) {
+  let result = 0;
+  for (const value of values) {
+    if (value > result) result = value;
+  }
+  return result;
+}
+
 function quantile(values, probability) {
   if (!values.length) return 0;
   const sorted = [...values].sort((left, right) => left - right);
@@ -1142,9 +1281,20 @@ function percent(value) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+function formatCounts(counts, limit = 5) {
+  const entries = Object.entries(counts ?? {}).slice(0, limit);
+  return entries.length ? entries.map(([key, value]) => `${key}=${value}`).join(" / ") : "无";
+}
+
 function positiveInteger(value, fallback, label) {
   const parsed = Number(value ?? fallback);
   if (!Number.isInteger(parsed) || parsed <= 0) throw new Error(`${label} must be a positive integer`);
+  return parsed;
+}
+
+function nonnegativeInteger(value, fallback, label) {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(`${label} must be a non-negative integer`);
   return parsed;
 }
 
@@ -1161,6 +1311,22 @@ function severityLabel(severity) {
 const STRATUM_DIMENSIONS = ["cohort", "gender", "settlement", "class_tier", "region_group", "attribute_tier"];
 
 const INFANT_ADULT_PERSPECTIVE = /你(?:知道|第一次知道|意识到|明白|懂得|发现|觉得|认为|盘算|决定|期待|担心|记住|记得|回想|先记起|学会|只好|终于|从此)|后来回想|多年以后你仍记得|你把每一笔开销|你没有忽然成为|你一面被年月改变|日子像被洗亮/;
+const OWN_CHILD_TEXT = /(?:你自己的|自己的|你的)(?:孩子|儿子|女儿)|你和(?:伴侣|妻子|丈夫)的孩子|你(?:儿子|女儿)的|你的孩子的/;
+const AMBIGUOUS_CHILD_TEXT = /孩子的(?:东西|学费|上学|接送|房间)|带着孩子(?:逃难|回家|出门)|远处的孩子|孩子们在外地生活|家里的孩子|自家的孩子|你家的孩子/;
+const CURRENT_WORK_TEXT = /(?:你(?:又)?下班|下班后你|下班以后你|你(?:去|在)?值班|你的工位|轮到你的班次|你领到(?:了)?工资)/;
+const AMBIGUOUS_WORK_TEXT = /(?:同事(?:把|教|替|拉|提醒|和你)|你和同事|单位(?:安排|组织|通知)你)/;
+const PAST_WORK_CONTEXT = /旧同事|从前的同事|过去的同事|以前的同事|退休前|当年|旧工牌|从前的单位|原单位/;
+const ACTIVE_AFTER_RETIREMENT_CONTEXT = /返聘|兼职|零工|临时帮工|重新上班/;
+
+function hasUnqualifiedMatch(copy, pattern) {
+  const matcher = new RegExp(pattern.source, "g");
+  for (const match of copy.matchAll(matcher)) {
+    const start = Math.max(0, match.index - 24);
+    const end = Math.min(copy.length, match.index + match[0].length + 20);
+    if (!PAST_WORK_CONTEXT.test(copy.slice(start, end))) return true;
+  }
+  return false;
+}
 
 const SHADOW_HARM_ACTION = /(?:你|他|她)(?:亲手|曾经|又|也|决定|选择|开始|被迫)?(?:告密|出卖|背叛|侵吞|贪污|收受贿赂|受贿|欺骗|诈骗|逼迫|强迫|殴打|打伤|报复|勒索|偷走|抢走|羞辱|虐待|伤害|杀害|处决|镇压|迫害)|(?:你|他|她)(?:参与|默许|纵容|下令|领导).{0,16}(?:镇压|迫害|掠夺|欺骗|暴力|伤害|杀害|屠杀)/;
 const SHADOW_CONSEQUENCE_TEXT = /内疚|愧疚|噩梦|失去信任|不再信任|疏远|决裂|关系破裂|伤口|阴影|代价|责任|追责|赔偿|道歉|坦白|恐惧|无法原谅|记恨|报复|自我辩解/;
@@ -1179,6 +1345,8 @@ const AGE_RULES = [
   { label: "入伍", pattern: /你参军|你入伍|你被征兵|你被拉了壮丁/, min: 14, max: 60 },
   { label: "退休", pattern: /你退休|办了退休|退休金|退休生活/, min: 38 },
   { label: "孙辈", pattern: /你的孙子|你的孙女|外孙|孙辈/, min: 32 },
+  { label: "儿童随大人谋食", pattern: /你跟着大人.{0,12}(?:找野菜|挖野菜|讨饭)|大人夸你.{0,8}懂事|你帮忙照看更小的孩子/, max: 20 },
+  { label: "仍被当作年幼女孩/男孩照料", pattern: /长辈替你.{0,16}(?:女孩子|男孩子)|大人替你.{0,16}(?:女孩子|男孩子)/, max: 25 },
 ];
 
 const ERA_TERMS = [
@@ -1186,6 +1354,8 @@ const ERA_TERMS = [
   { term: "电话", since: 1882 },
   { term: "电影", since: 1896 },
   { term: "收音机", since: 1923 },
+  { term: "供销店/供销社", pattern: /供销店|供销社/, since: 1950 },
+  { term: "单位制高置信语汇", pattern: /单位(?:分房|宿舍|食堂|医务室|托儿所|福利|大院|介绍信)|组织介绍信|凭介绍信(?:分房|住宿|就医)|办(?:理)?退休/, since: 1949 },
   { term: "电视", since: 1958 },
   { term: "赤脚医生", since: 1968 },
   { term: "万元户", since: 1979 },
@@ -1194,8 +1364,10 @@ const ERA_TERMS = [
   { term: "BP机", since: 1983 },
   { term: "乡镇企业", since: 1984 },
   { term: "大哥大", since: 1987 },
+  { term: "银行卡", since: 1985 },
   { term: "下岗", since: 1987 },
   { term: "手机", since: 1990 },
+  { term: "会亮起的通讯录", pattern: /通讯录.{0,14}(?:亮起|不会亮|不再亮|再也不会亮)/, since: 1995 },
   { term: "VCD", since: 1993 },
   { term: "互联网", since: 1994 },
   { term: "网吧", since: 1996 },

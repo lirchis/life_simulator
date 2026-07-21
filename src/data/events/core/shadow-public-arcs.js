@@ -36,6 +36,37 @@ function joinConditions(required, extra = {}) {
   };
 }
 
+function careerRule(config, path) {
+  return config.conditions?.all?.find((condition) => condition.path === path);
+}
+
+function continuationText(step, config, index) {
+  if (index === 0 || !step.leftRoleText) return step.text;
+  const statusRule = careerRule(config, "career.status");
+  const fieldRule = careerRule(config, "career.field");
+  const statuses = statusRule?.in ?? (statusRule?.eq ? [statusRule.eq] : []);
+  const fields = fieldRule?.in ?? (fieldRule?.eq ? [fieldRule.eq] : []);
+  if (!statuses.length || !fields.length) return step.text;
+
+  const roleHeld = [has("career.status", "in", statuses), has("career.field", "in", fields)];
+  const openingCityTiers = config.currentRegions?.cityTiers ?? [];
+  const roleHeldHere = step.awayText && openingCityTiers.length
+    ? [...roleHeld, has("location.currentCityTier", "in", openingCityTiers)]
+    : roleHeld;
+  const roleLeft = {
+    any: [has("career.status", "notIn", statuses), has("career.field", "notIn", fields)],
+  };
+  return [
+    text(roleLeft, step.leftRoleText),
+    ...(step.awayText && openingCityTiers.length ? [
+      text({ all: [...roleHeld, has("location.currentCityTier", "notIn", openingCityTiers)] }, step.awayText),
+    ] : []),
+    ...step.text.map((variant) => variant.conditions
+      ? { ...variant, conditions: joinConditions(roleHeldHere, variant.conditions) }
+      : variant),
+  ];
+}
+
 function makeChain(key, config) {
   const stages = ["begin", "deepen", "consequence"];
   const ids = stages.map((stage) => `shadow_public_${key}_${stage}`);
@@ -60,13 +91,18 @@ function makeChain(key, config) {
     const ageRange = step.ageRange ?? (index === 0
       ? config.ageRange
       : [config.ageRange[0] + minimumDelay, Math.min(99, config.ageRange[1] + maximumDelay)]);
+    const next = config.steps[index + 1];
+    const nextDelay = next
+      ? [next.minYears ?? (index === 0 ? 2 : 3), next.withinYears ?? 9]
+      : null;
+    const currentRegions = step.currentRegions ?? (index === 0 ? config.currentRegions : undefined);
     return {
       id: ids[index],
       title: step.title,
       category: step.category ?? config.category,
       yearRange,
       ageRange,
-      currentRegions: step.currentRegions ?? config.currentRegions,
+      ...(currentRegions ? { currentRegions } : {}),
       conditions: joinConditions(
         [...required, ...dependencyThreshold],
         step.conditions ?? (index === 0 ? config.conditions : {}),
@@ -83,9 +119,18 @@ function makeChain(key, config) {
       narrativeThread: index === 2
         ? { close: true }
         : { expiresAfterYears: config.steps[index + 1]?.withinYears ?? 9 },
-      text: step.text,
+      text: continuationText(step, config, index),
       effects: [
         ...(step.effects ?? []),
+        ...(nextDelay ? [{
+          scheduleEvent: {
+            eventId: ids[index + 1],
+            delayYears: nextDelay,
+            // Openings remain rare. Once one occurs, its responsibility and
+            // memory trace must survive a crowded yearly event pool.
+            weightMultiplier: index === 0 ? 24 : 16,
+          },
+        }] : []),
         { addTag: "shadow_public_actor" },
         { addTag: `shadow_public_${key}` },
         { addTag: stageTags[index] },
@@ -117,6 +162,8 @@ const rentMeasure = makeChain("rent_measure", {
     },
     {
       title: "仓里多出几袋",
+      leftRoleText: "你后来不再经手收租，旧量法却没有跟着你离开。后来接手的人仍照你留下的手势压斗，也有人记得第一年是谁先把多出来的一掌说成惯例；你失去了那只斗，没失去这笔来路。",
+      awayText: "你已经搬离收租的地方，旧量法却仍由后来的人照用。偶尔有旧识捎来一句那边还是那样，你先问收成，始终没有问那只斗又从谁家多量了多少。",
       text: [
         text(guilty, "第二年再量租，你认得那几张盯着斗沿的脸，手还是照旧压下去。回家后你少吃了一碗，像是能从自己碗里补回别人失去的谷。"),
         text(hardened, "仓里年年多出几袋，东家夸你办事稳妥。你渐渐把佃户的沉默当成同意，把自己的熟练当成公道。"),
@@ -127,6 +174,8 @@ const rentMeasure = makeChain("rent_measure", {
     },
     {
       title: "斗还在仓角",
+      leftRoleText: "你早已不在仓边，旧相识说起那只偏斗时仍有人记得你。没有人专程追来讨账，你也不再有机会用一袋粮把旧事讲成已经两清。",
+      awayText: "你在别处安顿下来后，听说那只斗还留在旧仓。没有人追到新住处同你算账，偏斗也不需要认路；它只要被下一双手拿起，旧办法便能继续下去。",
       text: [
         text(guilty, "多年后你托人给一户困难人家送去一袋粮，没有留下名字。量斗仍在仓角，你也没有把旧账算清，只是不再敢说自己从未亏欠谁。"),
         text(hardened, "后来换了东家，旧斗仍照样使用。你安稳退下，村里有人见你仍客气；客气不是原谅，只是他们还要从这条路经过。"),
@@ -160,6 +209,7 @@ const guildCredit = makeChain("guild_credit", {
     },
     {
       title: "名声长在别人手上",
+      leftRoleText: "你已经离开原来的铺子，招牌上的名声却仍跟着你。旧学徒没有追来争辩，只在别处把那套做法重新做了一遍；别人问起师承时，他把你的名字略了过去。",
       text: [
         text(guilty, "同行又夸你手艺精进时，你下意识看了一眼学徒。他低头磨刀，没有拆穿；那份沉默比一句指责更难接。"),
         text(hardened, "你凭那件活接到更多生意，也让学徒继续做最难的部分。你说这是给他历练，工钱却仍按最初那份算。"),
@@ -170,6 +220,7 @@ const guildCredit = makeChain("guild_credit", {
     },
     {
       title: "对街的新招牌",
+      leftRoleText: "你不再守着原来的柜台，旧学徒也早已另谋生计。那件难活仍被人算在你的履历里，他的名字则只留在少数同行的记性中；离开没有替任何一方改写落款。",
       text: [
         text(guilty, "你晚些时候在旧账边补写了学徒的名字，也把一件工具送给他。字补得太晚，至多证明你终于承认，不足以把那些年还回去。"),
         text(hardened, "学徒离开后在对街开铺，你告诉同行他忘恩。他没有争辩，只把自己的名字写得很大；你仍有老客，生意并未立刻惩罚谁。"),
@@ -202,6 +253,7 @@ const famineStock = makeChain("famine_stock", {
     },
     {
       title: "仓门关得更紧",
+      leftRoleText: "你后来不再经手粮食，先前囤下的那批货却已换成钱或家用。街上的饥饿没有跟着你换行当，别人问起时，你只说自己早就不做那门生意了。",
       text: [
         text(guilty, "粮价再涨时，你夜里听见有人敲后门求赊，最后只卖了一小袋。你把这点让步记得很重，仿佛足以替整仓货作证。"),
         text(hardened, "你分批放货，每次都说库存将尽。利润被称作承担风险的回报，至于风险主要落在谁的饭锅里，账本没有那一栏。"),
@@ -212,6 +264,7 @@ const famineStock = makeChain("famine_stock", {
     },
     {
       title: "价落之后",
+      leftRoleText: "你早已离开粮行，靠那批货留下的钱却混进了后来的日子。旧顾客不再来往，也没人专门追究；来路被时间磨淡，不等于从账上消失。",
       text: [
         text(guilty, "年景恢复后，你不再谈那批粮，只给地方善举捐过几次钱。匾额记住了捐款，没有记录钱最初怎样来到你手里。"),
         text(hardened, "你靠那次买卖添了铺面，后来被人称作会看行情。没有官司，也没有清算；苦日子过去后，财富替来路换了一个体面的说法。"),
@@ -244,6 +297,7 @@ const doubleLedger = makeChain("double_ledger", {
     },
     {
       title: "两本账都能对上",
+      leftRoleText: "你已经离开那张账桌，旧账却仍由留下的人照着解释。有人偶尔来问一处对不上的数，你说年月久了记不清；那处空白反而比许多正数更耐久。",
       text: [
         text(guilty, "你开始另记一张小纸，怕自己忘了哪些数动过。纸越写越密，你反而不敢停手，停下像是在承认前面的每一笔。"),
         text(hardened, "几次盘账都平安过去，你又替上司遮过一笔更大的差额。自此你不只拿钱，也成了别人放心继续拿钱的理由。"),
@@ -254,6 +308,7 @@ const doubleLedger = makeChain("double_ledger", {
     },
     {
       title: "查账的人翻过那一页",
+      leftRoleText: "清查来时你已不在原处，旧同事把差额归进前任留下的问题。你没有回去说明，也没有因此受罚；离职替你制造了距离，没有制造无辜。",
       text: [
         text(guilty, "一次查账前，你悄悄补回部分差额，仍有旧账无法填平。查账的人翻过去后，你没有轻松，只第一次知道侥幸也会增加重量。"),
         text(hardened, "清查时，上司把一处差错推给已经离职的伙计，你没有开口。账过了，你还升了一格；任命公文只写你熟悉业务，没有写那天你沉默了什么。"),
@@ -287,6 +342,7 @@ const meetingDenunciation = makeChain("meeting_denunciation", {
     },
     {
       title: "座位往前挪了",
+      leftRoleText: "你后来离开了原来的单位或队伍，那句话带来的安全却已经用过。旧同事偶尔提到被调走的人，你说自己也只是熬过那几年；这话不全是假，也没有说全。",
       text: [
         text(guilty, "那人被调走后，你坐到了他原来的位置。抽屉里还留着一支削到很短的铅笔，你用了几天，最后还是扔了。"),
         text(hardened, "你被认为立场清楚，会议上发言的次序也往前了。后来再有人被点名，你已经懂得在什么时候先开口。"),
@@ -297,6 +353,7 @@ const meetingDenunciation = makeChain("meeting_denunciation", {
     },
     {
       title: "名字从名单上淡下去",
+      leftRoleText: "你早已不在当年的单位，名单上的名字也换了几轮。那句补充没有随档案一起作废；你偶尔把它讲成不得已，讲得越熟，越像在替一个已经离职的人辩护。",
       text: [
         text(guilty, "多年后你在旧纸上又看见那人的名字，想起自己补过的那句话。你没有找到对方，只把这件事第一次完整说给家人听。"),
         text(hardened, "风向变过几次，你始终说当时人人都那样。后来没人专门追究你，解释重复久了，连语气都磨得像事实。"),
@@ -327,6 +384,7 @@ const ruleWindow = makeChain("rule_window", {
     },
     {
       title: "大家来学你的办法",
+      leftRoleText: "你已经离开窗口，后来人仍沿用你整理的拒件话术。你不再亲手合上那扇窗，旧办法却替你继续准时下班；责任从岗位上卸下了，痕迹没有。",
       text: [
         text(guilty, "你后来遇到相似情况，偶尔悄悄把材料压在下班前收进来。你没有改变规则，只学会把一点人情藏在不被同事看见的地方。"),
         text(hardened, "上级夸你窗口差错少，让新人照你的做法。你把不解释、不通融称为专业，群众意见也更容易被记成手续问题。"),
@@ -337,6 +395,7 @@ const ruleWindow = makeChain("rule_window", {
     },
     {
       title: "一张退回的表",
+      leftRoleText: "离开原岗位后，你在别处听见有人抱怨那套窗口规矩。你先说制度不是一个人定的，停了一会儿，又想起最初把每句话整理得那么顺的人正是自己。",
       text: [
         text(guilty, "你退休前替一个材料不全的人把缺项逐条写清，又多等了十分钟。那不是偿还，只让你承认规则可以由人执行得不那么伤人。"),
         text(hardened, "你凭少出差错顺利升迁，墙上还挂过先进照片。那些被退回的人没有出现在统计里，统计因此一直很好看。"),
@@ -370,6 +429,7 @@ const withheldWages = makeChain("withheld_wages", {
     },
     {
       title: "用旧工资接新工程",
+      leftRoleText: "你已不再管原来那摊生意，旧欠条却还在人手里传。有人找到你如今的住处或单位，你说账要向原项目算；项目没有嘴，便只剩他们继续等。",
       text: [
         text(guilty, "有人来问孩子学费，你先发了他一部分，又让他别告诉别人。你把偏私当成善意，欠下的总数仍没有减少。"),
         text(hardened, "你用压下的工资垫资接到新工程，规模很快做大。饭局上别人夸你敢周转，没有人请工人来解释这个‘敢’由谁出钱。"),
@@ -380,6 +440,7 @@ const withheldWages = makeChain("withheld_wages", {
     },
     {
       title: "人走了，活还在",
+      leftRoleText: "原来的队伍散了，你也转行、停业或退了下来。偶尔还有人问那笔工资，你把旧账说成当年周转失败；失败听起来没有主语，欠款的人却仍记得是谁让他们再等一周。",
       text: [
         text(guilty, "你后来卖掉一件设备补发大半工资，仍有人没拿全。你在补款收条上写清数目，没有写道歉；有些词比钱更难落笔。"),
         text(hardened, "熟练工陆续离开，你又招来新人，把离开说成他们吃不了苦。工程仍做下去，代价被更新成一批不认识旧账的人。"),
@@ -411,6 +472,7 @@ const stolenCredit = makeChain("stolen_credit", {
     },
     {
       title: "掌声记住了你",
+      leftRoleText: "你已经离开原来的团队，那项成果仍留在履历上。旧同事没有追着你改名单，只是不再替你证明当年的合作；纸上的功劳比关系保存得更完整。",
       text: [
         text(guilty, "你得奖后在私下说团队都很辛苦，却仍没在公开记录里补回名字。良心获得了一句谦虚，履历继续获得全部成果。"),
         text(hardened, "那次成果让你升职，你开始相信带团队本身就等于拥有团队产出。下属做得越好，越能证明你领导有方。"),
@@ -421,6 +483,7 @@ const stolenCredit = makeChain("stolen_credit", {
     },
     {
       title: "轮到别人审你的名字",
+      leftRoleText: "你转行或离职以后，旧名单仍被后来的人引用。真正做成关键部分的人在新的地方只从头积累，你则继续带着那项成果；没有公开争执，档案也不会自己感到难堪。",
       text: [
         text(guilty, "你后来在一次公开回顾里补提了当年的贡献者。对方只回了一句收到；迟到的承认能修正档案，不能要求别人配合感动。"),
         text(hardened, "旧下属后来成了评审，照章驳回你的项目，没有提旧事。你认定这是报复，也第一次发现规则落在自己身上时格外锋利。"),
@@ -451,6 +514,7 @@ const safetyBlame = makeChain("safety_blame", {
     },
     {
       title: "整改只多了一张表",
+      leftRoleText: "你调离、转业或退休后，那份事故报告仍在档案里。后来部门添了检查表，却没有重写责任；你不再签字，最初被写进去的那个人却还背着那个名字。",
       text: [
         text(guilty, "你推动增加了一项检查，却没敢重开事故责任。新表每天有人签字，旧设备仍偶尔异响；补救被限制在不推翻自己那份报告的范围里。"),
         text(hardened, "上级夸你处置及时，你也升去管更大的团队。后来每逢事故，你先问谁签过字，仿佛签名能替设备承受磨损。"),
@@ -461,6 +525,7 @@ const safetyBlame = makeChain("safety_blame", {
     },
     {
       title: "第二份相似报告",
+      leftRoleText: "旧单位后来又出过相似问题，有人翻到你写的那份报告，把措辞照用了一遍。你已没有权限更改，也没有主动补充；离开现场以后，沉默仍能成为一种参与。",
       text: [
         text(guilty, "相似问题再次出现时，你终于把排班和设备写进报告，也附上旧记录。坦白让你受了处分，受伤的人却不必再独自背着全部原因。"),
         text(hardened, "第二次事故仍被拆成几个个人失误，你已很熟悉措辞。部门继续运转，你也继续升迁；伤者离开后，岗位很快补上了新人。"),
@@ -492,6 +557,7 @@ const rulesAsWeapon = makeChain("rules_as_weapon", {
     },
     {
       title: "办理量很好看",
+      leftRoleText: "你不再坐在那个窗口，拒件模板却留在系统里。新人沿用时甚至不知道是谁写的；你偶尔听说有人又被来回补件，只说流程后来已经改过很多次。",
       text: [
         text(guilty, "你私下记住几个明显有误的拒件，偶尔下班后帮人找复核入口。善意只能偷偷进行，说明公开流程仍在奖励相反的事。"),
         text(hardened, "你的办理速度位居前列，被请去分享经验。你强调不要替申请人猜理由，听起来中立，也正好把所有解释成本推回给最不懂规则的人。"),
@@ -502,6 +568,7 @@ const rulesAsWeapon = makeChain("rules_as_weapon", {
     },
     {
       title: "申诉改回来了",
+      leftRoleText: "你离开岗位后，一个旧拒件终于申诉成功。结果改回来了，耽误的时间没有；通知不再抄送给你，责任也因此更容易被说成无人负责的系统旧账。",
       text: [
         text(guilty, "一个旧拒件申诉成功后，你主动把同类案例重新筛了一遍。你帮助了后来的人，最早被耽误的那位仍没有得到丢失的时间。"),
         text(hardened, "申诉部门推翻了你的决定，你只把它归为口径更新。绩效没有追回，升迁也没受影响；制度修正了结果，没有追问谁曾享受错误。"),
@@ -532,6 +599,7 @@ const careQueue = makeChain("care_queue", {
     },
     {
       title: "大家都来找你",
+      leftRoleText: "你已不再掌握名单，先前调过的顺序却留在记录里。接手的人只能逐项解释，有些家庭已经等过了那几周；权力交出去以后，旧人情并不会自动退出队伍。",
       text: [
         text(guilty, "第二次有人托付时，你先查了后排家庭的风险，仍找到一个自认不伤人的位置。名单越来越像一道你独自判分的题。"),
         text(hardened, "会办事的名声传开，你收下礼物，也把插队称作协调资源。正式规则仍在运行，只是总有人从侧门更快到达。"),
@@ -542,6 +610,7 @@ const careQueue = makeChain("care_queue", {
     },
     {
       title: "审计只找到一处手改",
+      leftRoleText: "审计追到旧名单时，你已经调岗或退休。你把经过说明成当时的协调惯例，既没有全盘撒谎，也避开了谁被挤到后面；离岗让处分变轻，没有让记录失真。",
       text: [
         text(guilty, "审计前你恢复了大部分顺序，也给一户久等家庭主动联系补位。你做的是纠正，不是恩惠；直到这时你才肯用这个词。"),
         text(hardened, "审计只找到一处手工调整，你把责任归给已经调岗的下属。系统权限随后收紧，你保住职位，还参与了新规则设计。"),
@@ -572,6 +641,7 @@ const heatShelter = makeChain("heat_shelter", {
     },
     {
       title: "空调开着，门外也有人",
+      leftRoleText: "你后来不再帮忙登记，预留过的名额却已经兑现。门外那几户只知道名单曾被改过，不知道你何时退出；你说以后不会再管这事，像不再握笔便能撤回旧字。",
       text: [
         text(guilty, "高温最重那天，门外又来一户，你挪出储物角让人坐下，却没有重排名单。临时善意让眼前好过一点，也替原先的不公遮住一角。"),
         text(hardened, "你坚持只认已登记名单，门外争执时还让人不要影响室内秩序。凉屋运行得平稳，平稳的定义不包括门外的人。"),
@@ -582,6 +652,7 @@ const heatShelter = makeChain("heat_shelter", {
     },
     {
       title: "报告说运行平稳",
+      leftRoleText: "季末报告写成运行平稳时，你已不在登记组。你的名字没有出现在总结里，预留名单也没有；被拒家庭保存着当日记录，责任则散在每个已经换岗的人口中。",
       text: [
         text(guilty, "季末总结时，你把门外等待和临时拒收写进报告，也承认预留名单有问题。记录来得迟，至少没有让下一次从一份漂亮谎话开始。"),
         text(hardened, "总结只写凉屋满负荷平稳运行，你因此获得表扬。后来那份报告成了范例，门外那几个人则只存在于家属的记忆里。"),

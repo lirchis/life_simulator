@@ -225,7 +225,10 @@ export const dailyEraTextureEvents = [
     { conditions: { all: [{ path: "meta.age", gte: 45 }] }, text: "单位运动会缺人，你被安排参加趣味项目。年轻人争名次，你更关心别扭了腰；最后大家都去食堂领奖，奖品是同一份加菜。" },
     { text: "单位开运动会，你被临时安排一个项目。成绩普通、口号响亮，拍照时队伍很齐；赛后最受一致好评的仍是食堂多出的那道菜。" },
   ], {
-    conditions: { all: [{ path: "career.status", eq: "employed" }] },
+    conditions: { all: [
+      { path: "career.status", eq: "employed" },
+      { path: "career.field", in: ["factory", "textile", "state_unit", "public_sector", "teacher", "education", "healthcare", "doctor", "nurse", "grassroots_post", "shop_clerk", "mine", "railway", "professional"] },
+    ] },
     effects: [add("resources.health", 3), add("relationships.friendship", 3), add("resources.happiness", 3)],
   }),
 

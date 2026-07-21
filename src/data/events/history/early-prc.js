@@ -572,16 +572,42 @@ export const historyEarlyPrcEvents = [
         "conditions": {
           "all": [
             {
+              "path": "meta.age",
+              "lte": 3
+            }
+          ]
+        },
+        "text": "后来家里人说，那年春天野菜很苦，锅底很薄。他们轮流把你抱在怀里，谁也不肯说明下一顿还剩多少。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
               "path": "birth.gender",
               "eq": "female"
             },
             {
               "path": "meta.age",
               "gte": 10
+            },
+            {
+              "path": "meta.age",
+              "lte": 17
             }
           ]
         },
         "text": "春天来了，锅里却没有春天。你跟着大人找野菜、照看更小的孩子，也把自己的饿藏得很安静。"
+      },
+      {
+        "conditions": {
+          "all": [
+            {
+              "path": "meta.age",
+              "gte": 18
+            }
+          ]
+        },
+        "text": "春天来了，锅里却没有春天。你同家里人四处找能下锅的东西，也把省下的一口往更虚弱的人那边推；饥饿让每顿饭都像一次艰难分配。"
       },
       {
         "text": "春天来了，锅里却没有春天。你记住了野菜的苦，也记住了大人把最后一口让出去的样子。"
@@ -860,7 +886,41 @@ export const historyEarlyPrcEvents = [
     ],
     "maxOccurrences": 1,
     "baseWeight": 26,
-    "text": "村里的赤脚医生背着药箱来，针头在开水里滚过。简陋归简陋，很多命就靠这点亮光拖住。",
+    "text": [
+      {
+        "conditions": {
+          "all": [{ "path": "meta.age", "lte": 3 }]
+        },
+        "text": "你病得还不会说哪里难受，家里人抱着你等赤脚医生来。药箱在桌上打开，大人轮流听用量和时辰；这一夜后来只留在他们的讲述里。"
+      },
+      {
+        "conditions": {
+          "all": [{ "path": "meta.age", "lte": 12 }]
+        },
+        "text": "赤脚医生到家时先问你哪里疼，又问今天吃过什么。药片很苦，大人在旁边说苦才管用；你暂且相信了前半句。"
+      },
+      {
+        "conditions": {
+          "all": [{ "path": "resources.health", "lte": 40 }]
+        },
+        "text": "赤脚医生背着药箱来看你，把能处理的先处理，又反复嘱咐哪种变化必须往公社或县里送。设备不多，知道自己不能治什么也成了一种本事。"
+      },
+      {
+        "conditions": {
+          "all": [{ "path": "resources.wealth", "lte": 42 }]
+        },
+        "text": "你先问药钱，赤脚医生已经蹲下来量体温。几片药记进合作医疗的账，家里仍要仔细过日子，至少这回没有先把病拖成更贵的病。"
+      },
+      {
+        "conditions": {
+          "all": [{ "path": "location.currentCityTier", "eq": "county" }]
+        },
+        "text": "附近卫生室的人背着药箱下到队里，处理完常见病，又把两个不能耽搁的人写在转诊单上。县城并不遥远，病起来时每段路都有长度。"
+      },
+      {
+        "text": "赤脚医生背着药箱走来，针具在开水里滚过，问诊就在炕边或桌旁完成。条件简陋，谁家该换药、谁该赶紧送诊，他记得比许多人家的日历清楚。"
+      }
+    ],
     "effects": [
       {
         "path": "resources.health",
@@ -1494,9 +1554,8 @@ export const historyEarlyPrcEvents = [
       },
       {
         "conditions": {
-          "any": [
-            { "path": "relationships.children", "gte": 1 },
-            { "path": "resources.wealth", "lte": 35 }
+          "all": [
+            { "path": "relationships.children", "gte": 1 }
           ]
         },
         "text": "你在粮店队伍里反复核对全家的定量，孩子长身体，票面却不会跟着长。轮到柜台时，你先问粗粮还有没有，再决定月底几顿饭该怎样搭配。"
@@ -1751,13 +1810,20 @@ export const historyEarlyPrcEvents = [
         "text": "那一年，学校几次组织大家听广播、低头默哀。你未必明白每个名字同国家有什么关系，只记得老师的声音很轻，操场上那么多人，竟能同时安静下来。"
       },
       {
-        "conditions": {
-          "any": [
-            { "path": "career.field", "in": ["factory", "manual_worker", "farm_work", "grassroots_post"] },
-            { "path": "career.status", "eq": "employed" }
-          ]
-        },
+        "conditions": { "all": [{ "path": "career.field", "in": ["factory", "manual_worker", "construction"] }] },
         "text": "广播传来讣告，单位停下手里的活组织悼念。有人真心落泪，有人只把帽子攥在手里；机器重新响起后，大家仍压低声音谈论接下来会怎样。"
+      },
+      {
+        "conditions": { "all": [{ "path": "location.currentCityTier", "in": ["village", "town"] }, { "path": "meta.age", "gte": 13 }] },
+        "text": "讣告从村里的喇叭传来，田里的人陆续停下手。风把后半句吹得断断续续，大家回去以后又找收音机核对；那一年，连沉默也常要靠信号接力。"
+      },
+      {
+        "conditions": { "all": [{ "path": "career.field", "in": ["teacher", "education", "public_sector", "grassroots_post"] }] },
+        "text": "你在学校或基层单位帮着安排悼念，桌上的名单、黑纱和广播时间写得很具体，关于未来的话却没人敢写。仪式结束后，大家收椅子的声音比平常轻。"
+      },
+      {
+        "conditions": { "all": [{ "path": "meta.age", "gte": 60 }] },
+        "text": "广播里的讣告接连传来，你已经见过几次时代转弯，仍觉得这一年的安静不同。家里有人想问以后会怎样，话到嘴边只剩一句：先把收音机再调清楚些。"
       },
       {
         "text": "一九七六年的讣告接连从广播里传来，家人围坐着听，谁也没有急着发表意见。你说不清未来，只觉得熟悉的政治语言忽然失去了几个最常被提起的人。"
@@ -1800,7 +1866,27 @@ export const historyEarlyPrcEvents = [
     ageRange: [0, 8],
     maxOccurrences: 1,
     baseWeight: 25,
-    text: "大人抱着你去接种，队伍从诊室排到院里。针头带来一阵哭声，也在胳膊上留下一枚小疤；许多年后，你未必记得那天，却一直带着它的保护。",
+    text: [
+      {
+        conditions: { all: [{ path: "meta.age", lte: 1 }] },
+        text: "大人用棉被角裹着你去接种，队伍从诊室排到院里。你后来没有这段记忆，家人却一直记得那声哭有多响——前面几家孩子也可作证。"
+      },
+      {
+        conditions: { all: [{ path: "location.currentCityTier", in: ["county", "city", "tier2", "tier1"] }] },
+        text: "街道通知孩子按次序接种，大人拿着登记纸在卫生院排队。针头、酒精棉和哭声轮流经过，护士写字比哄人快，队伍因此还能向前挪。"
+      },
+      {
+        conditions: { all: [{ path: "birth.hukou", eq: "rural" }] },
+        text: "接种人员来到乡里，家长抱着孩子从各处赶来。名字在纸上逐个勾掉，哭声则从屋里传到院外；看不见的疾病，第一次有了这样具体的一支队伍。"
+      },
+      {
+        conditions: { all: [{ path: "resources.wealth", lte: 30 }] },
+        text: "家里手头很紧，仍按通知带你去接种。针剂不靠家中存款决定，排队的人也因此站在同一条长凳旁；轮到你时，大人先替你把袖口卷好。"
+      },
+      {
+        text: "大人带你去接种，针头带来一阵哭声，也在胳膊上留下一枚小疤。许多年后，你未必记得那天，却一直带着那次公共卫生行动留下的保护。"
+      }
+    ],
     effects: [
       { path: "resources.health", add: 7 },
       { path: "relationships.family", add: 2 },
@@ -2048,7 +2134,27 @@ export const historyEarlyPrcEvents = [
     ageRange: [5, 18],
     maxOccurrences: 1,
     baseWeight: 20,
-    text: "哥哥姐姐穿小的棉袄拆洗补好，轮到你继续穿。袖口颜色和衣身不太一致，保暖却不讲究体面；一家孩子的身高，像年轮一样留在接过几次的针脚上。",
+    text: [
+      {
+        conditions: { all: [{ path: "resources.wealth", lte: 32 }] },
+        text: "家里把一件穿小的旧棉袄拆洗、续棉，再改到你身上。布票和棉花都紧，袖口便先学会兼任补丁；针脚不整齐，寒风倒没挑出多少毛病。"
+      },
+      {
+        conditions: { all: [{ path: "birth.hukou", eq: "rural" }] },
+        text: "旧棉袄在炕边拆开，能用的棉花重新拍松，磨薄处补上另一块布。它从亲属家传到你家，颜色一路变化，保暖这件事却始终很务实。"
+      },
+      {
+        conditions: { all: [{ path: "meta.age", lte: 8 }] },
+        text: "大人把旧棉袄改小给你，袖子仍长，先向里折了两道。你跑起来像临时借来一双胳膊，等到开春，那两道折痕才慢慢放出来。"
+      },
+      {
+        conditions: { all: [{ path: "birth.familyClass", "in": ["worker_family", "state_worker", "cadre_family", "intellectual_family"] }] },
+        text: "家里拿布票添一点新布，把旧棉袄的里外重新翻过。领口看着新，里面仍是几年前的棉花；计划供应年代的体面，常很懂得把旧日子翻到内侧。"
+      },
+      {
+        text: "一件旧棉袄拆洗补好后轮到你穿。袖口颜色和衣身不太一致，针脚记着几次修改；衣服没有家谱，却把一家人的身量都留在里面。"
+      }
+    ],
     effects: [
       { path: "resources.wealth", add: 2 },
       { path: "relationships.family", add: 4 },
@@ -2186,7 +2292,13 @@ export const historyEarlyPrcEvents = [
     },
     maxOccurrences: 1,
     baseWeight: 18,
-    text: "单位终于分下一间屋，面积不大，门窗也旧。你和爱人拿粉笔在地上比划床、桌子和孩子的位置；几平方米被反复安排，竟也慢慢长出了家的样子。",
+    text: [
+      {
+        conditions: { all: [{ path: "relationships.children", gte: 1 }] },
+        text: "单位终于分下一间屋，面积不大，门窗也旧。你和爱人拿粉笔在地上比划床、桌子和孩子的位置；几平方米被反复安排，竟也慢慢长出了家的样子。",
+      },
+      { text: "单位终于分下一间屋，面积不大，门窗也旧。你和爱人拿粉笔在地上比划床、桌子和柜子的位置；几平方米被反复安排，竟也慢慢长出了家的样子。" },
+    ],
     effects: [
       { path: "resources.wealth", add: 5 },
       { path: "resources.happiness", add: 7 },
@@ -2268,7 +2380,13 @@ export const historyEarlyPrcEvents = [
     currentRegions: { hukou: ["rural"], cityTiers: ["village", "town"] },
     maxOccurrences: 1,
     baseWeight: 28,
-    text: "农忙时你白天下田抢收抢种，天黑后还要烧饭、洗衣、哄孩子。工分本只记下田里的那一段，灶台旁的劳动没有格子可填；你累得沉默，却知道一家人的日子正压在这两副担子上。",
+    text: [
+      {
+        conditions: { all: [{ path: "relationships.children", gte: 1 }] },
+        text: "农忙时你白天下田抢收抢种，天黑后还要烧饭、洗衣、哄孩子。工分本只记下田里的那一段，灶台旁的劳动没有格子可填；你累得沉默，却知道一家人的日子正压在这两副担子上。",
+      },
+      { text: "农忙时你白天下田抢收抢种，天黑后还要烧饭、洗衣、照料一家人的零碎。工分本只记下田里的那一段，灶台旁的劳动没有格子可填；你累得沉默，两副担子却一副也不会自己变轻。" },
+    ],
     effects: [
       { path: "resources.health", add: -5 },
       { path: "relationships.family", add: 5 },
@@ -2366,7 +2484,13 @@ export const historyEarlyPrcEvents = [
     conditions: { all: [{ hasTag: "third_front_builder" }] },
     maxOccurrences: 1,
     baseWeight: 32,
-    text: "三线厂区离家很远，你在信里写机器已经安装、宿舍不漏雨，却没写山路封雪和孩子发烧时赶不回去。建设的尺度很大，牵挂仍按一封信、一张车票来计算。",
+    text: [
+      {
+        conditions: { all: [{ path: "relationships.children", gte: 1 }] },
+        text: "三线厂区离家很远，你在信里写机器已经安装、宿舍不漏雨，却没写山路封雪和孩子发烧时赶不回去。建设的尺度很大，牵挂仍按一封信、一张车票来计算。",
+      },
+      { text: "三线厂区离家很远，你在信里写机器已经安装、宿舍不漏雨，却没写山路封雪和家里有人生病时赶不回去。建设的尺度很大，牵挂仍按一封信、一张车票来计算。" },
+    ],
     effects: [
       { path: "relationships.family", add: 4 },
       { path: "resources.happiness", add: -2 },

@@ -6,7 +6,7 @@ import { applyEffects, makeEffectSummary, writeSnapshot } from "./effects.js?v=s
 import { matchConditions } from "./conditions.js?v=shadow-1";
 import { applyNaturalChanges } from "./naturalChanges.js?v=shadow-1";
 import { getHistoricalLife } from "./historicalLives.js?v=shadow-1";
-import { composeQuietYearText } from "./quietYearText.js?v=continuity-1";
+import { composeQuietYearText } from "./quietYearText.js?v=content-cycle-1";
 import { applyEventLifeCourse, matchLifeCourse } from "./lifeCourse.js?v=continuity-1";
 import {
   beginNarrativeYear,
@@ -167,6 +167,15 @@ function selectEvents(candidates, state, context) {
     if (picked) selected.push(picked);
   }
 
+  // A scheduled continuation may compete with hundreds of otherwise valid
+  // events for several years. On the last authored year, keep it from
+  // disappearing by chance. Major priority events stay first, so death can
+  // still end a life naturally; if the person survives, the open thread gets
+  // its promised continuation in the same year.
+  for (const event of candidates.filter((item) => scheduledAtDeadline(item, state))) {
+    if (!selected.some((item) => item.id === event.id)) selected.push(event);
+  }
+
   while (selected.length < count) {
     if (selected.some(changesLocation)) break;
     const eligible = candidates.filter((event) => !event.priority && !selected.some((item) => item.id === event.id));
@@ -177,6 +186,12 @@ function selectEvents(candidates, state, context) {
   }
 
   return selected;
+}
+
+function scheduledAtDeadline(event, state) {
+  return state.scheduledEvents.some((scheduled) => scheduled.eventId === event.id
+    && scheduled.earliestYear <= state.meta.currentYear
+    && scheduled.latestYear === state.meta.currentYear);
 }
 
 function baseCandidates(state, events, context) {
@@ -214,7 +229,22 @@ function matchLifetimeProbability(event, state) {
   const configured = event.lifetimeProbability ?? (event.id.startsWith("daily_") ? 0.38 : undefined);
   if (configured === undefined) return true;
   const probability = Math.min(1, Math.max(0, configured));
-  return stableUnitInterval(`${state.meta.seed}|${event.id}`) < probability;
+  if (stableUnitInterval(`${state.meta.seed}|${event.id}`) < probability) return true;
+
+  // Lifetime probability keeps openings diverse, but it must not be allowed
+  // to erase every structural candidate for a long stretch. Only explicitly
+  // authored safety-net arcs may re-enter after prolonged texture; rare harm,
+  // mortality and ordinary one-off events keep their original probability.
+  return event.narrativeSafetyNet === true && narrativeSafetyNetDue(state);
+}
+
+function narrativeSafetyNetDue(state) {
+  const narrative = state.narrative ?? {};
+  const child = state.meta.age <= 12;
+  const textureLimit = child ? 5 : 4;
+  const gapLimit = child ? 6 : 5;
+  return (narrative.textureStreak ?? 0) >= textureLimit
+    || (narrative.yearsSinceStructural ?? 0) >= gapLimit;
 }
 
 function stableUnitInterval(value) {

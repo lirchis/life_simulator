@@ -173,7 +173,7 @@ export const dailyContextMicroevents = [
   micro("qing_teahouse_kettle", "铜壶续水", [1840, 1911], [12, 80], "work", working,
     "你在茶馆替客人续水，谁谈大事、谁欠茶钱都听得清。伙计知道许多消息，通常没有插话的资格。",
     "茶馆的铜壶嘴冒着白气，你把杯子往里挪了一点。旁桌争论天下，你先防着自己的袖口被烫。", H, urbanRegion),
-  micro("qing_hair_oil", "桂花油抹少了", [1840, 1911], [9, 70], "family", female,
+  micro("qing_hair_oil", "桂花油抹少了", [1840, 1911], [9, 24], "family", female,
     "出门前，长辈替你抿平碎发，只用一点桂花油。她说女孩子要整洁，也说油快用完了；教诲与存货一向彼此照应。",
     "家人替你梳头，木梳卡住时先怪头发不听话。梳妆完毕，镜里的人很整齐，头皮另有意见。", F, urbanRegion),
   micro("qing_spectacle_case", "眼镜装进硬盒", [1870, 1911], [45, 90], "health", comfortable,
